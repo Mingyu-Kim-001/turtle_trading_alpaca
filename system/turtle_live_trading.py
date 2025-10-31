@@ -19,7 +19,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 _initial_risk_pot = 10000
-
 class DailyLogger:
   """Log daily trading activities"""
   
@@ -30,18 +29,8 @@ class DailyLogger:
     self.log_file = os.path.join(log_dir, f'trading_{self.today}.log')
     self.order_log_file = os.path.join(log_dir, f'orders_{self.today}.json')
     self.state_log_file = os.path.join(log_dir, f'state_{self.today}.json')
-    self.orders = self._load_existing_orders()
+    self.orders = []
     self.state_snapshots = []
-    
-  def _load_existing_orders(self):
-    """Load existing orders from today's log file"""
-    if os.path.exists(self.order_log_file):
-      try:
-        with open(self.order_log_file, 'r') as f:
-          return json.load(f)
-      except:
-        return []
-    return []
     
   def log(self, message, level='INFO'):
     """Log a message with timestamp"""
@@ -67,26 +56,6 @@ class DailyLogger:
     # Save to file
     with open(self.order_log_file, 'w') as f:
       json.dump(self.orders, f, indent=2)
-  
-  def update_order_status(self, order_id, new_status, additional_details=None):
-    """Update the status of an existing order in the log"""
-    updated = False
-    for order in self.orders:
-      if order.get('details', {}).get('order_id') == order_id:
-        order['status'] = new_status
-        order['updated_at'] = datetime.now().isoformat()
-        if additional_details:
-          order['details'].update(additional_details)
-        updated = True
-        self.log(f"Updated order {order_id} status to {new_status}")
-        break
-    
-    if updated:
-      # Save to file
-      with open(self.order_log_file, 'w') as f:
-        json.dump(self.orders, f, indent=2)
-    
-    return updated
   
   def log_state_snapshot(self, state, label='snapshot'):
     """Log a snapshot of trading state"""
@@ -155,7 +124,6 @@ class SlackNotifier:
     message = "\n".join(message_lines)
     self.send_message(message, title=title)
 
-
 class StateManager:
   """Manage trading state persistence"""
   
@@ -172,17 +140,14 @@ class StateManager:
         self.positions = data.get('positions', {})
         self.entry_queue = data.get('entry_queue', [])
         self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
-        self.pending_exit_orders = data.get('pending_exit_orders', {})
         self.last_updated = data.get('last_updated', None)
-        print(f"State loaded: risk_pot=${self.risk_pot:,.2f}, positions={len(self.positions)}, "
-              f"pending_pyramids={len(self.pending_pyramid_orders)}, pending_exits={len(self.pending_exit_orders)}")
+        print(f"State loaded: risk_pot=${self.risk_pot:,.2f}, positions={len(self.positions)}, pending_pyramids={len(self.pending_pyramid_orders)}")
     except FileNotFoundError:
       print("No existing state found, initializing new state")
       self.risk_pot = _initial_risk_pot
       self.positions = {}
       self.entry_queue = []
       self.pending_pyramid_orders = {}
-      self.pending_exit_orders = {}
       self.last_updated = None
       self.save_state()
   
@@ -193,7 +158,6 @@ class StateManager:
       'positions': self.positions,
       'entry_queue': self.entry_queue,
       'pending_pyramid_orders': self.pending_pyramid_orders,
-      'pending_exit_orders': self.pending_exit_orders,
       'last_updated': datetime.now().isoformat()
     }
     
@@ -208,7 +172,7 @@ class StateManager:
     self.risk_pot += pnl
     print(f"Risk pot updated: ${old_risk_pot:,.2f} -> ${self.risk_pot:,.2f} (PnL: ${pnl:,.2f})")
     self.save_state()
-
+    
 
 class TurtleTrading:
   """Main Turtle Trading System"""
@@ -354,218 +318,6 @@ class TurtleTrading:
     
     return highest_entry - 2 * highest_entry_n
   
-
-  def sync_filled_orders(self):
-    """Check all pending orders and update state if they've been filled"""
-    self.logger.log("Syncing filled orders with broker...")
-    
-    try:
-      # Check pending exit orders
-      for ticker in list(self.state.pending_exit_orders.keys()):
-        order_id = self.state.pending_exit_orders[ticker]
-        
-        try:
-          order = self.trading_client.get_order_by_id(order_id)
-          
-          if order.status == 'filled':
-            self.logger.log(f"Found filled exit order for {ticker} that wasn't processed", 'WARNING')
-            
-            # Check if position still exists in state
-            if ticker in self.state.positions:
-              position = self.state.positions[ticker]
-              
-              filled_price = float(order.filled_avg_price)
-              total_units = float(order.filled_qty)
-              exit_value = total_units * filled_price
-              
-              # Calculate P&L
-              entry_value = sum(p['entry_value'] for p in position['pyramid_units'])
-              pnl = exit_value - entry_value
-              
-              # Return allocated risk
-              for pyramid in position['pyramid_units']:
-                risk_allocated = pyramid['units'] * 2 * pyramid['entry_n']
-                self.state.risk_pot += risk_allocated
-              
-              # Add P&L to risk pot
-              self.state.update_risk_pot(pnl)
-              
-              # Track daily PnL
-              self.daily_pnl += pnl
-              
-              # Remove position
-              del self.state.positions[ticker]
-              
-              self.logger.log(f"Synced exit for {ticker}: filled at ${filled_price:.2f}, P&L: ${pnl:.2f}")
-              
-              # Update order log
-              self.logger.update_order_status(order_id, 'FILLED', {
-                'filled_price': filled_price,
-                'exit_value': exit_value,
-                'entry_value': entry_value,
-                'pnl': pnl,
-                'new_risk_pot': self.state.risk_pot,
-                'synced_at': datetime.now().isoformat()
-              })
-              
-              # Send Slack notification
-              emoji = "🟢" if pnl > 0 else "🔴"
-              self.slack.send_summary(f"{emoji} EXIT SYNCED (LATE)", {
-                "Ticker": ticker,
-                "Units": int(total_units),
-                "Exit Price": f"${filled_price:.2f}",
-                "Entry Value": f"${entry_value:,.2f}",
-                "Exit Value": f"${exit_value:,.2f}",
-                "P&L": f"${pnl:,.2f}",
-                "Risk Pot": f"${self.state.risk_pot:,.2f}",
-                "Note": "Order was filled but not processed earlier"
-              })
-            
-            # Remove from pending
-            del self.state.pending_exit_orders[ticker]
-            self.state.save_state()
-            
-          elif order.status in ['cancelled', 'rejected', 'expired']:
-            self.logger.log(f"Pending exit order for {ticker} was {order.status}, removing", 'WARNING')
-            del self.state.pending_exit_orders[ticker]
-            self.state.save_state()
-            self.logger.update_order_status(order_id, order.status.upper())
-            
-        except Exception as e:
-          self.logger.log(f"Error checking pending exit order {order_id} for {ticker}: {e}", 'ERROR')
-      
-      # Check pending pyramid orders
-      for ticker in list(self.state.pending_pyramid_orders.keys()):
-        order_id = self.state.pending_pyramid_orders[ticker]
-        
-        try:
-          order = self.trading_client.get_order_by_id(order_id)
-          
-          if order.status == 'filled':
-            self.logger.log(f"Found filled pyramid order for {ticker} that wasn't processed", 'WARNING')
-            
-            # Check if this order is already in pyramid_units
-            if ticker in self.state.positions:
-              order_ids_in_position = [p['order_id'] for p in self.state.positions[ticker]['pyramid_units']]
-              
-              if order_id not in order_ids_in_position:
-                # Need to add this pyramid unit
-                filled_price = float(order.filled_avg_price)
-                units = float(order.filled_qty)
-                cost = units * filled_price
-                
-                # Get current N
-                df = self.get_historical_data(ticker, days=30)
-                if df is not None:
-                  df = self.calculate_indicators(df)
-                  current_n = df.iloc[-1]['N']
-                else:
-                  current_n = filled_price * 0.02
-                
-                # Create pyramid unit
-                pyramid_unit = {
-                  'units': units,
-                  'entry_price': filled_price,
-                  'entry_n': current_n,
-                  'entry_value': cost,
-                  'entry_date': datetime.now().isoformat(),
-                  'order_id': order_id
-                }
-                
-                self.state.positions[ticker]['pyramid_units'].append(pyramid_unit)
-                
-                # Update stop price
-                stop_price = self.calculate_overall_stop(self.state.positions[ticker]['pyramid_units'])
-                self.state.positions[ticker]['stop_price'] = stop_price
-                
-                # Update risk pot
-                risk_allocated = units * 2 * current_n
-                self.state.risk_pot -= risk_allocated
-                
-                self.logger.log(f"Synced pyramid entry for {ticker}: {units} units at ${filled_price:.2f}")
-                
-                # Update order log
-                self.logger.update_order_status(order_id, 'FILLED', {
-                  'filled_price': filled_price,
-                  'cost': cost,
-                  'risk_allocated': risk_allocated,
-                  'new_risk_pot': self.state.risk_pot,
-                  'synced_at': datetime.now().isoformat()
-                })
-                
-                # Send Slack notification
-                self.slack.send_summary("🟢 PYRAMID SYNCED (LATE)", {
-                  "Ticker": ticker,
-                  "Level": len(self.state.positions[ticker]['pyramid_units']),
-                  "Units": int(units),
-                  "Price": f"${filled_price:.2f}",
-                  "Cost": f"${cost:,.2f}",
-                  "Stop Price": f"${stop_price:.2f}",
-                  "Risk Allocated": f"${risk_allocated:,.2f}",
-                  "Risk Pot": f"${self.state.risk_pot:,.2f}",
-                  "Note": "Order was filled but not processed earlier"
-                })
-            
-            # Remove from pending
-            del self.state.pending_pyramid_orders[ticker]
-            self.state.save_state()
-            
-          elif order.status in ['cancelled', 'rejected', 'expired']:
-            self.logger.log(f"Pending pyramid order for {ticker} was {order.status}, removing", 'WARNING')
-            del self.state.pending_pyramid_orders[ticker]
-            self.state.save_state()
-            self.logger.update_order_status(order_id, order.status.upper())
-            
-        except Exception as e:
-          self.logger.log(f"Error checking pending pyramid order {order_id} for {ticker}: {e}", 'ERROR')
-      
-    except Exception as e:
-      self.logger.log(f"Error syncing filled orders: {e}", 'ERROR')
-  
-  def check_pending_orders(self):
-    """Check status of pending orders and clean up"""
-    try:
-      request = GetOrdersRequest(
-        status=QueryOrderStatus.OPEN,
-        limit=100
-      )
-      open_orders = self.trading_client.get_orders(request)
-      
-      if open_orders:
-        self.logger.log(f"Found {len(open_orders)} open orders")
-        for order in open_orders:
-          self.logger.log(f"  {order.symbol}: {order.side} {order.qty} @ ${order.stop_price}, status: {order.status}")
-      
-      # Clean up stale pending pyramid orders
-      for ticker in list(self.state.pending_pyramid_orders.keys()):
-        order_id = self.state.pending_pyramid_orders[ticker]
-        try:
-          order = self.trading_client.get_order_by_id(order_id)
-          if order.status not in ['pending_new', 'accepted', 'new']:
-            del self.state.pending_pyramid_orders[ticker]
-            self.logger.log(f"Removed stale pending pyramid order for {ticker}")
-            self.logger.update_order_status(order_id, order.status)
-        except:
-          del self.state.pending_pyramid_orders[ticker]
-      
-      # Clean up stale pending exit orders
-      for ticker in list(self.state.pending_exit_orders.keys()):
-        order_id = self.state.pending_exit_orders[ticker]
-        try:
-          order = self.trading_client.get_order_by_id(order_id)
-          if order.status not in ['pending_new', 'accepted', 'new']:
-            del self.state.pending_exit_orders[ticker]
-            self.logger.log(f"Removed stale pending exit order for {ticker}")
-            self.logger.update_order_status(order_id, order.status)
-        except:
-          del self.state.pending_exit_orders[ticker]
-      
-      if self.state.pending_pyramid_orders or self.state.pending_exit_orders:
-        self.state.save_state()
-        
-    except Exception as e:
-      self.logger.log(f"Error checking pending orders: {e}", 'ERROR')
-  
   def enter_position(self, ticker, units, target_price, n):
     """Enter a new position or add to existing (pyramid) using stop-limit order"""
     try:
@@ -601,7 +353,7 @@ class TurtleTrading:
       )
       
       order = self.trading_client.submit_order(order_data)
-      order_id = str(order.id)
+      order_id = str(order.id)  # Convert UUID to string
       
       # Send Slack notification immediately when order is placed
       order_type = f"Pyramid Level {pyramid_level}" if is_pyramid else "Initial Entry"
@@ -669,7 +421,9 @@ class TurtleTrading:
         
         self.logger.log(f"Order filled: {ticker} at ${filled_price:.2f}, "
                        f"risk pot decreased by ${risk_allocated:.2f}")
-        self.logger.update_order_status(order_id, 'FILLED', {
+        self.logger.log_order('ENTRY', ticker, 'FILLED', {
+          'order_id': order_id,
+          'units': units,
           'filled_price': filled_price,
           'cost': cost,
           'risk_allocated': risk_allocated,
@@ -698,8 +452,9 @@ class TurtleTrading:
         return False
       else:
         self.logger.log(f"Order not filled for {ticker}, status: {filled_order.status}", 'WARNING')
-        self.logger.update_order_status(order_id, 'NOT_FILLED', {
-          'final_status': filled_order.status
+        self.logger.log_order('ENTRY', ticker, 'NOT_FILLED', {
+          'order_id': order_id,
+          'status': filled_order.status
         })
         return False
         
@@ -707,265 +462,198 @@ class TurtleTrading:
       self.logger.log(f"Error entering position for {ticker}: {e}", 'ERROR')
       self.slack.send_message(f"❌ Error entering {ticker}: {str(e)}")
       return False
-  
   def exit_position(self, ticker, target_price, reason):
-    """Exit entire position using stop-limit order"""
-    try:
-      if ticker not in self.state.positions:
-        self.logger.log(f"No position found for {ticker}", 'ERROR')
-        return False
-      
-      # Check if there's already a pending exit order for this ticker
-      if ticker in self.state.pending_exit_orders:
-        existing_order_id = self.state.pending_exit_orders[ticker]
-        self.logger.log(f"Exit order already pending for {ticker}: {existing_order_id}", 'WARNING')
-        
-        # Check status of existing order
-        try:
-          existing_order = self.trading_client.get_order_by_id(existing_order_id)
-          if existing_order.status in ['pending_new', 'accepted', 'new']:
-            self.logger.log(f"Existing exit order still pending, skipping duplicate", 'WARNING')
-            return False
-          elif existing_order.status == 'filled':
-            self.logger.log(f"Existing exit order was filled, cleaning up state", 'WARNING')
-            # This will be handled by check_pending_orders
-            return True
-        except:
-          # Order not found, clean up tracking
-          del self.state.pending_exit_orders[ticker]
-          self.state.save_state()
-      
-      # Check for existing open orders for this ticker
+      """Exit entire position using stop-limit order"""
       try:
-        request = GetOrdersRequest(
-          status=QueryOrderStatus.OPEN,
-          symbols=[ticker],
-          limit=10
-        )
-        open_orders = self.trading_client.get_orders(request)
-        
-        # Check if there's already a sell order
-        existing_sell = [o for o in open_orders if o.side == OrderSide.SELL]
-        if existing_sell:
-          self.logger.log(f"Sell order already exists for {ticker}: {existing_sell[0].id}", 'WARNING')
-          # Track this order
-          self.state.pending_exit_orders[ticker] = str(existing_sell[0].id)
-          self.state.save_state()
+        if ticker not in self.state.positions:
+          self.logger.log(f"No position found for {ticker}", 'ERROR')
           return False
         
-        # Cancel any buy orders to free up shares
-        buy_orders = [o for o in open_orders if o.side == OrderSide.BUY]
-        if buy_orders:
-          self.logger.log(f"Cancelling {len(buy_orders)} buy orders for {ticker} to free shares")
-          for order in buy_orders:
-            try:
-              self.trading_client.cancel_order_by_id(order.id)
-              self.logger.log(f"Cancelled order {order.id}")
-              
-              # Update order log
-              self.logger.update_order_status(str(order.id), 'CANCELLED')
-              
-              # Remove from pending pyramid orders if present
-              if ticker in self.state.pending_pyramid_orders and self.state.pending_pyramid_orders[ticker] == str(order.id):
-                del self.state.pending_pyramid_orders[ticker]
-                self.state.save_state()
-              
-              time.sleep(0.5)
-            except Exception as e:
-              self.logger.log(f"Error cancelling order {order.id}: {e}", 'ERROR')
-      
-      except Exception as e:
-        self.logger.log(f"Error checking existing orders for {ticker}: {e}", 'WARNING')
-      
-      position = self.state.positions[ticker]
-      total_units = sum(p['units'] for p in position['pyramid_units'])
-      
-      stop_price = round(target_price * self.exit_margin, 2)
-      limit_price = round(stop_price * 0.995, 2)
-      
-      self.logger.log(f"Placing exit order for {ticker}: units={total_units}, "
-                     f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
-      
-      # Place stop-limit sell order with retry logic
-      max_retries = 3
-      retry_delay = 2
-      order_id = None
-      
-      for attempt in range(max_retries):
+        # Check for existing open orders for this ticker
         try:
-          order_data = StopLimitOrderRequest(
-            symbol=ticker,
-            qty=int(total_units),
-            side=OrderSide.SELL,
-            time_in_force=TimeInForce.DAY,
-            stop_price=stop_price,
-            limit_price=limit_price
+          request = GetOrdersRequest(
+            status=QueryOrderStatus.OPEN,
+            symbols=[ticker],
+            limit=10
           )
+          open_orders = self.trading_client.get_orders(request)
           
-          order = self.trading_client.submit_order(order_data)
-          order_id = str(order.id)
+          # Check if there's already a sell order
+          existing_sell = [o for o in open_orders if o.side == OrderSide.SELL]
+          if existing_sell:
+            self.logger.log(f"Sell order already exists for {ticker}: {existing_sell[0].id}", 'WARNING')
+            return False
           
-          # Track pending exit order
-          self.state.pending_exit_orders[ticker] = order_id
+          # Cancel any buy orders to free up shares
+          buy_orders = [o for o in open_orders if o.side == OrderSide.BUY]
+          if buy_orders:
+            self.logger.log(f"Cancelling {len(buy_orders)} buy orders for {ticker} to free shares")
+            for order in buy_orders:
+              try:
+                self.trading_client.cancel_order_by_id(order.id)
+                self.logger.log(f"Cancelled order {order.id}")
+                time.sleep(0.5)  # Brief wait for order to cancel
+              except Exception as e:
+                self.logger.log(f"Error cancelling order {order.id}: {e}", 'ERROR')
+        
+        except Exception as e:
+          self.logger.log(f"Error checking existing orders for {ticker}: {e}", 'WARNING')
+          # Continue anyway, we'll catch the duplicate order error below
+        
+        position = self.state.positions[ticker]
+        total_units = sum(p['units'] for p in position['pyramid_units'])
+        
+        stop_price = round(target_price * self.exit_margin, 2)
+        limit_price = round(stop_price * 0.995, 2)
+        
+        self.logger.log(f"Placing exit order for {ticker}: units={total_units}, "
+                      f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
+        
+        # Place stop-limit sell order with retry logic
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+          try:
+            order_data = StopLimitOrderRequest(
+              symbol=ticker,
+              qty=int(total_units),
+              side=OrderSide.SELL,
+              time_in_force=TimeInForce.DAY,
+              stop_price=stop_price,
+              limit_price=limit_price
+            )
+            
+            order = self.trading_client.submit_order(order_data)
+            order_id = str(order.id)
+            
+            # Send Slack notification immediately
+            self.slack.send_summary("📤 EXIT ORDER PLACED", {
+              "Ticker": ticker,
+              "Reason": reason,
+              "Order ID": order_id,
+              "Units": int(total_units),
+              "Stop Price": f"${stop_price:.2f}",
+              "Limit Price": f"${limit_price:.2f}",
+              "Status": "PENDING",
+              "Attempt": f"{attempt + 1}/{max_retries}"
+            })
+            
+            self.logger.log(f"Exit order placed: {order_id} for {ticker}")
+            self.logger.log_order('EXIT', ticker, 'PLACED', {
+              'order_id': order_id,
+              'units': int(total_units),
+              'stop_price': stop_price,
+              'limit_price': limit_price,
+              'reason': reason
+            })
+            
+            # Successfully placed order, break retry loop
+            break
+            
+          except Exception as e:
+            error_str = str(e)
+            
+            # Check if it's a duplicate order error
+            if "40310000" in error_str or "insufficient qty" in error_str.lower():
+              self.logger.log(f"Shares for {ticker} are held by another order", 'WARNING')
+              self.logger.log(f"Error details: {error_str}", 'WARNING')
+              return False  # Don't retry, order already exists
+            
+            # Connection errors - retry
+            if attempt < max_retries - 1:
+              self.logger.log(f"Connection error placing exit order for {ticker} (attempt {attempt + 1}/{max_retries}): {e}", 'WARNING')
+              time.sleep(retry_delay)
+              retry_delay *= 2  # Exponential backoff
+              continue
+            else:
+              # Final attempt failed
+              self.logger.log(f"Failed to place exit order for {ticker} after {max_retries} attempts: {e}", 'ERROR')
+              self.slack.send_message(f"❌ Failed to exit {ticker} after {max_retries} attempts: {str(e)}")
+              return False
+        
+        # Wait for order to process
+        time.sleep(3)
+        
+        # Check if order filled (with retry for connection errors)
+        for attempt in range(3):
+          try:
+            filled_order = self.trading_client.get_order_by_id(order_id)
+            break
+          except Exception as e:
+            if attempt < 2:
+              self.logger.log(f"Error checking order status (attempt {attempt + 1}/3): {e}", 'WARNING')
+              time.sleep(2)
+              continue
+            else:
+              self.logger.log(f"Cannot verify order status for {ticker}: {e}", 'ERROR')
+              return False
+        
+        if filled_order.status == 'filled':
+          filled_price = float(filled_order.filled_avg_price)
+          exit_value = total_units * filled_price
+          
+          # Calculate P&L
+          entry_value = sum(p['entry_value'] for p in position['pyramid_units'])
+          pnl = exit_value - entry_value
+          
+          # Return allocated risk
+          for pyramid in position['pyramid_units']:
+            risk_allocated = pyramid['units'] * 2 * pyramid['entry_n']
+            self.state.risk_pot += risk_allocated
+          
+          # Add P&L to risk pot
+          self.state.update_risk_pot(pnl)
+          
+          # Track daily PnL
+          self.daily_pnl += pnl
+          
+          # Remove position
+          del self.state.positions[ticker]
           self.state.save_state()
           
-          # Send Slack notification immediately
-          self.slack.send_summary("📤 EXIT ORDER PLACED", {
-            "Ticker": ticker,
-            "Reason": reason,
-            "Order ID": order_id,
-            "Units": int(total_units),
-            "Stop Price": f"${stop_price:.2f}",
-            "Limit Price": f"${limit_price:.2f}",
-            "Status": "PENDING",
-            "Attempt": f"{attempt + 1}/{max_retries}"
-          })
-          
-          self.logger.log(f"Exit order placed: {order_id} for {ticker}")
-          self.logger.log_order('EXIT', ticker, 'PLACED', {
+          self.logger.log(f"Exit filled: {ticker} at ${filled_price:.2f}, P&L: ${pnl:.2f}")
+          self.logger.log_order('EXIT', ticker, 'FILLED', {
             'order_id': order_id,
             'units': int(total_units),
-            'stop_price': stop_price,
-            'limit_price': limit_price,
-            'reason': reason
+            'filled_price': filled_price,
+            'pnl': pnl,
+            'new_risk_pot': self.state.risk_pot
           })
           
-          # Successfully placed order, break retry loop
-          break
+          # Send Slack notification
+          emoji = "🟢" if pnl > 0 else "🔴"
+          self.slack.send_summary(f"{emoji} EXIT EXECUTED", {
+            "Ticker": ticker,
+            "Reason": reason,
+            "Units": int(total_units),
+            "Exit Price": f"${filled_price:.2f}",
+            "Entry Value": f"${entry_value:,.2f}",
+            "Exit Value": f"${exit_value:,.2f}",
+            "P&L": f"${pnl:,.2f}",
+            "Risk Pot": f"${self.state.risk_pot:,.2f}"
+          })
           
-        except Exception as e:
-          error_str = str(e)
+          return True
+        elif filled_order.status in ['pending_new', 'accepted', 'new']:
+          self.logger.log(f"Exit order pending for {ticker}, status: {filled_order.status}", 'WARNING')
+          self.logger.log_order('EXIT', ticker, 'PENDING', {
+            'order_id': order_id,
+            'status': filled_order.status
+          })
+          return False
+        else:
+          self.logger.log(f"Exit order not filled for {ticker}, status: {filled_order.status}", 'WARNING')
+          self.logger.log_order('EXIT', ticker, 'NOT_FILLED', {
+            'order_id': order_id,
+            'status': filled_order.status
+          })
+          return False
           
-          # Check if it's a duplicate order error
-          if "40310000" in error_str or "insufficient qty" in error_str.lower():
-            self.logger.log(f"Shares for {ticker} are held by another order", 'WARNING')
-            self.logger.log(f"Error details: {error_str}", 'WARNING')
-            
-            # Try to extract the related order ID from error message
-            import re
-            match = re.search(r'"related_orders":\["([^"]+)"\]', error_str)
-            if match:
-              related_order_id = match.group(1)
-              self.logger.log(f"Related order holding shares: {related_order_id}", 'WARNING')
-              # Track this as pending exit order
-              self.state.pending_exit_orders[ticker] = related_order_id
-              self.state.save_state()
-            
-            return False
-          
-          # Connection errors - retry
-          if attempt < max_retries - 1:
-            self.logger.log(f"Connection error placing exit order for {ticker} (attempt {attempt + 1}/{max_retries}): {e}", 'WARNING')
-            time.sleep(retry_delay)
-            retry_delay *= 2
-            continue
-          else:
-            # Final attempt failed
-            self.logger.log(f"Failed to place exit order for {ticker} after {max_retries} attempts: {e}", 'ERROR')
-            self.slack.send_message(f"❌ Failed to exit {ticker} after {max_retries} attempts: {str(e)}")
-            return False
-      
-      if order_id is None:
-        self.logger.log(f"Failed to place exit order for {ticker}", 'ERROR')
+      except Exception as e:
+        self.logger.log(f"Error exiting position for {ticker}: {e}", 'ERROR')
+        self.slack.send_message(f"❌ Error exiting {ticker}: {str(e)}")
         return False
-      
-      # Wait for order to process
-      time.sleep(3)
-      
-      # Check if order filled (with retry for connection errors)
-      filled_order = None
-      for attempt in range(3):
-        try:
-          filled_order = self.trading_client.get_order_by_id(order_id)
-          break
-        except Exception as e:
-          if attempt < 2:
-            self.logger.log(f"Error checking order status (attempt {attempt + 1}/3): {e}", 'WARNING')
-            time.sleep(2)
-            continue
-          else:
-            self.logger.log(f"Cannot verify order status for {ticker}: {e}", 'ERROR')
-            return False
-      
-      if filled_order is None:
-        return False
-      
-      if filled_order.status == 'filled':
-        filled_price = float(filled_order.filled_avg_price)
-        exit_value = total_units * filled_price
-        
-        # Calculate P&L
-        entry_value = sum(p['entry_value'] for p in position['pyramid_units'])
-        pnl = exit_value - entry_value
-        
-        # Return allocated risk
-        for pyramid in position['pyramid_units']:
-          risk_allocated = pyramid['units'] * 2 * pyramid['entry_n']
-          self.state.risk_pot += risk_allocated
-        
-        # Add P&L to risk pot
-        self.state.update_risk_pot(pnl)
-        
-        # Track daily PnL
-        self.daily_pnl += pnl
-        
-        # Remove position
-        del self.state.positions[ticker]
-        
-        # Remove from pending exit orders
-        if ticker in self.state.pending_exit_orders:
-          del self.state.pending_exit_orders[ticker]
-        
-        self.state.save_state()
-        
-        self.logger.log(f"Exit filled: {ticker} at ${filled_price:.2f}, P&L: ${pnl:.2f}")
-        self.logger.update_order_status(order_id, 'FILLED', {
-          'filled_price': filled_price,
-          'exit_value': exit_value,
-          'entry_value': entry_value,
-          'pnl': pnl,
-          'new_risk_pot': self.state.risk_pot
-        })
-        
-        # Send Slack notification
-        emoji = "🟢" if pnl > 0 else "🔴"
-        self.slack.send_summary(f"{emoji} EXIT EXECUTED", {
-          "Ticker": ticker,
-          "Reason": reason,
-          "Units": int(total_units),
-          "Exit Price": f"${filled_price:.2f}",
-          "Entry Value": f"${entry_value:,.2f}",
-          "Exit Value": f"${exit_value:,.2f}",
-          "P&L": f"${pnl:,.2f}",
-          "Risk Pot": f"${self.state.risk_pot:,.2f}"
-        })
-        
-        return True
-      elif filled_order.status in ['pending_new', 'accepted', 'new']:
-        self.logger.log(f"Exit order pending for {ticker}, status: {filled_order.status}", 'WARNING')
-        self.logger.log_order('EXIT', ticker, 'PENDING', {
-          'order_id': order_id,
-          'status': filled_order.status
-        })
-        return False
-      else:
-        self.logger.log(f"Exit order not filled for {ticker}, status: {filled_order.status}", 'WARNING')
-        self.logger.update_order_status(order_id, 'NOT_FILLED', {
-          'final_status': filled_order.status
-        })
-        
-        # Remove from pending exit orders if cancelled/rejected
-        if filled_order.status in ['cancelled', 'rejected', 'expired']:
-          if ticker in self.state.pending_exit_orders:
-            del self.state.pending_exit_orders[ticker]
-            self.state.save_state()
-        
-        return False
-        
-    except Exception as e:
-      self.logger.log(f"Error exiting position for {ticker}: {e}", 'ERROR')
-      self.slack.send_message(f"❌ Error exiting {ticker}: {str(e)}")
-      return False
   
   def reconcile_orders(self):
     """Reconcile actual broker orders with internal state"""
@@ -990,7 +678,7 @@ class TurtleTrading:
         if ticker not in orders_by_ticker:
           orders_by_ticker[ticker] = []
         orders_by_ticker[ticker].append({
-          'id': str(order.id),
+          'id': str(order.id),  # Convert UUID to string
           'side': order.side,
           'qty': float(order.qty),
           'status': order.status,
@@ -1094,7 +782,7 @@ class TurtleTrading:
           if ticker not in orders_by_ticker:
             orders_by_ticker[ticker] = []
           orders_by_ticker[ticker].append({
-            'order_id': str(order.id),
+            'order_id': str(order.id),  # Convert UUID to string
             'qty': float(order.qty),
             'filled_price': float(order.filled_avg_price),
             'filled_at': order.filled_at
@@ -1125,6 +813,7 @@ class TurtleTrading:
           self.logger.log(f"  Using estimated N: ${estimated_n:.2f}", "WARNING")
         
         # Reconstruct pyramid units from orders
+        # Group orders from same day with similar prices into single pyramid unit
         pyramid_units = []
         if ticker in orders_by_ticker:
           sorted_orders = sorted(orders_by_ticker[ticker], key=lambda x: x['filled_at'])
@@ -1150,7 +839,7 @@ class TurtleTrading:
               # Check if same day and price within 2%
               if next_date == current_date:
                 price_diff_pct = abs(next_price - current_price) / current_price
-                if price_diff_pct <= 0.02:
+                if price_diff_pct <= 0.02:  # Within 2%
                   total_qty += next_order['qty']
                   total_value += next_order['qty'] * next_order['filled_price']
                   order_ids.append(next_order['order_id'])
@@ -1235,7 +924,8 @@ class TurtleTrading:
             self.logger.log(f"❌ Unit mismatch for {ticker}: state={state_units}, broker={broker_units}", "WARNING")
       
       # Calculate new risk pot
-      new_risk_pot = _initial_risk_pot
+      # Start with initial risk pot and subtract all allocated risk
+      new_risk_pot = _initial_risk_pot  # Starting capital - you may want to make this configurable
       
       for ticker, position in broker_state.items():
         for pyramid in position['pyramid_units']:
@@ -1404,17 +1094,43 @@ class TurtleTrading:
     self.slack.send_summary("🔔 Market Open", summary)
     self.logger.log(f"Market open - Risk Pot: ${self.state.risk_pot:,.2f}, "
                    f"Positions: {len(self.state.positions)}")
-  
+    
+  def check_pending_orders(self):
+    """Check status of pending orders and clean up"""
+    try:
+      request = GetOrdersRequest(
+        status=QueryOrderStatus.OPEN,
+        limit=100
+      )
+      open_orders = self.trading_client.get_orders(request)
+      
+      if open_orders:
+        self.logger.log(f"Found {len(open_orders)} open orders")
+        for order in open_orders:
+          self.logger.log(f"  {order.symbol}: {order.side} {order.qty} @ {order.stop_price}, status: {order.status}")
+      
+      # Clean up stale pending pyramid orders
+      for ticker in list(self.state.pending_pyramid_orders.keys()):
+        order_id = self.state.pending_pyramid_orders[ticker]
+        try:
+          order = self.trading_client.get_order_by_id(order_id)
+          if order.status not in ['pending_new', 'accepted', 'new']:
+            del self.state.pending_pyramid_orders[ticker]
+            self.logger.log(f"Removed stale pending pyramid order for {ticker}")
+        except:
+          del self.state.pending_pyramid_orders[ticker]
+      
+      if self.state.pending_pyramid_orders:
+        self.state.save_state()
+        
+    except Exception as e:
+      self.logger.log(f"Error checking pending orders: {e}", 'ERROR')
+
   def check_position_stops(self):
     """Check if any positions hit stop loss"""
     positions_to_exit = []
     
     for ticker, position in self.state.positions.items():
-      # Skip if already pending exit
-      if ticker in self.state.pending_exit_orders:
-        self.logger.log(f"Exit already pending for {ticker}, skipping stop check")
-        continue
-      
       current_price = self.get_current_price(ticker)
       
       if current_price is None:
@@ -1434,11 +1150,6 @@ class TurtleTrading:
     positions_to_exit = []
     
     for ticker, position in self.state.positions.items():
-      # Skip if already pending exit
-      if ticker in self.state.pending_exit_orders:
-        self.logger.log(f"Exit already pending for {ticker}, skipping exit signal check")
-        continue
-      
       df = self.get_historical_data(ticker, days=30)
       if df is None or len(df) < 10:
         continue
@@ -1479,6 +1190,7 @@ class TurtleTrading:
             continue
           elif order.status == 'filled':
             # Order was filled, should already be in pyramid_units
+            # Clean up tracking
             del self.state.pending_pyramid_orders[ticker]
             self.state.save_state()
             self.logger.log(f"Pending pyramid order for {ticker} was filled, removed from tracking")
@@ -1488,7 +1200,9 @@ class TurtleTrading:
             self.logger.log(f"Pyramid order for {ticker} no longer pending (status: {order.status}), removing tracking")
             del self.state.pending_pyramid_orders[ticker]
             self.state.save_state()
+            # Continue to check if we should place a new order
         except Exception as e:
+          # Order not found or error - remove tracking and continue
           self.logger.log(f"Error checking pending pyramid order for {ticker}: {e}, removing tracking")
           del self.state.pending_pyramid_orders[ticker]
           self.state.save_state()
@@ -1534,7 +1248,9 @@ class TurtleTrading:
           
           # If order was placed but not filled, track it
           if not success:
+            # Check if order is pending
             try:
+              # Get most recent order for this ticker
               request = GetOrdersRequest(
                 status=QueryOrderStatus.OPEN,
                 symbols=[ticker],
@@ -1545,7 +1261,8 @@ class TurtleTrading:
               if orders and len(orders) > 0:
                 latest_order = orders[0]
                 if latest_order.side == OrderSide.BUY and latest_order.status in ['pending_new', 'accepted', 'new']:
-                  self.state.pending_pyramid_orders[ticker] = str(latest_order.id)
+                  # Track this pending order
+                  self.state.pending_pyramid_orders[ticker] = str(latest_order.id)  # Convert UUID to string
                   self.state.save_state()
                   self.logger.log(f"Tracking pending pyramid order {latest_order.id} for {ticker}")
             except Exception as e:
@@ -1597,40 +1314,37 @@ class TurtleTrading:
     self.state.entry_queue = [s for s in self.state.entry_queue if s['ticker'] not in processed]
     if processed:
       self.state.save_state()
-    
+  
   def intraday_monitor(self):
     """Main intraday monitoring loop (run every 5 minutes)"""
     self.logger.log("="*60)
     self.logger.log(f"INTRADAY MONITOR - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     self.logger.log("="*60)
     
-    # NEW: Sync any filled orders that weren't processed
-    self.logger.log("0. Syncing filled orders...")
-    self.sync_filled_orders()
-    
-    # Check for any pending orders
-    self.logger.log("1. Checking pending orders...")
+    # Check for any pending orders first
+    self.logger.log("0. Checking pending orders...")
     self.check_pending_orders()
     
     # Log state snapshot before monitoring
     self.logger.log_state_snapshot(self.state, f'intraday_{datetime.now().strftime("%H%M")}')
     
-    self.logger.log("2. Checking position stops...")
+    # ... rest of your code
+    
+    self.logger.log("1. Checking position stops...")
     self.check_position_stops()
     
-    self.logger.log("3. Checking exit signals...")
+    self.logger.log("2. Checking exit signals...")
     self.check_exit_signals()
     
-    self.logger.log("4. Checking pyramid opportunities...")
+    self.logger.log("3. Checking pyramid opportunities...")
     self.check_pyramid_opportunities()
     
-    self.logger.log("5. Processing entry queue...")
+    self.logger.log("4. Processing entry queue...")
     self.process_entry_queue()
     
     self.logger.log(f"Status: {len(self.state.positions)} positions, {len(self.state.entry_queue)} pending entries")
-    self.logger.log(f"Risk Pot: ${self.state.risk_pot:,.2f}") 
-
-      
+    self.logger.log(f"Risk Pot: ${self.state.risk_pot:,.2f}")
+  
   def post_market_routine(self):
     """Post-market routine - generate daily report"""
     self.logger.log("="*60)
@@ -1663,4 +1377,66 @@ class TurtleTrading:
     }
     
     if discrepancies:
-      summary["⚠️ Discrepancies"] = len
+      summary["⚠️ Discrepancies"] = len(discrepancies)
+    
+    # List open positions
+    if self.state.positions:
+      positions_text = "\n".join([
+        f"• {ticker}: {len(pos['pyramid_units'])} pyramid levels, stop ${pos['stop_price']:.2f}"
+        for ticker, pos in self.state.positions.items()
+      ])
+      summary["Positions"] = f"\n{positions_text}"
+    
+    # Order details
+    if daily_orders:
+      order_summary = []
+      for order in daily_orders:
+        order_summary.append(
+          f"• {order['type']} {order['ticker']}: {order['status']}"
+        )
+      summary["Today's Orders"] = f"\n{'\n'.join(order_summary[:20])}"  # Limit to 20
+    
+    self.slack.send_summary("📊 Daily Summary", summary)
+    
+    self.logger.log(f"Daily summary sent - P&L: ${self.daily_pnl:,.2f}")
+    
+    # Reset daily PnL
+    self.daily_pnl = 0
+
+
+def load_config(config_path, key):
+  """Load configuration from JSON file"""
+  with open(config_path, 'r') as f:
+    config = json.load(f)
+    return config[key]
+
+
+def main():
+  # Load API keys
+  alpaca_key = load_config('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_KEY')
+  alpaca_secret = load_config('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_SECRET')
+  slack_token = load_config('./.config/personal_slack_token.json', 'PERSONAL_SLACK_TOKEN')
+  slack_channel = 'C09M9NNU8JH'
+  
+  # Initialize trading system
+  system = TurtleTrading(
+    api_key=alpaca_key,
+    api_secret=alpaca_secret,
+    slack_token=slack_token,
+    slack_channel=slack_channel,
+    paper=True,
+    entry_margin=0.99,
+    exit_margin=1.01
+  )
+  
+  print("Turtle Trading System initialized successfully!")
+  print("Available workflows:")
+  print("  - system.daily_eod_analysis()     # After market close")
+  print("  - system.market_open_setup()      # Before market open")
+  print("  - system.intraday_monitor()       # Every 5 minutes during market")
+  print("  - system.post_market_routine()    # After market close")
+  print("\nLogs are stored in ./logs/")
+
+
+if __name__ == "__main__":
+  main()
