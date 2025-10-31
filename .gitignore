@@ -1,0 +1,9 @@
+.config/
+graveyard/
+.DS_Store
+data/
+data_gathering/
+logs/
+test/
+trading_state*
+.python-version
