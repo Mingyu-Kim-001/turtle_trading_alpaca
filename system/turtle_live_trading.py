@@ -176,7 +176,7 @@ class StateManager:
     self.risk_pot += pnl
     print(f"Risk pot updated: ${old_risk_pot:,.2f} -> ${self.risk_pot:,.2f} (PnL: ${pnl:,.2f})")
     self.save_state()
-    
+
 class TurtleTrading:
   """Main Turtle Trading System"""
   
@@ -396,7 +396,7 @@ class TurtleTrading:
         time.sleep(2)
         
         # Get filled order details
-        max_retries = 5
+        max_retries = 10
         filled_order = None
         
         for attempt in range(max_retries):
@@ -944,9 +944,9 @@ class TurtleTrading:
     
     This will:
     1. Get all current broker positions
-    2. Get recent filled orders to reconstruct pyramid units
+    2. Get recent filled orders (BUY and SELL) to reconstruct pyramid units
     3. Update internal state to match broker reality
-    4. Recalculate risk pot based on actual positions
+    4. Recalculate risk pot based on actual account equity
     
     Args:
       dry_run: If True, only show what would change without applying
@@ -959,6 +959,15 @@ class TurtleTrading:
       self.logger.log("DRY RUN MODE - No changes will be applied", "WARNING")
     
     try:
+      # Get account info for risk pot calculation
+      account = self.trading_client.get_account()
+      total_equity = float(account.equity)
+      total_cash = float(account.cash)
+      
+      self.logger.log(f"\nAccount Status:")
+      self.logger.log(f"  Total Equity: ${total_equity:,.2f}")
+      self.logger.log(f"  Cash: ${total_cash:,.2f}")
+      
       # Get current broker positions
       broker_positions = self.trading_client.get_all_positions()
       
@@ -977,18 +986,23 @@ class TurtleTrading:
       broker_state = {}
       orders_by_ticker = {}
       
-      # Group orders by ticker
+      # Group ALL orders (BUY and SELL) by ticker
       for order in recent_orders:
-        if order.status == 'filled' and order.side == OrderSide.BUY:
+        if order.status in ['filled', 'partially_filled']:
           ticker = order.symbol
           if ticker not in orders_by_ticker:
             orders_by_ticker[ticker] = []
           orders_by_ticker[ticker].append({
-            'order_id': str(order.id),  # Convert UUID to string
-            'qty': float(order.qty),
-            'filled_price': float(order.filled_avg_price),
+            'order_id': str(order.id),
+            'side': order.side,
+            'qty': float(order.filled_qty) if order.filled_qty else float(order.qty),
+            'filled_price': float(order.filled_avg_price) if order.filled_avg_price else None,
             'filled_at': order.filled_at
           })
+      
+      # Calculate total open position value and cost
+      total_position_value = 0
+      total_position_cost = 0
       
       # Match with current positions
       for position in broker_positions:
@@ -999,10 +1013,14 @@ class TurtleTrading:
         market_value = float(position.market_value)
         cost_basis = float(position.cost_basis)
         
+        total_position_value += market_value
+        total_position_cost += cost_basis
+        
         self.logger.log(f"\nBroker position: {ticker}")
         self.logger.log(f"  Quantity: {qty}")
         self.logger.log(f"  Avg Entry: ${avg_entry_price:.2f}")
         self.logger.log(f"  Cost Basis: ${cost_basis:.2f}")
+        self.logger.log(f"  Market Value: ${market_value:.2f}")
         
         # Get historical data to estimate N
         df = self.get_historical_data(ticker, days=30)
@@ -1014,37 +1032,90 @@ class TurtleTrading:
           estimated_n = avg_entry_price * 0.02
           self.logger.log(f"  Using estimated N: ${estimated_n:.2f}", "WARNING")
         
-        # Reconstruct pyramid units from orders
-        # Group orders from same day with similar prices into single pyramid unit
+        # Reconstruct pyramid units considering both BUY and SELL orders
         pyramid_units = []
+        
         if ticker in orders_by_ticker:
+          # Sort orders chronologically
           sorted_orders = sorted(orders_by_ticker[ticker], key=lambda x: x['filled_at'])
           
-          i = 0
-          while i < len(sorted_orders):
-            current_order = sorted_orders[i]
-            current_date = current_order['filled_at'].date()
-            current_price = current_order['filled_price']
+          # Track all buy transactions
+          buy_transactions = []
+          total_bought = 0
+          total_sold = 0
+          
+          self.logger.log(f"  Processing {len(sorted_orders)} orders:")
+          
+          for order in sorted_orders:
+            if order['side'] == OrderSide.BUY:
+              buy_transactions.append({
+                'qty': order['qty'],
+                'price': order['filled_price'],
+                'date': order['filled_at'],
+                'order_id': order['order_id'],
+                'remaining_qty': order['qty']  # Track what hasn't been sold
+              })
+              total_bought += order['qty']
+              self.logger.log(f"    BUY: {order['qty']} @ ${order['filled_price']:.2f} on {order['filled_at'].date()}")
             
-            # Accumulate orders from same day with similar price (within 2%)
-            total_qty = current_order['qty']
-            total_value = current_order['qty'] * current_order['filled_price']
-            order_ids = [current_order['order_id']]
+            elif order['side'] == OrderSide.SELL:
+              total_sold += order['qty']
+              self.logger.log(f"    SELL: {order['qty']} @ ${order['filled_price']:.2f} on {order['filled_at'].date()}")
+              
+              # Apply FIFO: reduce oldest buys first
+              qty_to_reduce = order['qty']
+              for buy in buy_transactions:
+                if qty_to_reduce <= 0:
+                  break
+                
+                if buy['remaining_qty'] > 0:
+                  reduction = min(buy['remaining_qty'], qty_to_reduce)
+                  buy['remaining_qty'] -= reduction
+                  qty_to_reduce -= reduction
+                  self.logger.log(f"      -> Reduced buy from {buy['date'].date()} by {reduction} units")
+              
+              if qty_to_reduce > 0:
+                self.logger.log(f"      -> WARNING: {qty_to_reduce} units sold but no matching buys found", "WARNING")
+          
+          self.logger.log(f"  Total bought: {total_bought}, Total sold: {total_sold}, Remaining: {total_bought - total_sold}")
+          self.logger.log(f"  Broker shows: {qty} units")
+          
+          # Verify our calculation matches broker
+          calculated_remaining = sum(b['remaining_qty'] for b in buy_transactions)
+          if abs(calculated_remaining - qty) > 0.01:
+            self.logger.log(f"  ⚠️  WARNING: Calculated remaining ({calculated_remaining}) != Broker qty ({qty})", "WARNING")
+            self.logger.log(f"  This may indicate orders outside the 30-day lookback window", "WARNING")
+          
+          # Group remaining buys into pyramid units by date
+          # Group buys from same day with similar prices
+          remaining_buys = [b for b in buy_transactions if b['remaining_qty'] > 0]
+          remaining_buys.sort(key=lambda x: x['date'])
+          
+          i = 0
+          while i < len(remaining_buys):
+            current_buy = remaining_buys[i]
+            current_date = current_buy['date'].date()
+            current_price = current_buy['price']
+            
+            # Accumulate buys from same day with similar price (within 2%)
+            total_qty = current_buy['remaining_qty']
+            total_value = current_buy['remaining_qty'] * current_buy['price']
+            order_ids = [current_buy['order_id']]
             grouped_count = 1
             
             j = i + 1
-            while j < len(sorted_orders):
-              next_order = sorted_orders[j]
-              next_date = next_order['filled_at'].date()
-              next_price = next_order['filled_price']
+            while j < len(remaining_buys):
+              next_buy = remaining_buys[j]
+              next_date = next_buy['date'].date()
+              next_price = next_buy['price']
               
               # Check if same day and price within 2%
               if next_date == current_date:
                 price_diff_pct = abs(next_price - current_price) / current_price
                 if price_diff_pct <= 0.02:  # Within 2%
-                  total_qty += next_order['qty']
-                  total_value += next_order['qty'] * next_order['filled_price']
-                  order_ids.append(next_order['order_id'])
+                  total_qty += next_buy['remaining_qty']
+                  total_value += next_buy['remaining_qty'] * next_buy['price']
+                  order_ids.append(next_buy['order_id'])
                   grouped_count += 1
                   j += 1
                 else:
@@ -1060,20 +1131,39 @@ class TurtleTrading:
               'entry_price': avg_price,
               'entry_n': estimated_n,
               'entry_value': total_value,
-              'entry_date': current_order['filled_at'].isoformat(),
-              'order_id': ','.join(str(order_id) for order_id in order_ids),
+              'entry_date': current_buy['date'].isoformat(),
+              'order_id': ','.join(order_ids),
               'grouped_orders': grouped_count
             })
             
             if grouped_count > 1:
-              self.logger.log(f"  Grouped {grouped_count} orders from {current_date} into single pyramid unit "
-                            f"(avg price: ${avg_price:.2f})")
+              self.logger.log(f"  Grouped {grouped_count} remaining buys from {current_date} into pyramid unit "
+                            f"({total_qty} units @ avg ${avg_price:.2f})")
+            else:
+              self.logger.log(f"  Pyramid unit from {current_date}: {total_qty} units @ ${avg_price:.2f}")
             
             i = j if j > i + 1 else i + 1
           
-          self.logger.log(f"  Reconstructed {len(pyramid_units)} pyramid units from {len(sorted_orders)} orders")
+          if not pyramid_units:
+            # No order history that explains current position
+            # This happens if all buys are older than lookback window
+            self.logger.log(f"  No recent buy orders found to explain position", "WARNING")
+            self.logger.log(f"  Creating single pyramid unit from broker avg cost", "WARNING")
+            pyramid_units.append({
+              'units': qty,
+              'entry_price': avg_entry_price,
+              'entry_n': estimated_n,
+              'entry_value': cost_basis,
+              'entry_date': datetime.now().isoformat(),
+              'order_id': 'unknown_old_position'
+            })
+          
+          self.logger.log(f"  Final: {len(pyramid_units)} pyramid units from remaining buys")
+          
         else:
-          # No order history found, create single unit
+          # No order history found at all
+          self.logger.log(f"  No order history found", "WARNING")
+          self.logger.log(f"  Creating single pyramid unit from broker data", "WARNING")
           pyramid_units.append({
             'units': qty,
             'entry_price': avg_entry_price,
@@ -1082,7 +1172,6 @@ class TurtleTrading:
             'entry_date': datetime.now().isoformat(),
             'order_id': 'unknown'
           })
-          self.logger.log(f"  No order history, created single pyramid unit", "WARNING")
         
         # Calculate stop price
         stop_price = self.calculate_overall_stop(pyramid_units)
@@ -1095,6 +1184,40 @@ class TurtleTrading:
         }
         
         self.logger.log(f"  Stop Price: ${stop_price:.2f}")
+      
+      # Calculate risk pot based on account equity
+      self.logger.log("\n" + "="*60)
+      self.logger.log("RISK POT CALCULATION")
+      self.logger.log("="*60)
+      
+      # Calculate allocated risk for all open positions
+      total_allocated_risk = 0
+      for ticker, position in broker_state.items():
+        position_risk = 0
+        for pyramid in position['pyramid_units']:
+          risk_allocated = pyramid['units'] * 2 * pyramid['entry_n']
+          position_risk += risk_allocated
+          total_allocated_risk += risk_allocated
+        self.logger.log(f"  {ticker}: ${position_risk:,.2f} allocated ({len(position['pyramid_units'])} units)")
+      
+      # Calculate unrealized P&L
+      unrealized_pnl = total_position_value - total_position_cost
+      
+      # NEW RISK POT CALCULATION
+      # Risk pot = Unrealized P&L - Allocated Risk
+      # This represents available capital for new trades
+      new_risk_pot = _initial_risk_pot + total_allocated_risk
+      
+      self.logger.log(f"\n  Total Equity: ${total_equity:,.2f}")
+      self.logger.log(f"  Cash: ${total_cash:,.2f}")
+      self.logger.log(f"  Open Positions Value: ${total_position_value:,.2f}")
+      self.logger.log(f"  Open Positions Cost: ${total_position_cost:,.2f}")
+      self.logger.log(f"  Unrealized P&L: ${unrealized_pnl:,.2f}")
+      self.logger.log(f"  Total Allocated Risk: ${total_allocated_risk:,.2f}")
+      self.logger.log(f"  ─────────────────────────")
+      self.logger.log(f"  Calculated Risk Pot: ${new_risk_pot:,.2f}")
+      self.logger.log(f"  Current State Risk Pot: ${self.state.risk_pot:,.2f}")
+      self.logger.log(f"  Difference: ${new_risk_pot - self.state.risk_pot:,.2f}")
       
       # Compare with current state
       self.logger.log("\n" + "="*60)
@@ -1121,22 +1244,16 @@ class TurtleTrading:
           state_units = len(self.state.positions[ticker]['pyramid_units'])
           broker_units = len(broker_state[ticker]['pyramid_units'])
           
-          if state_units != broker_units:
+          # Also check total quantity
+          state_qty = sum(p['units'] for p in self.state.positions[ticker]['pyramid_units'])
+          broker_qty = sum(p['units'] for p in broker_state[ticker]['pyramid_units'])
+          
+          if state_units != broker_units or abs(state_qty - broker_qty) > 0.01:
             changes.append(('UPDATE', ticker, broker_state[ticker]))
-            self.logger.log(f"❌ Unit mismatch for {ticker}: state={state_units}, broker={broker_units}", "WARNING")
+            self.logger.log(f"❌ Mismatch for {ticker}: state={state_units} units ({state_qty:.0f} shares), "
+                          f"broker={broker_units} units ({broker_qty:.0f} shares)", "WARNING")
       
-      # Calculate new risk pot
-      # Start with initial risk pot and subtract all allocated risk
-      new_risk_pot = _initial_risk_pot  # Starting capital - you may want to make this configurable
-      
-      for ticker, position in broker_state.items():
-        for pyramid in position['pyramid_units']:
-          risk_allocated = pyramid['units'] * 2 * pyramid['entry_n']
-          new_risk_pot -= risk_allocated
-      
-      self.logger.log(f"\nCurrent Risk Pot: ${self.state.risk_pot:.2f}")
-      self.logger.log(f"Calculated Risk Pot: ${new_risk_pot:.2f}")
-      
+      # Check risk pot mismatch
       if abs(self.state.risk_pot - new_risk_pot) > 1:
         changes.append(('RISK_POT', None, new_risk_pot))
         self.logger.log(f"❌ Risk pot mismatch: ${self.state.risk_pot:.2f} vs ${new_risk_pot:.2f}", "WARNING")
@@ -1154,12 +1271,12 @@ class TurtleTrading:
       for change_type, ticker, data in changes:
         if change_type == 'ADD':
           units = sum(p['units'] for p in data['pyramid_units'])
-          self.logger.log(f"  + ADD {ticker}: {units} units, {len(data['pyramid_units'])} pyramid levels")
+          self.logger.log(f"  + ADD {ticker}: {units:.0f} shares, {len(data['pyramid_units'])} pyramid levels")
         elif change_type == 'REMOVE':
           self.logger.log(f"  - REMOVE {ticker}")
         elif change_type == 'UPDATE':
           units = sum(p['units'] for p in data['pyramid_units'])
-          self.logger.log(f"  ↻ UPDATE {ticker}: {units} units, {len(data['pyramid_units'])} pyramid levels")
+          self.logger.log(f"  ↻ UPDATE {ticker}: {units:.0f} shares, {len(data['pyramid_units'])} pyramid levels")
         elif change_type == 'RISK_POT':
           self.logger.log(f"  ↻ UPDATE Risk Pot: ${data:.2f}")
       
@@ -1176,7 +1293,9 @@ class TurtleTrading:
         json.dump({
           'risk_pot': self.state.risk_pot,
           'positions': self.state.positions,
-          'entry_queue': self.state.entry_queue
+          'entry_queue': self.state.entry_queue,
+          'pending_pyramid_orders': self.state.pending_pyramid_orders,
+          'pending_entry_orders': self.state.pending_entry_orders
         }, f, indent=2)
       self.logger.log(f"Backup saved to: {backup_file}")
       
@@ -1206,7 +1325,9 @@ class TurtleTrading:
         "Changes Applied": len(changes),
         "Backup File": backup_file,
         "New Risk Pot": f"${self.state.risk_pot:.2f}",
-        "Positions": len(self.state.positions)
+        "Total Equity": f"${total_equity:.2f}",
+        "Positions": len(self.state.positions),
+        "Allocated Risk": f"${total_allocated_risk:.2f}"
       })
       
       self.logger.log("\n✅ State alignment complete!")
@@ -1273,7 +1394,7 @@ class TurtleTrading:
                               title="📈 Entry Signals Generated")
     else:
       self.slack.send_message("No entry signals found", title="📈 Entry Signals")
-  
+    
   def market_open_setup(self):
     """Setup routine at market open"""
     self.logger.log("="*60)
@@ -1698,6 +1819,7 @@ def main():
   print("  - system.intraday_monitor()       # Every 5 minutes during market")
   print("  - system.post_market_routine()    # After market close")
   print("\nLogs are stored in ./logs/")
+  # system.align_state_with_broker(dry_run=True)
 
 
 if __name__ == "__main__":
