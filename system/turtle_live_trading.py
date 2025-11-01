@@ -16,9 +16,47 @@ from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 import requests
 import warnings
+
+from functools import wraps
+import time
+
+
 warnings.filterwarnings('ignore')
 
 _initial_risk_pot = 10000
+
+
+def retry_on_connection_error(max_retries=3, initial_delay=1, backoff=2):
+  """Decorator to retry API calls on connection errors"""
+  def decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+      delay = initial_delay
+      last_exception = None
+      
+      for attempt in range(max_retries):
+        try:
+          return func(*args, **kwargs)
+        except (ConnectionResetError, ConnectionError, 
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout) as e:
+          last_exception = e
+          if attempt < max_retries - 1:
+            print(f"Connection error in {func.__name__} (attempt {attempt + 1}/{max_retries}): {e}")
+            print(f"Retrying in {delay} seconds...")
+            time.sleep(delay)
+            delay *= backoff
+          else:
+            print(f"Failed after {max_retries} attempts in {func.__name__}")
+      
+      # If all retries failed, log but don't crash
+      print(f"All retries exhausted for {func.__name__}: {last_exception}")
+      return None
+    
+    return wrapper
+  return decorator
+
+
 class DailyLogger:
   """Log daily trading activities"""
   
@@ -272,6 +310,7 @@ class TurtleTrading:
     
     return df
   
+  @retry_on_connection_error(max_retries=3, initial_delay=2, backoff=2)
   def get_current_price(self, ticker):
     """Get current price for a ticker"""
     try:
@@ -1417,7 +1456,8 @@ class TurtleTrading:
     self.slack.send_summary("🔔 Market Open", summary)
     self.logger.log(f"Market open - Risk Pot: ${self.state.risk_pot:,.2f}, "
                    f"Positions: {len(self.state.positions)}")
-    
+  
+  @retry_on_connection_error(max_retries=3, initial_delay=2, backoff=2)
   def check_pending_orders(self):
     """Check status of pending orders and clean up"""
     try:
@@ -1704,29 +1744,45 @@ class TurtleTrading:
     self.logger.log(f"INTRADAY MONITOR - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     self.logger.log("="*60)
     
-    # Check for any pending orders first
-    self.logger.log("0. Checking pending orders...")
-    self.check_pending_orders()
-    
-    # Log state snapshot before monitoring
-    self.logger.log_state_snapshot(self.state, f'intraday_{datetime.now().strftime("%H%M")}')
-    
-    # ... rest of your code
-    
-    self.logger.log("1. Checking position stops...")
-    self.check_position_stops()
-    
-    self.logger.log("2. Checking exit signals...")
-    self.check_exit_signals()
-    
-    self.logger.log("3. Checking pyramid opportunities...")
-    self.check_pyramid_opportunities()
-    
-    self.logger.log("4. Processing entry queue...")
-    self.process_entry_queue()
-    
-    self.logger.log(f"Status: {len(self.state.positions)} positions, {len(self.state.entry_queue)} pending entries")
-    self.logger.log(f"Risk Pot: ${self.state.risk_pot:,.2f}")
+    try:
+      # Add small delay at start to avoid hammering API
+      time.sleep(0.5)
+      
+      # Check for any pending orders first
+      self.logger.log("0. Checking pending orders...")
+      self.check_pending_orders()
+      
+      time.sleep(0.5)  # Small delay between API operations
+      
+      # Log state snapshot before monitoring
+      self.logger.log_state_snapshot(self.state, f'intraday_{datetime.now().strftime("%H%M")}')
+      
+      self.logger.log("1. Checking position stops...")
+      self.check_position_stops()
+      
+      time.sleep(0.5)
+      
+      self.logger.log("2. Checking exit signals...")
+      self.check_exit_signals()
+      
+      time.sleep(0.5)
+      
+      self.logger.log("3. Checking pyramid opportunities...")
+      self.check_pyramid_opportunities()
+      
+      time.sleep(0.5)
+      
+      self.logger.log("4. Processing entry queue...")
+      self.process_entry_queue()
+      
+      self.logger.log(f"Status: {len(self.state.positions)} positions, {len(self.state.entry_queue)} pending entries")
+      self.logger.log(f"Risk Pot: ${self.state.risk_pot:,.2f}")
+      
+    except Exception as e:
+      self.logger.log(f"Critical error in intraday monitor: {e}", 'ERROR')
+      import traceback
+      self.logger.log(traceback.format_exc(), 'ERROR')
+      # Don't crash - log error and continue to next cycle
   
   def post_market_routine(self):
     """Post-market routine - generate daily report"""
