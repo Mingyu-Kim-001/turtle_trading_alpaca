@@ -318,6 +318,205 @@ class TurtleTrading:
     
     return highest_entry - 2 * highest_entry_n
   
+  def exit_all_positions_market(self):
+    """
+    Emergency exit: Close all positions using MARKET ORDERS
+    
+    WARNING: This uses market orders for immediate execution.
+    Should only be used manually in emergency situations.
+    """
+    self.logger.log("="*60)
+    self.logger.log("🚨 EMERGENCY EXIT: CLOSING ALL POSITIONS AT MARKET")
+    self.logger.log("="*60)
+    
+    # Log state snapshot before exit
+    self.logger.log_state_snapshot(self.state, 'before_exit_all')
+    
+    if not self.state.positions:
+      self.logger.log("No positions to exit", 'WARNING')
+      self.slack.send_message("⚠️ No positions to exit")
+      return
+    
+    # Cancel all open orders first
+    try:
+      self.logger.log("Cancelling all open orders...")
+      self.trading_client.cancel_orders()
+      self.logger.log("All open orders cancelled")
+      time.sleep(1)  # Brief wait for cancellations to process
+    except Exception as e:
+      self.logger.log(f"Error cancelling orders: {e}", 'ERROR')
+    
+    positions_to_exit = list(self.state.positions.keys())
+    self.logger.log(f"Exiting {len(positions_to_exit)} positions at market price")
+    
+    # Send initial notification
+    self.slack.send_summary("🚨 EMERGENCY EXIT INITIATED", {
+      "Positions to Close": len(positions_to_exit),
+      "Tickers": ", ".join(positions_to_exit),
+      "Timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    })
+    
+    exit_results = []
+    total_pnl = 0
+    
+    for ticker in positions_to_exit:
+      try:
+        position = self.state.positions[ticker]
+        total_units = sum(p['units'] for p in position['pyramid_units'])
+        entry_value = sum(p['entry_value'] for p in position['pyramid_units'])
+        
+        self.logger.log(f"\nProcessing {ticker}: {total_units:.0f} units")
+        
+        # Place MARKET order for immediate execution
+        from alpaca.trading.requests import MarketOrderRequest
+        
+        order_data = MarketOrderRequest(
+          symbol=ticker,
+          qty=int(total_units),
+          side=OrderSide.SELL,
+          time_in_force=TimeInForce.DAY
+        )
+        
+        self.logger.log(f"Placing MARKET sell order for {ticker}: {int(total_units)} units")
+        
+        order = self.trading_client.submit_order(order_data)
+        order_id = str(order.id)
+        
+        self.logger.log(f"Market order placed: {order_id}")
+        self.logger.log_order('EXIT_MARKET', ticker, 'PLACED', {
+          'order_id': order_id,
+          'units': int(total_units),
+          'order_type': 'MARKET'
+        })
+        
+        # Wait for order to fill (market orders usually fill quickly)
+        time.sleep(2)
+        
+        # Get filled order details
+        max_retries = 5
+        filled_order = None
+        
+        for attempt in range(max_retries):
+          try:
+            filled_order = self.trading_client.get_order_by_id(order_id)
+            if filled_order.status == 'filled':
+              break
+            elif filled_order.status in ['pending_new', 'accepted', 'new']:
+              self.logger.log(f"Order still pending (attempt {attempt+1}/{max_retries}), waiting...")
+              time.sleep(2)
+            else:
+              self.logger.log(f"Order status: {filled_order.status}", 'WARNING')
+              break
+          except Exception as e:
+            self.logger.log(f"Error checking order status (attempt {attempt+1}/{max_retries}): {e}", 'WARNING')
+            if attempt < max_retries - 1:
+              time.sleep(2)
+            else:
+              raise
+        
+        if filled_order and filled_order.status == 'filled':
+          filled_price = float(filled_order.filled_avg_price)
+          exit_value = total_units * filled_price
+          pnl = exit_value - entry_value
+          pnl_pct = (pnl / entry_value) * 100 if entry_value > 0 else 0
+          
+          # Return allocated risk to pot
+          for pyramid in position['pyramid_units']:
+            risk_allocated = pyramid['units'] * 2 * pyramid['entry_n']
+            self.state.risk_pot += risk_allocated
+          
+          # Add P&L to risk pot
+          self.state.update_risk_pot(pnl)
+          total_pnl += pnl
+          
+          self.logger.log(f"✅ {ticker} exited at ${filled_price:.2f}, P&L: ${pnl:,.2f} ({pnl_pct:.2f}%)")
+          self.logger.log_order('EXIT_MARKET', ticker, 'FILLED', {
+            'order_id': order_id,
+            'units': int(total_units),
+            'filled_price': filled_price,
+            'pnl': pnl,
+            'pnl_pct': pnl_pct
+          })
+          
+          exit_results.append({
+            'ticker': ticker,
+            'status': 'SUCCESS',
+            'units': total_units,
+            'exit_price': filled_price,
+            'entry_value': entry_value,
+            'exit_value': exit_value,
+            'pnl': pnl,
+            'pnl_pct': pnl_pct
+          })
+          
+          # Remove position from state
+          del self.state.positions[ticker]
+          
+        else:
+          self.logger.log(f"❌ Market order for {ticker} not filled, status: {filled_order.status if filled_order else 'unknown'}", 'ERROR')
+          
+          exit_results.append({
+            'ticker': ticker,
+            'status': 'FAILED',
+            'reason': filled_order.status if filled_order else 'unknown'
+          })
+        
+      except Exception as e:
+        self.logger.log(f"❌ Error exiting {ticker}: {e}", 'ERROR')
+        import traceback
+        self.logger.log(traceback.format_exc(), 'ERROR')
+        
+        exit_results.append({
+          'ticker': ticker,
+          'status': 'ERROR',
+          'reason': str(e)
+        })
+    
+    # Save final state
+    self.state.save_state()
+    
+    # Log state snapshot after exit
+    self.logger.log_state_snapshot(self.state, 'after_exit_all')
+    
+    # Prepare summary
+    successful = [r for r in exit_results if r['status'] == 'SUCCESS']
+    failed = [r for r in exit_results if r['status'] != 'SUCCESS']
+    
+    self.logger.log("\n" + "="*60)
+    self.logger.log("EXIT ALL COMPLETE")
+    self.logger.log("="*60)
+    self.logger.log(f"Successful: {len(successful)}/{len(exit_results)}")
+    self.logger.log(f"Total P&L: ${total_pnl:,.2f}")
+    self.logger.log(f"New Risk Pot: ${self.state.risk_pot:,.2f}")
+    
+    # Send detailed Slack notification
+    summary_lines = [
+      f"*🚨 EMERGENCY EXIT COMPLETE*",
+      f"",
+      f"*Results:*",
+      f"• Successful: {len(successful)}/{len(exit_results)}",
+      f"• Total P&L: ${total_pnl:,.2f}",
+      f"• New Risk Pot: ${self.state.risk_pot:,.2f}",
+      f"",
+      f"*Position Details:*"
+    ]
+    
+    for result in successful:
+      emoji = "🟢" if result['pnl'] > 0 else "🔴"
+      summary_lines.append(
+        f"{emoji} {result['ticker']}: {result['units']:.0f} units @ ${result['exit_price']:.2f} "
+        f"→ ${result['pnl']:,.2f} ({result['pnl_pct']:.2f}%)"
+      )
+    
+    if failed:
+      summary_lines.append(f"\n*⚠️ Failed Exits:*")
+      for result in failed:
+        summary_lines.append(f"• {result['ticker']}: {result.get('reason', 'Unknown error')}")
+    
+    self.slack.send_message("\n".join(summary_lines))
+    
+    return exit_results
+  
   def enter_position(self, ticker, units, target_price, n):
     """Enter a new position or add to existing (pyramid) using stop-limit order"""
     try:

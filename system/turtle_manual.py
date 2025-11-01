@@ -9,6 +9,7 @@ Run specific workflows manually for testing:
   python turtle_manual.py status    # Show current system status
   python turtle_manual.py align     # Align state with broker (dry-run)
   python turtle_manual.py align --apply  # Align state with broker (apply changes)
+  python turtle_manual.py exit-all  # EXIT ALL POSITIONS AT MARKET PRICE (DANGEROUS!)
 """
 
 import sys
@@ -166,6 +167,38 @@ def main():
       print("\nRunning DRY RUN - no changes will be applied")
       print("Use 'python turtle_manual.py align --apply' to actually apply changes\n")
       system.align_state_with_broker(dry_run=True)
+  
+  elif command == 'exit-all':
+    print("\n" + "="*60)
+    print("⚠️  DANGER: EXIT ALL POSITIONS AT MARKET PRICE")
+    print("="*60)
+    print("\nThis will:")
+    print("  - Immediately sell ALL open positions")
+    print("  - Use MARKET ORDERS (fills at current market price)")
+    print("  - Update risk pot with realized P&L")
+    print("  - Clear all positions from state")
+    print("\n🚨 This action CANNOT be undone!")
+    
+    # Show current positions
+    if system.state.positions:
+      print("\nPositions to be closed:")
+      for ticker, pos in system.state.positions.items():
+        total_units = sum(p['units'] for p in pos['pyramid_units'])
+        entry_value = sum(p['entry_value'] for p in pos['pyramid_units'])
+        print(f"  - {ticker}: {total_units:.0f} units (entry: ${entry_value:,.2f})")
+    else:
+      print("\nNo open positions to close.")
+      sys.exit(0)
+    
+    print("\n" + "="*60)
+    response = input("\nType 'EXIT ALL NOW' to confirm (anything else to cancel): ")
+    
+    if response != 'EXIT ALL NOW':
+      print("\nExit cancelled.")
+      sys.exit(0)
+    
+    print("\n🔥 Executing market exit for all positions...")
+    system.exit_all_positions_market()
     
   else:
     print(f"Unknown command: {command}")
