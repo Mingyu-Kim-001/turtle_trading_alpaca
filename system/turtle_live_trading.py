@@ -140,14 +140,17 @@ class StateManager:
         self.positions = data.get('positions', {})
         self.entry_queue = data.get('entry_queue', [])
         self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
+        self.pending_entry_orders = data.get('pending_entry_orders', {}) 
         self.last_updated = data.get('last_updated', None)
-        print(f"State loaded: risk_pot=${self.risk_pot:,.2f}, positions={len(self.positions)}, pending_pyramids={len(self.pending_pyramid_orders)}")
+        print(f"State loaded: risk_pot=${self.risk_pot:,.2f}, positions={len(self.positions)}, "
+              f"pending_pyramids={len(self.pending_pyramid_orders)}, pending_entries={len(self.pending_entry_orders)}")
     except FileNotFoundError:
       print("No existing state found, initializing new state")
       self.risk_pot = _initial_risk_pot
       self.positions = {}
       self.entry_queue = []
       self.pending_pyramid_orders = {}
+      self.pending_entry_orders = {} 
       self.last_updated = None
       self.save_state()
   
@@ -158,6 +161,7 @@ class StateManager:
       'positions': self.positions,
       'entry_queue': self.entry_queue,
       'pending_pyramid_orders': self.pending_pyramid_orders,
+      'pending_entry_orders': self.pending_entry_orders, 
       'last_updated': datetime.now().isoformat()
     }
     
@@ -173,7 +177,6 @@ class StateManager:
     print(f"Risk pot updated: ${old_risk_pot:,.2f} -> ${self.risk_pot:,.2f} (PnL: ${pnl:,.2f})")
     self.save_state()
     
-
 class TurtleTrading:
   """Main Turtle Trading System"""
   
@@ -1299,7 +1302,7 @@ class TurtleTrading:
     try:
       request = GetOrdersRequest(
         status=QueryOrderStatus.OPEN,
-        limit=100
+        limit=500
       )
       open_orders = self.trading_client.get_orders(request)
       
@@ -1319,7 +1322,18 @@ class TurtleTrading:
         except:
           del self.state.pending_pyramid_orders[ticker]
       
-      if self.state.pending_pyramid_orders:
+      # ADD THIS SECTION - Clean up stale pending entry orders
+      for ticker in list(self.state.pending_entry_orders.keys()):
+        order_id = self.state.pending_entry_orders[ticker]
+        try:
+          order = self.trading_client.get_order_by_id(order_id)
+          if order.status not in ['pending_new', 'accepted', 'new']:
+            del self.state.pending_entry_orders[ticker]
+            self.logger.log(f"Removed stale pending entry order for {ticker}")
+        except:
+          del self.state.pending_entry_orders[ticker]
+      
+      if self.state.pending_pyramid_orders or self.state.pending_entry_orders:
         self.state.save_state()
         
     except Exception as e:
@@ -1483,9 +1497,39 @@ class TurtleTrading:
       
       ticker = signal['ticker']
       
+      # Check if already in positions
       if ticker in self.state.positions:
         processed.append(ticker)
         continue
+      
+      # ADD THIS SECTION - Check if there's already a pending entry order
+      if ticker in self.state.pending_entry_orders:
+        try:
+          order_id = self.state.pending_entry_orders[ticker]
+          order = self.trading_client.get_order_by_id(order_id)
+          
+          if order.status in ['pending_new', 'accepted', 'new']:
+            self.logger.log(f"Entry order already pending for {ticker} (order {order_id})")
+            continue
+          elif order.status == 'filled':
+            # Order was filled, should already be in positions
+            # Clean up tracking and mark as processed
+            del self.state.pending_entry_orders[ticker]
+            self.state.save_state()
+            processed.append(ticker)
+            self.logger.log(f"Pending entry order for {ticker} was filled, removed from tracking")
+            continue
+          else:
+            # Order was cancelled, rejected, or expired - remove tracking
+            self.logger.log(f"Entry order for {ticker} no longer pending (status: {order.status}), removing tracking")
+            del self.state.pending_entry_orders[ticker]
+            self.state.save_state()
+            # Continue to check if we should place a new order
+        except Exception as e:
+          # Order not found or error - remove tracking and continue
+          self.logger.log(f"Error checking pending entry order for {ticker}: {e}, removing tracking")
+          del self.state.pending_entry_orders[ticker]
+          self.state.save_state()
       
       current_price = self.get_current_price(ticker)
       if current_price is None:
@@ -1506,6 +1550,25 @@ class TurtleTrading:
           if success:
             processed.append(ticker)
             buying_power -= cost
+          else:
+            # ADD THIS SECTION - Order placed but not filled, track it
+            try:
+              request = GetOrdersRequest(
+                status=QueryOrderStatus.OPEN,
+                symbols=[ticker],
+                limit=1
+              )
+              orders = self.trading_client.get_orders(request)
+              
+              if orders and len(orders) > 0:
+                latest_order = orders[0]
+                if latest_order.side == OrderSide.BUY and latest_order.status in ['pending_new', 'accepted', 'new']:
+                  # Track this pending order
+                  self.state.pending_entry_orders[ticker] = str(latest_order.id)
+                  self.state.save_state()
+                  self.logger.log(f"Tracking pending entry order {latest_order.id} for {ticker}")
+            except Exception as e:
+              self.logger.log(f"Error tracking pending entry order for {ticker}: {e}", 'ERROR')
         else:
           self.logger.log(f"Insufficient buying power for {ticker}: need ${cost:,.2f}, have ${buying_power:,.2f}")
           break
@@ -1513,7 +1576,7 @@ class TurtleTrading:
     self.state.entry_queue = [s for s in self.state.entry_queue if s['ticker'] not in processed]
     if processed:
       self.state.save_state()
-  
+
   def intraday_monitor(self):
     """Main intraday monitoring loop (run every 5 minutes)"""
     self.logger.log("="*60)
