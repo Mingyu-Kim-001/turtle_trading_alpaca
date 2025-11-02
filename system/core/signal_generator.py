@@ -69,23 +69,23 @@ class SignalGenerator:
     return False
 
   @staticmethod
-  def check_pyramid_opportunity(last_entry_price, current_price, current_n, threshold=0.5):
+  def check_pyramid_opportunity(last_entry_price, current_price, initial_n, threshold=0.5):
     """
     Check if there's a pyramid opportunity
 
     Args:
       last_entry_price: Price of last pyramid entry
       current_price: Current market price
-      current_n: Current ATR (N value)
+      initial_n: Initial ATR (N value)
       threshold: Multiple of N for pyramid trigger (default 0.5)
 
     Returns:
       True if pyramid opportunity exists, False otherwise
     """
-    if current_n is None or current_n == 0:
+    if initial_n is None or initial_n == 0:
       return False
 
-    pyramid_trigger = last_entry_price + threshold * current_n
+    pyramid_trigger = last_entry_price + threshold * initial_n
 
     # Check if price has reached trigger (with 1% margin)
     return current_price > pyramid_trigger * 0.99

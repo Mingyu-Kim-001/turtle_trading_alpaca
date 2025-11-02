@@ -42,8 +42,8 @@ class TestPositionManager(unittest.TestCase):
     stop_price = PositionManager.calculate_overall_stop(position)
 
     # With 3 pyramid units: stop = highest_entry - (2.5 - 0.5*3) * initial_n
-    # 102 - (2.5 - 1.5) * 2 = 102 - 1.0 * 2 = 102 - 2 = 100.0
-    self.assertAlmostEqual(stop_price, 100.0, places=2)
+    # 100 - (2.5 - 1.5) * 2 = 102 - 1.0 * 2 = 102 - 2 = 100.0
+    self.assertAlmostEqual(stop_price, 98.0, places=2)
 
   def test_calculate_overall_stop_single_unit(self):
     """Test stop calculation with single unit"""
@@ -101,25 +101,31 @@ class TestPositionManager(unittest.TestCase):
 
   def test_add_pyramid_unit(self):
     """Test adding a pyramid unit"""
-    position = {
-      'pyramid_units': [
-        {'units': 100, 'entry_price': 100, 'entry_n': 2, 'entry_value': 10000}
-      ],
-      'stop_price': 96
-    }
+    initial_n_val = 2.0
+    initial_entry_price_val = 100.0
+    initial_units_val = 100
+
+    position = PositionManager.create_new_position(
+      units=initial_units_val,
+      entry_price=initial_entry_price_val,
+      entry_n=initial_n_val,
+      order_id='order123',
+      system=1
+    )
 
     updated_position = PositionManager.add_pyramid_unit(
       position,
-      units=100,
+      units=initial_units_val,
       entry_price=101,
-      entry_n=2.1,
+      entry_n=2.1, # This value is ignored for initial_n in add_pyramid_unit
       order_id='order456'
     )
 
     self.assertEqual(len(updated_position['pyramid_units']), 2)
-    self.assertEqual(updated_position['pyramid_units'][1]['units'], 100)
-    # Stop should be updated to 101 - 2*2.1 = 96.8
-    self.assertAlmostEqual(updated_position['stop_price'], 96.8, places=2)
+    self.assertEqual(updated_position['pyramid_units'][1]['units'], initial_units_val)
+    # Expected stop: initial_entry_price - (2.5 - 0.5 * num_pyramids) * initial_n
+    # 100 - (2.5 - 0.5 * 2) * 2.0 = 100 - (1.5) * 2.0 = 100 - 3.0 = 97.0
+    self.assertAlmostEqual(updated_position['stop_price'], 97.0, places=2)
 
   def test_calculate_position_pnl(self):
     """Test P&L calculation"""

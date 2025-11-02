@@ -46,14 +46,14 @@ class PositionManager:
     if not pyramid_units:
       return None
 
-    highest_entry = max(unit['entry_price'] for unit in pyramid_units)
+    initial_entry_price = pyramid_units[0]['entry_price']
     initial_n = position.get('initial_n', pyramid_units[0]['entry_n'])
     num_pyramids = len(pyramid_units)
 
     # Stop tightens by 0.5N for each pyramid unit
     stop_multiplier = 2.5 - (0.5 * num_pyramids)
 
-    return highest_entry - stop_multiplier * initial_n
+    return initial_entry_price - stop_multiplier * initial_n
 
   @staticmethod
   def can_pyramid(position, max_pyramids=4):
