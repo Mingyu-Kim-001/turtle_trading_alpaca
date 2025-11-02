@@ -8,17 +8,17 @@ class TestPositionManager(unittest.TestCase):
   """Test cases for PositionManager class"""
 
   def test_calculate_position_size(self):
-    """Test position size calculation"""
-    risk_pot = 10000
+    """Test position size calculation with new formula (matching backtester)"""
+    total_equity = 10000
     n = 2.5
 
-    units = PositionManager.calculate_position_size(risk_pot, n)
+    units = PositionManager.calculate_position_size(total_equity, n)
 
-    # Expected: (10000 * 0.02) / (2 * 2.5) = 200 / 5 = 40
-    self.assertEqual(units, 40)
+    # Expected: (10000 * 0.001) / 2.5 = 10 / 2.5 = 4
+    self.assertEqual(units, 4)
 
-  def test_calculate_position_size_zero_risk_pot(self):
-    """Test position size with zero risk pot"""
+  def test_calculate_position_size_zero_equity(self):
+    """Test position size with zero total equity"""
     units = PositionManager.calculate_position_size(0, 2.5)
     self.assertEqual(units, 0)
 

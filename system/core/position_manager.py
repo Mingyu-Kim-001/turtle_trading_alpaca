@@ -5,24 +5,24 @@ class PositionManager:
   """Manage trading positions and pyramid units"""
 
   @staticmethod
-  def calculate_position_size(risk_pot, n, risk_per_unit=0.02, max_risk=2):
+  def calculate_position_size(total_equity, n, risk_per_unit_pct=0.001):
     """
-    Calculate position size based on risk
+    Calculate position size based on total equity (matching backtester logic)
 
     Args:
-      risk_pot: Available risk capital
+      total_equity: Total equity (cash + positions value)
       n: Current ATR value
-      risk_per_unit: Risk per unit as decimal (default 2%)
-      max_risk: Maximum risk in units of N (default 2N)
+      risk_per_unit_pct: Risk per unit as decimal (default 0.1% = 0.001)
 
     Returns:
       Number of units to trade
     """
-    if n == 0 or risk_pot <= 0:
+    if n == 0 or total_equity <= 0:
       return 0
 
-    unit_risk = risk_pot * risk_per_unit
-    units = unit_risk / (max_risk * n)
+    unit_risk = total_equity * risk_per_unit_pct
+    # Risk per unit is N (matching backtester)
+    units = unit_risk / n
     return int(units)
 
   @staticmethod

@@ -48,7 +48,6 @@ class DailyLogger:
     snapshot = {
       'timestamp': datetime.now().isoformat(),
       'label': label,
-      'risk_pot': state.risk_pot,
       'positions': state.positions,
       'entry_queue': state.entry_queue,
       'position_count': len(state.positions),

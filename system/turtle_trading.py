@@ -83,6 +83,35 @@ class TurtleTrading:
       with open(universe_file, 'w') as f:
         f.write('\n'.join(self.universe))
 
+  def get_total_equity(self):
+    """
+    Calculate total equity (cash + positions value)
+
+    Returns:
+      Total equity as float
+    """
+    try:
+      account = self.trading_client.get_account()
+      return float(account.equity)
+    except Exception as e:
+      self.logger.log(f"Error getting total equity: {e}", 'ERROR')
+      # Fallback: calculate manually
+      try:
+        account = self.trading_client.get_account()
+        cash = float(account.cash)
+        positions_value = 0
+
+        for ticker in self.state.positions.keys():
+          current_price = self.data_provider.get_current_price(ticker)
+          if current_price:
+            total_units = sum(p['units'] for p in self.state.positions[ticker]['pyramid_units'])
+            positions_value += total_units * current_price
+
+        return cash + positions_value
+      except Exception as e2:
+        self.logger.log(f"Error calculating total equity manually: {e2}", 'ERROR')
+        return 10000  # Fallback value
+
   def enter_position(self, ticker, units, target_price, n):
     """
     Enter a new position or add pyramid level
@@ -106,9 +135,8 @@ class TurtleTrading:
     )
 
     if success and filled_price:
-      # Calculate cost and risk
+      # Calculate cost
       cost = units * filled_price
-      risk_allocated = units * 2 * n
 
       # Update or create position
       if is_pyramid:
@@ -123,11 +151,10 @@ class TurtleTrading:
         )
         reason = "Initial entry"
 
-      # Update risk pot
-      self.state.risk_pot -= risk_allocated
       self.state.save_state()
 
       stop_price = self.state.positions[ticker]['stop_price']
+      total_equity = self.get_total_equity()
 
       # Send notification
       self.slack.send_summary("🟢 ENTRY EXECUTED", {
@@ -137,8 +164,7 @@ class TurtleTrading:
         "Price": f"${filled_price:.2f}",
         "Cost": f"${cost:,.2f}",
         "Stop Price": f"${stop_price:.2f}",
-        "Risk Allocated": f"${risk_allocated:,.2f}",
-        "Risk Pot": f"${self.state.risk_pot:,.2f}"
+        "Total Equity": f"${total_equity:,.2f}"
       })
 
       return True
@@ -177,19 +203,14 @@ class TurtleTrading:
         position, filled_price
       )
 
-      # Return allocated risk
-      risk_allocated = self.position_manager.calculate_allocated_risk(position)
-      self.state.risk_pot += risk_allocated
-
-      # Add P&L to risk pot
-      self.state.update_risk_pot(pnl)
-
       # Track daily PnL
       self.daily_pnl += pnl
 
       # Remove position
       del self.state.positions[ticker]
       self.state.save_state()
+
+      total_equity = self.get_total_equity()
 
       # Send notification
       emoji = "🟢" if pnl > 0 else "🔴"
@@ -201,7 +222,7 @@ class TurtleTrading:
         "Entry Value": f"${entry_value:,.2f}",
         "Exit Value": f"${exit_value:,.2f}",
         "P&L": f"${pnl:,.2f} ({pnl_pct:.2f}%)",
-        "Risk Pot": f"${self.state.risk_pot:,.2f}"
+        "Total Equity": f"${total_equity:,.2f}"
       })
 
       return True
@@ -256,12 +277,6 @@ class TurtleTrading:
           pnl = exit_value - entry_value
           pnl_pct = (pnl / entry_value) * 100 if entry_value > 0 else 0
 
-          # Return allocated risk
-          risk_allocated = self.position_manager.calculate_allocated_risk(position)
-          self.state.risk_pot += risk_allocated
-
-          # Add P&L
-          self.state.update_risk_pot(pnl)
           total_pnl += pnl
 
           exit_results.append({
@@ -335,12 +350,11 @@ class TurtleTrading:
 
   def check_pyramid_opportunities(self):
     """Check if any positions can pyramid"""
+    total_equity = self.get_total_equity()
+
     for ticker, position in self.state.positions.items():
       # Check limits
       if not self.position_manager.can_pyramid(position):
-        continue
-
-      if self.state.risk_pot <= 0:
         continue
 
       # Check for pending pyramid order
@@ -391,6 +405,7 @@ class TurtleTrading:
     if not self.state.entry_queue:
       return
 
+    total_equity = self.get_total_equity()
     buying_power = self.order_manager.get_buying_power()
     processed = []
 
@@ -415,12 +430,8 @@ class TurtleTrading:
 
       entry_trigger = signal['entry_price'] * 0.99
       if current_price >= entry_trigger:
-        if self.state.risk_pot <= 0:
-          self.logger.log("Risk pot exhausted, stopping entries")
-          break
-
         units = self.position_manager.calculate_position_size(
-          self.state.risk_pot, signal['n']
+          total_equity, signal['n']
         )
         cost = units * signal['entry_price']
 
@@ -488,9 +499,9 @@ class TurtleTrading:
     account = self.trading_client.get_account()
 
     summary = {
-      "Risk Pot": f"${self.state.risk_pot:,.2f}",
       "Buying Power": f"${float(account.buying_power):,.2f}",
       "Equity": f"${float(account.equity):,.2f}",
+      "Cash": f"${float(account.cash):,.2f}",
       "Open Positions": len(self.state.positions),
       "Entry Queue": len(self.state.entry_queue)
     }
@@ -523,8 +534,9 @@ class TurtleTrading:
       self.logger.log("4. Processing entry queue...")
       self.process_entry_queue()
 
+      total_equity = self.get_total_equity()
       self.logger.log(f"Status: {len(self.state.positions)} positions, {len(self.state.entry_queue)} pending entries")
-      self.logger.log(f"Risk Pot: ${self.state.risk_pot:,.2f}")
+      self.logger.log(f"Total Equity: ${total_equity:,.2f}")
 
     except Exception as e:
       self.logger.log(f"Critical error in intraday monitor: {e}", 'ERROR')
@@ -547,8 +559,8 @@ class TurtleTrading:
 
     summary = {
       "Daily P&L": f"${self.daily_pnl:,.2f}",
-      "Risk Pot": f"${self.state.risk_pot:,.2f}",
       "Equity": f"${float(account.equity):,.2f}",
+      "Cash": f"${float(account.cash):,.2f}",
       "Open Positions": len(self.state.positions),
       "Orders Placed": orders_placed,
       "Orders Filled": orders_filled

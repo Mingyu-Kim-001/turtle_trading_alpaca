@@ -69,7 +69,6 @@ class TestDailyLogger(unittest.TestCase):
     # Create mock state object
     class MockState:
       def __init__(self):
-        self.risk_pot = 10000
         self.positions = {'AAPL': {}}
         self.entry_queue = []
 
@@ -87,7 +86,8 @@ class TestDailyLogger(unittest.TestCase):
       data = json.load(f)
       self.assertEqual(len(data), 1)
       self.assertEqual(data[0]['label'], 'test_snapshot')
-      self.assertEqual(data[0]['risk_pot'], 10000)
+      self.assertEqual(data[0]['position_count'], 1)
+      self.assertEqual(data[0]['queue_count'], 0)
 
   def test_get_daily_orders(self):
     """Test retrieving daily orders"""

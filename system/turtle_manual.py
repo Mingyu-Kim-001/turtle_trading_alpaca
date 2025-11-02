@@ -30,9 +30,8 @@ def show_status(system):
     print(f"  Equity: ${float(account.equity):,.2f}")
     print(f"  Cash: ${float(account.cash):,.2f}")
     print(f"  Buying Power: ${float(account.buying_power):,.2f}")
-    
+
     print(f"\nTrading State:")
-    print(f"  Risk Pot: ${system.state.risk_pot:,.2f}")
     print(f"  Open Positions: {len(system.state.positions)}")
     print(f"  Entry Queue: {len(system.state.entry_queue)}")
     
