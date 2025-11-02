@@ -2,19 +2,24 @@
 Manual Testing Script for Turtle Trading System
 
 Run specific workflows manually for testing:
-  python turtle_manual.py eod       # Run EOD analysis
-  python turtle_manual.py open      # Run market open setup
-  python turtle_manual.py monitor   # Run single intraday monitor cycle
-  python turtle_manual.py close     # Run post-market routine
-  python turtle_manual.py status    # Show current system status
-  python turtle_manual.py align     # Align state with broker (dry-run)
-  python turtle_manual.py align --apply  # Align state with broker (apply changes)
-  python turtle_manual.py exit-all  # EXIT ALL POSITIONS AT MARKET PRICE (DANGEROUS!)
+  python -m system.turtle_manual eod       # Run EOD analysis
+  python -m system.turtle_manual open      # Run market open setup
+  python -m system.turtle_manual monitor   # Run single intraday monitor cycle
+  python -m system.turtle_manual close     # Run post-market routine
+  python -m system.turtle_manual status    # Show current system status
+  python -m system.turtle_manual align            # Rebuild state from broker (dry-run)
+  python -m system.turtle_manual align --apply    # Rebuild state from broker (apply changes)
+  python -m system.turtle_manual exit-all  # EXIT ALL POSITIONS AT MARKET PRICE (DANGEROUS!)
+
+The 'align' command rebuilds trading_state.json from:
+  - Current broker positions
+  - Historical order fills from Alpaca
+  - Recalculated N values from historical price data
 """
 
 import sys
 import os
-from turtle_trading import TurtleTrading
+from .turtle_trading import TurtleTrading
 
 
 def show_status(system):
@@ -141,8 +146,35 @@ def main():
     show_status(system)
     
   elif command == 'align':
-    print("\n⚠️  State alignment feature not yet implemented in refactored version")
-    print("This will be added in a future update.")
+    # Check for --apply flag
+    apply_changes = '--apply' in sys.argv
+
+    print("\n" + "="*60)
+    print("STATE REBUILD FROM BROKER")
+    print("="*60)
+    print("\nThis will:")
+    print("  - Fetch your current positions from Alpaca")
+    print("  - Reconstruct pyramid_units from order history")
+    print("  - Recalculate N values from historical data")
+    print("  - Rebuild trading_state.json without risk_pot")
+
+    if apply_changes:
+      print("\n⚠️  --apply flag detected: Changes WILL be saved!")
+      print("Your old state will be backed up automatically.")
+    else:
+      print("\n🔍 DRY RUN MODE (no changes will be saved)")
+      print("Use 'python -m system.turtle_manual align --apply' to save changes")
+
+    print("\n" + "="*60)
+
+    if apply_changes:
+      response = input("\nType 'REBUILD' to confirm (anything else to cancel): ")
+      if response != 'REBUILD':
+        print("\nRebuild cancelled.")
+        sys.exit(0)
+
+    # Run the rebuild
+    system.rebuild_state_from_broker(lookback_days=90, dry_run=not apply_changes)
   
   elif command == 'exit-all':
     print("\n" + "="*60)

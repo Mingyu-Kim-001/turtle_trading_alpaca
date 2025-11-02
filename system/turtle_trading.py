@@ -318,8 +318,15 @@ class TurtleTrading:
 
   def check_position_stops(self):
     """Check if any positions hit stop loss"""
+    if not self.state.positions:
+      return
+
+    # Batch fetch prices for all positions
+    tickers = list(self.state.positions.keys())
+    current_prices = self.data_provider.get_current_prices_batch(tickers)
+
     for ticker, position in list(self.state.positions.items()):
-      current_price = self.data_provider.get_current_price(ticker)
+      current_price = current_prices.get(ticker)
 
       if current_price is None:
         continue
@@ -332,13 +339,20 @@ class TurtleTrading:
 
   def check_exit_signals(self):
     """Check if any positions hit exit signals"""
+    if not self.state.positions:
+      return
+
+    # Batch fetch prices for all positions
+    tickers = list(self.state.positions.keys())
+    current_prices = self.data_provider.get_current_prices_batch(tickers)
+
     for ticker, position in list(self.state.positions.items()):
       df = self.data_provider.get_historical_data(ticker, days=30)
       if df is None:
         continue
 
       df = self.indicator_calculator.calculate_indicators(df)
-      current_price = self.data_provider.get_current_price(ticker)
+      current_price = current_prices.get(ticker)
 
       if current_price is None:
         continue
@@ -350,7 +364,14 @@ class TurtleTrading:
 
   def check_pyramid_opportunities(self):
     """Check if any positions can pyramid"""
+    if not self.state.positions:
+      return
+
     total_equity = self.get_total_equity()
+
+    # Batch fetch prices for all positions
+    tickers = list(self.state.positions.keys())
+    current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in self.state.positions.items():
       # Check limits
@@ -362,7 +383,7 @@ class TurtleTrading:
         continue
 
       # Get current price
-      current_price = self.data_provider.get_current_price(ticker)
+      current_price = current_prices.get(ticker)
       if current_price is None:
         continue
 
@@ -409,10 +430,9 @@ class TurtleTrading:
     buying_power = self.order_manager.get_buying_power()
     processed = []
 
+    # Filter signals that need checking (not already in positions or pending)
+    signals_to_check = []
     for signal in self.state.entry_queue[:]:
-      if buying_power <= 0:
-        break
-
       ticker = signal['ticker']
 
       # Skip if already in positions
@@ -424,7 +444,24 @@ class TurtleTrading:
       if ticker in self.state.pending_entry_orders:
         continue
 
-      current_price = self.data_provider.get_current_price(ticker)
+      signals_to_check.append(signal)
+
+    # Batch fetch current prices for all tickers at once
+    if signals_to_check:
+      tickers_to_fetch = [s['ticker'] for s in signals_to_check]
+      self.logger.log(f"Batch fetching prices for {len(tickers_to_fetch)} tickers...")
+      current_prices = self.data_provider.get_current_prices_batch(tickers_to_fetch)
+    else:
+      current_prices = {}
+
+    # Now process signals with pre-fetched prices
+    for signal in signals_to_check:
+      if buying_power <= 0:
+        break
+
+      ticker = signal['ticker']
+      current_price = current_prices.get(ticker)
+
       if current_price is None:
         continue
 
@@ -570,6 +607,280 @@ class TurtleTrading:
 
     # Reset daily PnL
     self.daily_pnl = 0
+
+  def rebuild_state_from_broker(self, lookback_days=90, dry_run=True):
+    """
+    Rebuild trading_state.json from Alpaca order history and current positions
+
+    Args:
+      lookback_days: How many days back to fetch order history
+      dry_run: If True, don't save the state (just show what would be rebuilt)
+
+    Returns:
+      Dictionary of rebuilt state
+    """
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+
+    self.logger.log("="*60)
+    self.logger.log("REBUILDING STATE FROM BROKER")
+    self.logger.log("="*60)
+
+    # Step 1: Get current broker positions
+    self.logger.log("\n📊 Step 1: Fetching current broker positions...")
+    broker_positions = self.trading_client.get_all_positions()
+
+    if not broker_positions:
+      self.logger.log("⚠️  No open positions at broker. Nothing to rebuild.")
+      return None
+
+    self.logger.log(f"Found {len(broker_positions)} open positions at broker")
+    for pos in broker_positions:
+      self.logger.log(f"  - {pos.symbol}: {float(pos.qty):.0f} units @ ${float(pos.avg_entry_price):.2f}")
+
+    # Step 2: Fetch order history
+    self.logger.log(f"\n📜 Step 2: Fetching order history (last {lookback_days} days)...")
+
+    after_date = datetime.now() - timedelta(days=lookback_days)
+    request = GetOrdersRequest(
+      status=QueryOrderStatus.CLOSED,
+      limit=500,
+      after=after_date
+    )
+
+    all_orders = self.trading_client.get_orders(filter=request)
+    # Get both buy and sell orders
+    buy_orders = [o for o in all_orders if o.side.name == 'BUY' and o.status.name == 'FILLED']
+    sell_orders = [o for o in all_orders if o.side.name == 'SELL' and o.status.name == 'FILLED']
+
+    self.logger.log(f"Found {len(buy_orders)} filled BUY orders in history")
+    self.logger.log(f"Found {len(sell_orders)} filled SELL orders in history")
+
+    # Step 3: Group orders by ticker and filter out sold positions
+    self.logger.log("\n🔄 Step 3: Grouping orders by ticker...")
+    orders_by_ticker = defaultdict(list)
+    sells_by_ticker = defaultdict(list)
+
+    for order in buy_orders:
+      ticker = order.symbol
+      # Only process orders for current positions
+      if any(pos.symbol == ticker for pos in broker_positions):
+        orders_by_ticker[ticker].append({
+          'id': str(order.id),
+          'filled_qty': float(order.filled_qty),
+          'filled_avg_price': float(order.filled_avg_price),
+          'filled_at': order.filled_at,
+          'created_at': order.created_at
+        })
+
+    for order in sell_orders:
+      ticker = order.symbol
+      if any(pos.symbol == ticker for pos in broker_positions):
+        sells_by_ticker[ticker].append({
+          'id': str(order.id),
+          'filled_qty': float(order.filled_qty),
+          'filled_at': order.filled_at
+        })
+
+    # Sort by fill time
+    for ticker in orders_by_ticker:
+      orders_by_ticker[ticker].sort(key=lambda x: x['filled_at'])
+    for ticker in sells_by_ticker:
+      sells_by_ticker[ticker].sort(key=lambda x: x['filled_at'])
+
+    # Filter orders: only keep recent buys that sum to current position
+    # (work backwards from most recent buys until we match broker quantity)
+    for ticker in list(orders_by_ticker.keys()):
+      broker_qty = next(float(p.qty) for p in broker_positions if p.symbol == ticker)
+
+      # Calculate total sold
+      total_sold = sum(s['filled_qty'] for s in sells_by_ticker.get(ticker, []))
+
+      # Work backwards from most recent buys
+      orders_by_ticker[ticker].reverse()
+      cumulative = 0
+      filtered_orders = []
+
+      for order_info in orders_by_ticker[ticker]:
+        if cumulative < broker_qty:
+          filtered_orders.append(order_info)
+          cumulative += order_info['filled_qty']
+
+      # Reverse back to chronological order
+      filtered_orders.reverse()
+      orders_by_ticker[ticker] = filtered_orders
+
+      self.logger.log(f"  {ticker}: Using {len(filtered_orders)} most recent orders (total sold: {total_sold:.0f})")
+
+    # Step 4: Reconstruct pyramid units
+    self.logger.log("\n🏗️  Step 4: Reconstructing pyramid units...")
+    rebuilt_positions = {}
+
+    for position in broker_positions:
+      ticker = position.symbol
+      broker_qty = float(position.qty)
+
+      self.logger.log(f"\nProcessing {ticker}:")
+
+      if ticker not in orders_by_ticker:
+        self.logger.log(f"  ⚠️  No BUY orders found in history (beyond {lookback_days} days?)")
+        self.logger.log(f"  Using broker avg entry price: ${float(position.avg_entry_price):.2f}")
+
+        # Calculate N from current data (fetch extra days to ensure we have enough)
+        hist = self.data_provider.get_historical_data(ticker, 60)
+        if hist is not None and len(hist) >= 20:
+          hist_with_n = self.indicator_calculator.calculate_atr(hist)
+          n_value = hist_with_n['N'].iloc[-1]
+          if pd.notna(n_value):
+            n = float(n_value)
+          else:
+            n = float(position.avg_entry_price) * 0.02  # Fallback: 2% of price
+        else:
+          n = float(position.avg_entry_price) * 0.02  # Fallback: 2% of price
+
+        # Create single pyramid unit
+        rebuilt_positions[ticker] = {
+          'system': 1,
+          'pyramid_units': [{
+            'units': broker_qty,
+            'entry_price': float(position.avg_entry_price),
+            'entry_n': n,
+            'entry_value': broker_qty * float(position.avg_entry_price),
+            'entry_date': datetime.now().isoformat(),
+            'order_id': 'UNKNOWN_REBUILT',
+            'grouped_orders': 1
+          }],
+          'entry_date': datetime.now().isoformat(),
+          'stop_price': float(position.avg_entry_price) - (2 * n)
+        }
+        continue
+
+      # Group orders into pyramid levels (orders within 1 day = same level)
+      pyramid_levels = []
+      current_level = []
+      last_time = None
+
+      for order_info in orders_by_ticker[ticker]:
+        fill_time = order_info['filled_at']
+
+        if last_time is None or (fill_time - last_time).total_seconds() < 86400:  # Within 1 day
+          current_level.append(order_info)
+        else:
+          if current_level:
+            pyramid_levels.append(current_level)
+          current_level = [order_info]
+
+        last_time = fill_time
+
+      if current_level:
+        pyramid_levels.append(current_level)
+
+      self.logger.log(f"  Found {len(pyramid_levels)} pyramid level(s)")
+
+      # Reconstruct pyramid_units
+      pyramid_units = []
+      first_entry_date = None
+
+      for level_idx, level_orders in enumerate(pyramid_levels, 1):
+        # Calculate weighted average for this level
+        total_qty = sum(o['filled_qty'] for o in level_orders)
+        total_value = sum(o['filled_qty'] * o['filled_avg_price'] for o in level_orders)
+        avg_price = total_value / total_qty if total_qty > 0 else 0
+        entry_date = level_orders[0]['filled_at']
+
+        if first_entry_date is None:
+          first_entry_date = entry_date
+
+        # Calculate N from historical data at entry time (fetch extra days)
+        hist = self.data_provider.get_historical_data(ticker, 60, end_date=entry_date.date())
+        if hist is not None and len(hist) >= 20:
+          hist_with_n = self.indicator_calculator.calculate_atr(hist)
+          n_value = hist_with_n['N'].iloc[-1]
+          if pd.notna(n_value):
+            n = float(n_value)
+          else:
+            n = avg_price * 0.02  # Fallback
+        else:
+          n = avg_price * 0.02  # Fallback
+
+        order_ids = ','.join(o['id'] for o in level_orders)
+
+        pyramid_units.append({
+          'units': total_qty,
+          'entry_price': avg_price,
+          'entry_n': n,
+          'entry_value': total_value,
+          'entry_date': entry_date.isoformat(),
+          'order_id': order_ids,
+          'grouped_orders': len(level_orders)
+        })
+
+        self.logger.log(f"    Level {level_idx}: {total_qty:.0f} units @ ${avg_price:.2f}, "
+                 f"N=${n:.2f} ({len(level_orders)} order(s))")
+
+      # Verify total matches broker
+      total_units = sum(p['units'] for p in pyramid_units)
+      if abs(total_units - broker_qty) > 0.01:
+        self.logger.log(f"  ⚠️  WARNING: Reconstructed {total_units:.0f} units, "
+                 f"but broker shows {broker_qty:.0f} units", 'WARNING')
+
+      # Calculate stop price using last pyramid N
+      last_n = pyramid_units[-1]['entry_n']
+      last_entry = pyramid_units[-1]['entry_price']
+      stop_price = last_entry - (2 * last_n)
+
+      rebuilt_positions[ticker] = {
+        'system': 1,
+        'pyramid_units': pyramid_units,
+        'entry_date': first_entry_date.isoformat(),
+        'stop_price': stop_price
+      }
+
+      self.logger.log(f"  Stop Price: ${stop_price:.2f}")
+
+    # Step 5: Build complete state
+    self.logger.log("\n✅ Step 5: Building complete state...")
+
+    rebuilt_state = {
+      'positions': rebuilt_positions,
+      'entry_queue': [],  # Start with empty queue
+      'pending_pyramid_orders': {},
+      'pending_entry_orders': {},
+      'last_updated': datetime.now().isoformat()
+    }
+
+    self.logger.log(f"\nRebuilt state summary:")
+    self.logger.log(f"  Positions: {len(rebuilt_positions)}")
+    self.logger.log(f"  Total pyramid levels: {sum(len(p['pyramid_units']) for p in rebuilt_positions.values())}")
+
+    # Step 6: Save state
+    if dry_run:
+      self.logger.log("\n🔍 DRY RUN - State NOT saved")
+      self.logger.log("Run with --apply flag to save the rebuilt state")
+    else:
+      self.logger.log("\n💾 Saving rebuilt state to trading_state.json...")
+
+      # Backup old state
+      import shutil
+      backup_file = f"trading_state_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+      try:
+        shutil.copy(self.state.state_file, backup_file)
+        self.logger.log(f"  Old state backed up to: {backup_file}")
+      except:
+        pass
+
+      # Update state manager
+      self.state.positions = rebuilt_state['positions']
+      self.state.entry_queue = rebuilt_state['entry_queue']
+      self.state.pending_pyramid_orders = rebuilt_state['pending_pyramid_orders']
+      self.state.pending_entry_orders = rebuilt_state['pending_entry_orders']
+      self.state.save_state()
+
+      self.logger.log("  ✅ State successfully rebuilt and saved!")
+
+    self.logger.log("\n" + "="*60)
+
+    return rebuilt_state
 
 
 def main():
