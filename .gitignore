@@ -9,3 +9,4 @@ trading_state*
 .python-version
 tickers_universe.txt
 __pycache__
+.env

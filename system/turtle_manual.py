@@ -13,8 +13,8 @@ Run specific workflows manually for testing:
 """
 
 import sys
-import json
-from turtle_live_trading import TurtleTrading, load_config
+import os
+from turtle_trading import TurtleTrading
 
 
 def show_status(system):
@@ -108,9 +108,9 @@ def main():
   command = sys.argv[1].lower()
   
   # Load configuration
-  alpaca_key = load_config('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_KEY')
-  alpaca_secret = load_config('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_SECRET')
-  slack_token = load_config('./.config/personal_slack_token.json', 'PERSONAL_SLACK_TOKEN')
+  alpaca_key = os.environ.get('ALPACA_PAPER_KEY')
+  alpaca_secret = os.environ.get('ALPACA_PAPER_SECRET')
+  slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
   slack_channel = 'C09M9NNU8JH'
   
   # Initialize system
@@ -142,31 +142,8 @@ def main():
     show_status(system)
     
   elif command == 'align':
-    # Check if --apply flag is present
-    apply_changes = '--apply' in sys.argv
-    
-    if apply_changes:
-      print("\n" + "="*60)
-      print("⚠️  WARNING: You are about to APPLY changes to trading_state.json")
-      print("="*60)
-      print("\nThis will:")
-      print("  - Backup your current state")
-      print("  - Update positions to match broker")
-      print("  - Recalculate risk pot")
-      print("\nA backup will be saved before any changes.")
-      
-      response = input("\nAre you sure you want to proceed? (yes/no): ")
-      
-      if response.lower() != 'yes':
-        print("\nAlignment cancelled.")
-        sys.exit(0)
-      
-      print("\nProceeding with alignment...")
-      system.align_state_with_broker(dry_run=False)
-    else:
-      print("\nRunning DRY RUN - no changes will be applied")
-      print("Use 'python turtle_manual.py align --apply' to actually apply changes\n")
-      system.align_state_with_broker(dry_run=True)
+    print("\n⚠️  State alignment feature not yet implemented in refactored version")
+    print("This will be added in a future update.")
   
   elif command == 'exit-all':
     print("\n" + "="*60)

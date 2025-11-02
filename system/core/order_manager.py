@@ -1,0 +1,439 @@
+"""Order execution and management"""
+
+import time
+from datetime import datetime
+from alpaca.trading.client import TradingClient
+from alpaca.trading.requests import (
+  StopLimitOrderRequest,
+  MarketOrderRequest,
+  GetOrdersRequest
+)
+from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
+
+from ..utils.decorators import retry_on_connection_error
+
+
+class OrderManager:
+  """Handle order execution, tracking, and reconciliation"""
+
+  def __init__(self, trading_client, logger=None, notifier=None,
+        entry_margin=0.99, exit_margin=1.01):
+    """
+    Initialize order manager
+
+    Args:
+      trading_client: Alpaca TradingClient instance
+      logger: DailyLogger instance (optional)
+      notifier: SlackNotifier instance (optional)
+      entry_margin: Margin for entry stop orders (default 0.99)
+      exit_margin: Margin for exit stop orders (default 1.01)
+    """
+    self.trading_client = trading_client
+    self.logger = logger
+    self.notifier = notifier
+    self.entry_margin = entry_margin
+    self.exit_margin = exit_margin
+
+  def _log(self, message, level='INFO'):
+    """Helper to log message"""
+    if self.logger:
+      self.logger.log(message, level)
+    else:
+      print(f"[{level}] {message}")
+
+  def _notify(self, title, data):
+    """Helper to send notification"""
+    if self.notifier:
+      self.notifier.send_summary(title, data)
+
+  def place_entry_order(self, ticker, units, target_price, n, is_pyramid=False, pyramid_level=1):
+    """
+    Place an entry order (buy)
+
+    Args:
+      ticker: Stock symbol
+      units: Number of shares
+      target_price: Target entry price
+      n: Current ATR
+      is_pyramid: Whether this is a pyramid order
+      pyramid_level: Pyramid level number
+
+    Returns:
+      Tuple of (success, order_id, filled_price)
+    """
+    try:
+      units = int(units)
+      if units <= 0:
+        self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
+        return False, None, None
+
+      # Calculate prices
+      stop_price = round(target_price * self.entry_margin, 2)
+      limit_price = round(stop_price * 1.005, 2)
+
+      order_type = f"Pyramid Level {pyramid_level}" if is_pyramid else "Initial Entry"
+      self._log(f"Placing {order_type.lower()} order for {ticker}: "
+           f"units={units}, stop=${stop_price:.2f}, limit=${limit_price:.2f}")
+
+      # Place stop-limit order
+      order_data = StopLimitOrderRequest(
+        symbol=ticker,
+        qty=units,
+        side=OrderSide.BUY,
+        time_in_force=TimeInForce.DAY,
+        stop_price=stop_price,
+        limit_price=limit_price
+      )
+
+      order = self.trading_client.submit_order(order_data)
+      order_id = str(order.id)
+
+      # Notify immediately when order placed
+      self._notify("📤 ORDER PLACED", {
+        "Ticker": ticker,
+        "Type": order_type,
+        "Order ID": order_id,
+        "Units": units,
+        "Stop Price": f"${stop_price:.2f}",
+        "Limit Price": f"${limit_price:.2f}",
+        "Status": "PENDING"
+      })
+
+      if self.logger:
+        self.logger.log_order('ENTRY', ticker, 'PLACED', {
+          'order_id': order_id,
+          'units': units,
+          'stop_price': stop_price,
+          'limit_price': limit_price,
+          'is_pyramid': is_pyramid,
+          'pyramid_level': pyramid_level
+        })
+
+      # Wait and check if filled
+      time.sleep(3)
+      filled_order = self.trading_client.get_order_by_id(order_id)
+
+      if filled_order.status == 'filled':
+        filled_price = float(filled_order.filled_avg_price)
+        self._log(f"Order filled: {ticker} at ${filled_price:.2f}")
+
+        if self.logger:
+          self.logger.log_order('ENTRY', ticker, 'FILLED', {
+            'order_id': order_id,
+            'units': units,
+            'filled_price': filled_price
+          })
+
+        return True, order_id, filled_price
+
+      else:
+        self._log(f"Order pending for {ticker}, status: {filled_order.status}", 'WARNING')
+        if self.logger:
+          self.logger.log_order('ENTRY', ticker, 'PENDING', {
+            'order_id': order_id,
+            'status': filled_order.status
+          })
+        return False, order_id, None
+
+    except Exception as e:
+      self._log(f"Error placing entry order for {ticker}: {e}", 'ERROR')
+      if self.notifier:
+        self.notifier.send_message(f"❌ Error entering {ticker}: {str(e)}")
+      return False, None, None
+
+  def place_exit_order(self, ticker, units, target_price, reason):
+    """
+    Place an exit order (sell)
+
+    Args:
+      ticker: Stock symbol
+      units: Number of shares
+      target_price: Target exit price
+      reason: Reason for exit
+
+    Returns:
+      Tuple of (success, order_id, filled_price)
+    """
+    try:
+      # Check for existing open orders
+      try:
+        request = GetOrdersRequest(
+          status=QueryOrderStatus.OPEN,
+          symbols=[ticker],
+          limit=10
+        )
+        open_orders = self.trading_client.get_orders(request)
+
+        # Check if there's already a sell order
+        existing_sell = [o for o in open_orders if o.side == OrderSide.SELL]
+        if existing_sell:
+          self._log(f"Sell order already exists for {ticker}: {existing_sell[0].id}", 'WARNING')
+          return False, None, None
+
+        # Cancel any buy orders to free up shares
+        buy_orders = [o for o in open_orders if o.side == OrderSide.BUY]
+        if buy_orders:
+          self._log(f"Cancelling {len(buy_orders)} buy orders for {ticker} to free shares")
+          for order in buy_orders:
+            try:
+              self.trading_client.cancel_order_by_id(order.id)
+              self._log(f"Cancelled order {order.id}")
+              time.sleep(0.5)
+            except Exception as e:
+              self._log(f"Error cancelling order {order.id}: {e}", 'ERROR')
+
+      except Exception as e:
+        self._log(f"Error checking existing orders for {ticker}: {e}", 'WARNING')
+
+      # Calculate prices
+      stop_price = round(target_price * self.exit_margin, 2)
+      limit_price = round(stop_price * 0.995, 2)
+
+      self._log(f"Placing exit order for {ticker}: units={units}, "
+           f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
+
+      # Place stop-limit sell order with retry logic
+      max_retries = 3
+      retry_delay = 2
+      order_id = None
+
+      for attempt in range(max_retries):
+        try:
+          order_data = StopLimitOrderRequest(
+            symbol=ticker,
+            qty=int(units),
+            side=OrderSide.SELL,
+            time_in_force=TimeInForce.DAY,
+            stop_price=stop_price,
+            limit_price=limit_price
+          )
+
+          order = self.trading_client.submit_order(order_data)
+          order_id = str(order.id)
+
+          # Notify immediately
+          self._notify("📤 EXIT ORDER PLACED", {
+            "Ticker": ticker,
+            "Reason": reason,
+            "Order ID": order_id,
+            "Units": int(units),
+            "Stop Price": f"${stop_price:.2f}",
+            "Limit Price": f"${limit_price:.2f}",
+            "Status": "PENDING"
+          })
+
+          if self.logger:
+            self.logger.log_order('EXIT', ticker, 'PLACED', {
+              'order_id': order_id,
+              'units': int(units),
+              'stop_price': stop_price,
+              'limit_price': limit_price,
+              'reason': reason
+            })
+
+          break
+
+        except Exception as e:
+          error_str = str(e)
+
+          # Check if it's a duplicate order error
+          if "40310000" in error_str or "insufficient qty" in error_str.lower():
+            self._log(f"Shares for {ticker} are held by another order", 'WARNING')
+            return False, None, None
+
+          # Retry on connection errors
+          if attempt < max_retries - 1:
+            self._log(f"Error placing exit order for {ticker} (attempt {attempt + 1}/{max_retries}): {e}", 'WARNING')
+            time.sleep(retry_delay)
+            retry_delay *= 2
+            continue
+          else:
+            self._log(f"Failed to place exit order for {ticker} after {max_retries} attempts: {e}", 'ERROR')
+            if self.notifier:
+              self.notifier.send_message(f"❌ Failed to exit {ticker}: {str(e)}")
+            return False, None, None
+
+      if order_id is None:
+        return False, None, None
+
+      # Wait and check if filled
+      time.sleep(3)
+
+      # Check order status with retry
+      for attempt in range(3):
+        try:
+          filled_order = self.trading_client.get_order_by_id(order_id)
+          break
+        except Exception as e:
+          if attempt < 2:
+            self._log(f"Error checking order status (attempt {attempt + 1}/3): {e}", 'WARNING')
+            time.sleep(2)
+            continue
+          else:
+            self._log(f"Cannot verify order status for {ticker}: {e}", 'ERROR')
+            return False, order_id, None
+
+      if filled_order.status == 'filled':
+        filled_price = float(filled_order.filled_avg_price)
+        self._log(f"Exit filled: {ticker} at ${filled_price:.2f}")
+
+        if self.logger:
+          self.logger.log_order('EXIT', ticker, 'FILLED', {
+            'order_id': order_id,
+            'units': int(units),
+            'filled_price': filled_price
+          })
+
+        return True, order_id, filled_price
+
+      else:
+        self._log(f"Exit order pending for {ticker}, status: {filled_order.status}", 'WARNING')
+        if self.logger:
+          self.logger.log_order('EXIT', ticker, 'PENDING', {
+            'order_id': order_id,
+            'status': filled_order.status
+          })
+        return False, order_id, None
+
+    except Exception as e:
+      self._log(f"Error placing exit order for {ticker}: {e}", 'ERROR')
+      if self.notifier:
+        self.notifier.send_message(f"❌ Error exiting {ticker}: {str(e)}")
+      return False, None, None
+
+  def place_market_exit_order(self, ticker, units):
+    """
+    Place a market order to exit position immediately
+
+    Args:
+      ticker: Stock symbol
+      units: Number of shares
+
+    Returns:
+      Tuple of (success, order_id, filled_price)
+    """
+    try:
+      self._log(f"Placing MARKET sell order for {ticker}: {int(units)} units")
+
+      order_data = MarketOrderRequest(
+        symbol=ticker,
+        qty=int(units),
+        side=OrderSide.SELL,
+        time_in_force=TimeInForce.DAY
+      )
+
+      order = self.trading_client.submit_order(order_data)
+      order_id = str(order.id)
+
+      self._log(f"Market order placed: {order_id}")
+      if self.logger:
+        self.logger.log_order('EXIT_MARKET', ticker, 'PLACED', {
+          'order_id': order_id,
+          'units': int(units),
+          'order_type': 'MARKET'
+        })
+
+      # Wait for order to fill
+      time.sleep(2)
+
+      # Get filled order details
+      max_retries = 10
+      filled_order = None
+
+      for attempt in range(max_retries):
+        try:
+          filled_order = self.trading_client.get_order_by_id(order_id)
+          if filled_order.status == 'filled':
+            break
+          elif filled_order.status in ['pending_new', 'accepted', 'new']:
+            self._log(f"Order still pending (attempt {attempt+1}/{max_retries}), waiting...")
+            time.sleep(2)
+          else:
+            self._log(f"Order status: {filled_order.status}", 'WARNING')
+            break
+        except Exception as e:
+          self._log(f"Error checking order status (attempt {attempt+1}/{max_retries}): {e}", 'WARNING')
+          if attempt < max_retries - 1:
+            time.sleep(2)
+          else:
+            raise
+
+      if filled_order and filled_order.status == 'filled':
+        filled_price = float(filled_order.filled_avg_price)
+        self._log(f"✅ {ticker} exited at ${filled_price:.2f}")
+
+        if self.logger:
+          self.logger.log_order('EXIT_MARKET', ticker, 'FILLED', {
+            'order_id': order_id,
+            'units': int(units),
+            'filled_price': filled_price
+          })
+
+        return True, order_id, filled_price
+      else:
+        self._log(f"❌ Market order for {ticker} not filled", 'ERROR')
+        return False, order_id, None
+
+    except Exception as e:
+      self._log(f"❌ Error placing market exit order for {ticker}: {e}", 'ERROR')
+      return False, None, None
+
+  @retry_on_connection_error(max_retries=3, initial_delay=2, backoff=2)
+  def get_open_orders(self, ticker=None):
+    """
+    Get open orders
+
+    Args:
+      ticker: Optional ticker to filter by
+
+    Returns:
+      List of open orders
+    """
+    try:
+      request = GetOrdersRequest(
+        status=QueryOrderStatus.OPEN,
+        symbols=[ticker] if ticker else None,
+        limit=500
+      )
+      return self.trading_client.get_orders(request)
+    except Exception as e:
+      self._log(f"Error getting open orders: {e}", 'ERROR')
+      return []
+
+  def cancel_order(self, order_id):
+    """
+    Cancel an order
+
+    Args:
+      order_id: Order ID to cancel
+
+    Returns:
+      True if successful, False otherwise
+    """
+    try:
+      self.trading_client.cancel_order_by_id(order_id)
+      self._log(f"Cancelled order {order_id}")
+      return True
+    except Exception as e:
+      self._log(f"Error cancelling order {order_id}: {e}", 'ERROR')
+      return False
+
+  def cancel_all_orders(self):
+    """Cancel all open orders"""
+    try:
+      self._log("Cancelling all open orders...")
+      self.trading_client.cancel_orders()
+      self._log("All open orders cancelled")
+      return True
+    except Exception as e:
+      self._log(f"Error cancelling orders: {e}", 'ERROR')
+      return False
+
+  def get_buying_power(self):
+    """Get available buying power"""
+    try:
+      account = self.trading_client.get_account()
+      return float(account.buying_power)
+    except Exception as e:
+      self._log(f"Error getting buying power: {e}", 'ERROR')
+      return 0

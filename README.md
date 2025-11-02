@@ -4,18 +4,28 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 
 ## Table of Contents
 
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Setup](#setup)
-- [Usage](#usage)
-  - [Automated Trading](#automated-trading-recommended)
-  - [Manual Trading](#manual-trading)
-  - [Backtesting](#backtesting)
-- [Workflows](#workflows)
-- [System Logic](#system-logic)
-- [Risk Management](#risk-management)
-- [Slack Notifications](#slack-notifications)
-- [Disclaimer](#disclaimer)
+- [Turtle Trading Alpaca](#turtle-trading-alpaca)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Project Structure](#project-structure)
+  - [Architecture](#architecture)
+    - [Core Modules (`system/core/`)](#core-modules-systemcore)
+    - [Utility Modules (`system/utils/`)](#utility-modules-systemutils)
+    - [Main Orchestrator](#main-orchestrator)
+  - [Setup](#setup)
+  - [Usage](#usage)
+    - [Automated Trading (Recommended)](#automated-trading-recommended)
+    - [Manual Trading](#manual-trading)
+    - [Backtesting](#backtesting)
+    - [Running Tests](#running-tests)
+  - [Workflows](#workflows)
+  - [System Logic](#system-logic)
+    - [Entry](#entry)
+    - [Pyramiding](#pyramiding)
+    - [Exit](#exit)
+  - [Risk Management](#risk-management)
+  - [Slack Notifications](#slack-notifications)
+  - [Disclaimer](#disclaimer)
 
 ## Features
 
@@ -27,6 +37,8 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 - **Backtesting Engine**: A vectorized backtester to evaluate strategy performance on historical data.
 - **Slack Integration**: Sends real-time alerts for trades, daily summaries, and system status.
 - **State Persistence**: Maintains the trading state (positions, risk pot) in a JSON file.
+- **Modular Architecture**: Refactored into focused, testable components for better maintainability.
+- **Comprehensive Testing**: 34+ unit tests covering core trading logic.
 
 ## Project Structure
 
@@ -40,14 +52,54 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 │   └── state/                # JSON files for persisting trading state
 ├── data_gathering/           # Scripts to download historical data
 ├── logs/                     # Daily logs for trading activities, orders, and state
-├── system/
-│   ├── turtle_live_trading.py # Core live trading logic
-│   ├── turtle_manual.py      # Script for manually triggering trading workflows
+├── system/                   # Refactored modular trading system
+│   ├── core/                 # Core trading logic modules
+│   │   ├── data_provider.py      # Market data fetching from Alpaca
+│   │   ├── indicators.py         # Technical indicator calculations
+│   │   ├── signal_generator.py   # Entry/exit signal generation
+│   │   ├── position_manager.py   # Position and pyramid management
+│   │   └── order_manager.py      # Order execution and tracking
+│   ├── utils/                # Utility modules
+│   │   ├── decorators.py         # Retry and error handling decorators
+│   │   ├── logger.py             # Daily logging functionality
+│   │   ├── notifier.py           # Slack notification system
+│   │   └── state_manager.py      # State persistence management
+│   ├── turtle_trading.py     # Main orchestrator (refactored)
+│   ├── turtle_manual.py      # Script for manually triggering workflows
 │   └── turtle_scheduler.py   # Scheduler for automated trading
+├── tests/                    # Comprehensive unit tests
+│   ├── test_core/           # Tests for core trading modules
+│   ├── test_utils/          # Tests for utility modules
+│   └── run_tests.py         # Test runner
 ├── graveyard/                # Old or unused scripts
+│   └── turtle_live_trading_original.py  # Original monolithic implementation (preserved)
 ├── ticker_universe.txt       # List of tickers to trade
+├── REFACTORING.md           # Detailed refactoring documentation
+├── REFACTORING_SUMMARY.md   # Refactoring summary
 └── README.md                 # This file
 ```
+
+## Architecture
+
+The system has been refactored into a modular architecture with clear separation of concerns:
+
+### Core Modules (`system/core/`)
+- **DataProvider**: Fetches market data from Alpaca API with retry logic
+- **IndicatorCalculator**: Calculates ATR and Donchian Channels for signals
+- **SignalGenerator**: Generates entry, exit, and pyramid signals
+- **PositionManager**: Manages positions, pyramids, and risk calculations
+- **OrderManager**: Executes and tracks orders with error handling
+
+### Utility Modules (`system/utils/`)
+- **DailyLogger**: Logs trading activities, orders, and state snapshots
+- **SlackNotifier**: Sends real-time notifications to Slack
+- **StateManager**: Persists and loads trading state
+- **Decorators**: Retry logic for API calls
+
+### Main Orchestrator
+- **TurtleTrading**: Coordinates all components to execute the strategy
+
+This architecture makes the system easier to test, maintain, and extend.
 
 ## Setup
 
@@ -57,22 +109,12 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
     ```
 
 2.  **Configure API Keys**:
-    Create a `.config` directory and add the following JSON files:
 
-    -   `./.config/alpaca_api_keys.json`:
-        ```json
-        {
-          "ALPACA_PAPER_KEY": "your_paper_api_key",
-          "ALPACA_PAPER_SECRET": "your_paper_api_secret"
-        }
-        ```
-
-    -   `./.config/personal_slack_token.json`:
-        ```json
-        {
-          "PERSONAL_SLACK_TOKEN": "xoxb-your-slack-token"
-        }
-        ```
+    ```bash
+    export ALPACA_PAPER_KEY="your_key"
+    export ALPACA_PAPER_SECRET="your_secret"
+    export PERSONAL_SLACK_TOKEN="xoxb-token"
+    ```
 
 3.  **Define Ticker Universe**:
     Create a `ticker_universe.txt` file in the root directory with one ticker symbol per line. If this file is not found, a default list of tickers will be used.
@@ -137,6 +179,26 @@ The `backtesting.py` script allows you to test the Turtle Trading strategy on hi
     ```
 
 The script will run the backtest and generate a plot with the portfolio equity, drawdown, and number of open positions over time. It will also print a summary of the backtest results.
+
+### Running Tests
+
+The refactored system includes comprehensive unit tests:
+
+```bash
+# Run all tests
+python tests/run_tests.py
+
+# Run specific test module
+python -m unittest tests.test_core.test_indicators
+
+# Run specific test
+python -m unittest tests.test_core.test_position_manager.TestPositionManager.test_calculate_position_size
+```
+
+**Test Coverage:**
+- 34+ unit tests covering core trading logic
+- Tests for indicators, position management, signals, logging, and state management
+- All tests currently passing ✅
 
 ## Workflows
 
