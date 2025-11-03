@@ -27,7 +27,7 @@ class TurtleTrading:
   """Main Turtle Trading System - Orchestrates all components"""
 
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
-        universe_file='ticker_universe.txt', paper=True,
+        universe_file='system_long/ticker_universe.txt', paper=True,
         entry_margin=0.99, exit_margin=1.01):
     """
     Initialize Turtle Trading System

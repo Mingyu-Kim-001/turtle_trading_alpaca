@@ -3,10 +3,9 @@ graveyard/
 .DS_Store
 data/
 data_gathering/
-logs/
-test/
 trading_state*
 .python-version
 tickers_universe.txt
 __pycache__
 .env
+launch.json

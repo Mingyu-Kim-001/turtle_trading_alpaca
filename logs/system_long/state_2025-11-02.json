@@ -1,0 +1,180 @@
+[
+  {
+    "timestamp": "2025-11-02T20:31:00.438480",
+    "label": "EOD_start",
+    "positions": {
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 92.0,
+            "entry_price": 248.293152,
+            "entry_n": 5.482245000000002,
+            "entry_value": 22842.969984,
+            "entry_date": "2025-10-31T15:30:50.575131+00:00",
+            "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812,6cde857c-5ed5-4d73-b54a-714550be317a,bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec,b2ce8801-359c-4efb-b77d-3a68aec5131a",
+            "grouped_orders": 4
+          }
+        ],
+        "entry_date": "2025-10-31T15:30:50.575131+00:00",
+        "stop_price": 237.32866199999998
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.12,
+        "n": 7.033400000000003,
+        "proximity": 0.5624839290305992
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.56,
+        "n": 19.115219999999994,
+        "proximity": 2.2866654985106005
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 2.3522210563133945
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.37,
+        "n": 5.280994999999995,
+        "proximity": 2.570551466508854
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 2.9702970297029627
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.19,
+        "n": 7.296499999999997,
+        "proximity": 3.6985668053629137
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 4.185009097845862
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 4.675134667819379
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 202.49,
+        "n": 6.322735,
+        "proximity": 4.790310632623826
+      }
+    ],
+    "position_count": 1,
+    "queue_count": 9
+  },
+  {
+    "timestamp": "2025-11-02T20:31:02.828405",
+    "label": "EOD_complete",
+    "positions": {
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 92.0,
+            "entry_price": 248.293152,
+            "entry_n": 5.482245000000002,
+            "entry_value": 22842.969984,
+            "entry_date": "2025-10-31T15:30:50.575131+00:00",
+            "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812,6cde857c-5ed5-4d73-b54a-714550be317a,bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec,b2ce8801-359c-4efb-b77d-3a68aec5131a",
+            "grouped_orders": 4
+          }
+        ],
+        "entry_date": "2025-10-31T15:30:50.575131+00:00",
+        "stop_price": 237.32866199999998
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.12,
+        "n": 7.033400000000003,
+        "proximity": 0.5624839290305992
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.56,
+        "n": 19.115219999999994,
+        "proximity": 2.2866654985106005
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 2.3522210563133945
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.37,
+        "n": 5.280994999999995,
+        "proximity": 2.570551466508854
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 2.9702970297029627
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.19,
+        "n": 7.296499999999997,
+        "proximity": 3.6985668053629137
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 4.185009097845862
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 4.675134667819379
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 202.49,
+        "n": 6.322735,
+        "proximity": 4.790310632623826
+      }
+    ],
+    "position_count": 1,
+    "queue_count": 9
+  }
+]

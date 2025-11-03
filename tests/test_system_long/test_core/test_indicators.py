@@ -3,7 +3,7 @@
 import unittest
 import pandas as pd
 import numpy as np
-from system.core.indicators import IndicatorCalculator
+from system_long.core.indicators import IndicatorCalculator
 
 
 class TestIndicatorCalculator(unittest.TestCase):

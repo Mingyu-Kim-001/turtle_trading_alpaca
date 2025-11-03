@@ -7,7 +7,7 @@ from datetime import datetime
 class StateManager:
   """Manage trading state persistence"""
 
-  def __init__(self, state_file='trading_state.json'):
+  def __init__(self, state_file='system_long/trading_state.json'):
     self.state_file = state_file
     self.load_state()
 

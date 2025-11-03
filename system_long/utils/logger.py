@@ -8,7 +8,7 @@ from datetime import datetime
 class DailyLogger:
   """Log daily trading activities"""
 
-  def __init__(self, log_dir='logs'):
+  def __init__(self, log_dir='logs/system_long'):
     self.log_dir = log_dir
     os.makedirs(log_dir, exist_ok=True)
     self.today = datetime.now().strftime('%Y-%m-%d')

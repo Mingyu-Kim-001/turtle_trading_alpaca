@@ -9,8 +9,8 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
   - [Features](#features)
   - [Project Structure](#project-structure)
   - [Architecture](#architecture)
-    - [Core Modules (`system/core/`)](#core-modules-systemcore)
-    - [Utility Modules (`system/utils/`)](#utility-modules-systemutils)
+    - [Core Modules (`system_long/core/`)](#core-modules-system_longcore)
+    - [Utility Modules (`system_long/utils/`)](#utility-modules-system_longutils)
     - [Main Orchestrator](#main-orchestrator)
   - [Setup](#setup)
   - [Usage](#usage)
@@ -52,7 +52,9 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 │   └── state/                # JSON files for persisting trading state
 ├── data_gathering/           # Scripts to download historical data
 ├── logs/                     # Daily logs for trading activities, orders, and state
-├── system/                   # Refactored modular trading system
+│   ├── system_long/          # Logs for long-only system
+│   └── system_long_short/    # Logs for long-short system
+├── system_long/              # Long-only modular trading system
 │   ├── core/                 # Core trading logic modules
 │   │   ├── data_provider.py      # Market data fetching from Alpaca
 │   │   ├── indicators.py         # Technical indicator calculations
@@ -66,31 +68,52 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 │   │   └── state_manager.py      # State persistence management
 │   ├── turtle_trading.py     # Main orchestrator (refactored)
 │   ├── turtle_manual.py      # Script for manually triggering workflows
-│   └── turtle_scheduler.py   # Scheduler for automated trading
+│   ├── turtle_scheduler.py   # Scheduler for automated trading
+│   ├── ticker_universe.txt   # Ticker list for long-only system
+│   └── trading_state.json    # State file for long-only system
+├── system_long_short/        # Long and short modular trading system
+│   ├── core/                 # Core modules (long/short variants)
+│   ├── utils/                # Utility modules
+│   ├── turtle_trading_ls.py  # Main orchestrator
+│   ├── turtle_manual_ls.py   # Manual control script
+│   ├── turtle_scheduler_ls.py # Scheduler
+│   ├── ticker_universe.txt   # Ticker list for long-short system
+│   ├── trading_state_ls.json # State file for long-short system
+│   ├── htb_exclusions.txt    # Hard-to-borrow exclusion list
+│   └── README.md             # Detailed documentation
 ├── tests/                    # Comprehensive unit tests
-│   ├── test_core/           # Tests for core trading modules
-│   ├── test_utils/          # Tests for utility modules
+│   ├── test_system_long/    # Tests for system_long
+│   │   ├── test_core/       # Tests for core trading modules
+│   │   └── test_utils/      # Tests for utility modules
+│   ├── test_system_long_short/ # Tests for system_long_short
 │   └── run_tests.py         # Test runner
 ├── graveyard/                # Old or unused scripts
 │   └── turtle_live_trading_original.py  # Original monolithic implementation (preserved)
-├── ticker_universe.txt       # List of tickers to trade
 ├── REFACTORING.md           # Detailed refactoring documentation
 ├── REFACTORING_SUMMARY.md   # Refactoring summary
 └── README.md                 # This file
 ```
 
+**Important**: Each system (`system_long` and `system_long_short`) has its own:
+- Log directory: `logs/system_long/` and `logs/system_long_short/`
+- State file: `trading_state.json` and `trading_state_ls.json`
+- Ticker universe: `ticker_universe.txt` (in respective system directories)
+- Configuration files (HTB exclusions for long-short only)
+
+This ensures the two systems never interfere with each other.
+
 ## Architecture
 
 The system has been refactored into a modular architecture with clear separation of concerns:
 
-### Core Modules (`system/core/`)
+### Core Modules (`system_long/core/`)
 - **DataProvider**: Fetches market data from Alpaca API with retry logic
 - **IndicatorCalculator**: Calculates ATR and Donchian Channels for signals
 - **SignalGenerator**: Generates entry, exit, and pyramid signals
 - **PositionManager**: Manages positions, pyramids, and risk calculations
 - **OrderManager**: Executes and tracks orders with error handling
 
-### Utility Modules (`system/utils/`)
+### Utility Modules (`system_long/utils/`)
 - **DailyLogger**: Logs trading activities, orders, and state snapshots
 - **SlackNotifier**: Sends real-time notifications to Slack
 - **StateManager**: Persists and loads trading state
@@ -132,7 +155,11 @@ This architecture makes the system easier to test, maintain, and extend.
 The `turtle_scheduler.py` script automates all the trading workflows. It runs on a schedule during market days.
 
 ```bash
-python system/turtle_scheduler.py
+# Long-only system
+python system_long/turtle_scheduler.py
+
+# Long-short system
+python system_long_short/turtle_scheduler_ls.py
 ```
 
 The scheduler will perform the following actions at the specified times (in PT):
@@ -146,26 +173,31 @@ The scheduler will perform the following actions at the specified times (in PT):
 You can manually trigger the trading workflows using the `turtle_manual.py` script. This is useful for testing and debugging.
 
 ```bash
+# Long-only system
 # Run end-of-day analysis
-python system/turtle_manual.py eod
+python system_long/turtle_manual.py eod
 
 # Run market open setup
-python system/turtle_manual.py open
+python system_long/turtle_manual.py open
 
 # Run a single intraday monitor cycle
-python system/turtle_manual.py monitor
+python system_long/turtle_manual.py monitor
 
 # Run the post-market routine
-python system/turtle_manual.py close
+python system_long/turtle_manual.py close
 
 # Check the current system status
-python system/turtle_manual.py status
+python system_long/turtle_manual.py status
 
 # Align the local state with the broker's state (dry run)
-python system/turtle_manual.py align
+python system_long/turtle_manual.py align
 
 # Align the local state with the broker's state (apply changes)
-python system/turtle_manual.py align --apply
+python system_long/turtle_manual.py align --apply
+
+# Long-short system
+# See system_long_short/README.md for usage
+python system_long_short/turtle_manual_ls.py
 ```
 
 ### Backtesting
@@ -188,11 +220,14 @@ The refactored system includes comprehensive unit tests:
 # Run all tests
 python tests/run_tests.py
 
-# Run specific test module
-python -m unittest tests.test_core.test_indicators
+# Run tests for long-only system
+python -m unittest tests.test_system_long.test_core.test_indicators
+
+# Run tests for long-short system
+python -m unittest tests.test_system_long_short.test_core.test_indicators
 
 # Run specific test
-python -m unittest tests.test_core.test_position_manager.TestPositionManager.test_calculate_position_size
+python -m unittest tests.test_system_long.test_core.test_position_manager.TestPositionManager.test_calculate_position_size
 ```
 
 **Test Coverage:**

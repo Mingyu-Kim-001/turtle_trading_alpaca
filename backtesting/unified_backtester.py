@@ -17,7 +17,7 @@ from typing import Dict, List, Tuple, Optional
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from system.core.indicators import IndicatorCalculator
+from system_long.core.indicators import IndicatorCalculator
 
 # --- Long-Only Backtester Class ---
 class TurtleBacktester:

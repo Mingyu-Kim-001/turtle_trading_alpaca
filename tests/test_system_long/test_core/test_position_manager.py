@@ -1,7 +1,7 @@
 """Tests for PositionManager"""
 
 import unittest
-from system.core.position_manager import PositionManager
+from system_long.core.position_manager import PositionManager
 
 
 class TestPositionManager(unittest.TestCase):

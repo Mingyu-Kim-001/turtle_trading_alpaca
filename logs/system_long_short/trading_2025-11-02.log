@@ -1,0 +1,34 @@
+[2025-11-02 20:08:57] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-02 20:08:57] [INFO] Short selling: enabled
+[2025-11-02 20:11:48] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-02 20:11:48] [INFO] Short selling: enabled
+[2025-11-02 20:11:48] [INFO] ============================================================
+[2025-11-02 20:11:48] [INFO] REBUILDING STATE FROM BROKER (LONG/SHORT)
+[2025-11-02 20:11:48] [INFO] ============================================================
+[2025-11-02 20:11:48] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 20:11:48] [INFO] ⚠️  No open positions at broker. Nothing to rebuild.
+[2025-11-02 20:12:36] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-02 20:12:36] [INFO] Short selling: enabled
+[2025-11-02 20:12:36] [INFO] ============================================================
+[2025-11-02 20:12:36] [INFO] REBUILDING STATE FROM BROKER (LONG/SHORT)
+[2025-11-02 20:12:36] [INFO] ============================================================
+[2025-11-02 20:12:36] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 20:12:37] [INFO] ⚠️  No open positions at broker. Nothing to rebuild.
+[2025-11-02 20:13:06] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-02 20:13:06] [INFO] Short selling: enabled
+[2025-11-02 20:13:06] [INFO] ============================================================
+[2025-11-02 20:13:06] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-11-02 20:13:06] [INFO] ============================================================
+[2025-11-02 20:13:06] [INFO] State snapshot saved: EOD_start
+[2025-11-02 20:13:07] [INFO] State snapshot saved: EOD_complete
+[2025-11-02 20:13:07] [INFO] Found 0 potential entry signals
+[2025-11-02 20:31:41] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-02 20:31:41] [INFO] Short selling: enabled
+[2025-11-02 20:31:41] [INFO] ============================================================
+[2025-11-02 20:31:41] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-11-02 20:31:41] [INFO] ============================================================
+[2025-11-02 20:31:41] [INFO] State snapshot saved: EOD_start
+[2025-11-02 20:31:44] [INFO] State snapshot saved: EOD_complete
+[2025-11-02 20:31:44] [INFO] Found 19 potential entry signals

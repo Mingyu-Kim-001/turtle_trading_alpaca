@@ -165,7 +165,7 @@ This checks:
 
 **Hard-to-Borrow (HTB) Exclusion List**:
 
-Create `htb_exclusions.txt` to manually exclude problematic stocks:
+Create `system_long_short/htb_exclusions.txt` to manually exclude problematic stocks:
 
 ```txt
 # Hard-to-Borrow Exclusion List

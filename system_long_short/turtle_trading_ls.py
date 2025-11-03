@@ -28,7 +28,7 @@ class TurtleTradingLS:
   """Main Turtle Trading System with Long and Short Positions"""
 
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
-        universe_file='ticker_universe.txt', paper=True,
+        universe_file='system_long_short/ticker_universe.txt', paper=True,
         entry_margin=0.99, exit_margin=1.01,
         enable_shorts=True, check_shortability=False):
     """
@@ -110,7 +110,7 @@ class TurtleTradingLS:
     - Limited share availability
     - Short squeeze risk
     """
-    htb_file = 'htb_exclusions.txt'
+    htb_file = 'system_long_short/htb_exclusions.txt'
     if os.path.exists(htb_file):
       try:
         with open(htb_file, 'r') as f:
@@ -124,7 +124,7 @@ class TurtleTradingLS:
         self.logger.log(f"Error loading HTB exclusions: {e}", 'WARNING')
         self.htb_exclusions = set()
     else:
-      self.logger.log("No htb_exclusions.txt found, all stocks eligible for shorting")
+      self.logger.log("No system_long_short/htb_exclusions.txt found, all stocks eligible for shorting")
 
   def _load_shortable_tickers(self):
     """
@@ -1015,6 +1015,221 @@ class TurtleTradingLS:
     self.logger.log(f"Total P&L: ${total_pnl:,.2f}")
 
     return exit_results
+
+  def rebuild_state_from_broker(self, lookback_days=90, dry_run=True):
+    """
+    Rebuild trading_state_ls.json from Alpaca for long and short positions
+    """
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+
+    self.logger.log("="*60)
+    self.logger.log("REBUILDING STATE FROM BROKER (LONG/SHORT)")
+    self.logger.log("="*60)
+
+    # Step 1: Get current broker positions
+    self.logger.log("\n📊 Step 1: Fetching current broker positions...")
+    broker_positions = self.trading_client.get_all_positions()
+    long_broker_pos = {p.symbol: p for p in broker_positions if p.side.name == 'LONG'}
+    short_broker_pos = {p.symbol: p for p in broker_positions if p.side.name == 'SHORT'}
+
+    if not broker_positions:
+        self.logger.log("⚠️  No open positions at broker. Nothing to rebuild.")
+        return None
+
+    self.logger.log(f"Found {len(long_broker_pos)} long and {len(short_broker_pos)} short positions.")
+
+    # Step 2: Fetch order history
+    self.logger.log(f"\n📜 Step 2: Fetching order history (last {lookback_days} days)...")
+    after_date = datetime.now() - timedelta(days=lookback_days)
+    request = GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=500, after=after_date)
+    all_orders = self.trading_client.get_orders(filter=request)
+
+    filled_buys = [o for o in all_orders if o.side.name == 'BUY' and o.status.name == 'FILLED']
+    filled_sells = [o for o in all_orders if o.side.name == 'SELL' and o.status.name == 'FILLED']
+    self.logger.log(f"Found {len(filled_buys)} filled BUY and {len(filled_sells)} filled SELL orders.")
+
+    # Step 3 & 4: Reconstruct positions for each side
+    rebuilt_long_pos = self._reconstruct_positions('long', long_broker_pos, filled_buys, filled_sells, lookback_days)
+    rebuilt_short_pos = self._reconstruct_positions('short', short_broker_pos, filled_sells, filled_buys, lookback_days)
+
+    # Step 5: Build complete state
+    self.logger.log("\n✅ Step 5: Building complete state...")
+    rebuilt_state = {
+        'long_positions': rebuilt_long_pos,
+        'short_positions': rebuilt_short_pos,
+        'entry_queue': [],
+        'pending_pyramid_orders': {},
+        'pending_entry_orders': {},
+        'last_updated': datetime.now().isoformat()
+    }
+    self.logger.log(f"Rebuilt state: {len(rebuilt_long_pos)} long, {len(rebuilt_short_pos)} short positions")
+
+    # Step 6: Save state
+    if dry_run:
+        self.logger.log("\n🔍 DRY RUN - State NOT saved. Run with --apply to save.")
+    else:
+        self.logger.log("\n💾 Saving rebuilt state...")
+        # Backup and save
+        import shutil
+        backup_file = f"system_long_short/trading_state_ls_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        try:
+            shutil.copy(self.state.state_file, backup_file)
+            self.logger.log(f"  Old state backed up to: {backup_file}")
+        except FileNotFoundError:
+            pass # No old state to back up
+
+        self.state.long_positions = rebuilt_long_pos
+        self.state.short_positions = rebuilt_short_pos
+        self.state.entry_queue = []
+        self.state.pending_pyramid_orders = {}
+        self.state.pending_entry_orders = {}
+        self.state.save_state()
+        self.logger.log("  ✅ State successfully rebuilt and saved!")
+
+    self.logger.log("\n" + "="*60)
+    return rebuilt_state
+
+  def _reconstruct_positions(self, side, broker_positions, entry_orders, exit_orders, lookback_days):
+    from collections import defaultdict
+
+    self.logger.log(f"\n--- Reconstructing {side.upper()} positions ---")
+    orders_by_ticker = defaultdict(list)
+    for order in entry_orders:
+        if order.symbol in broker_positions:
+            orders_by_ticker[order.symbol].append({
+                'id': str(order.id),
+                'filled_qty': float(order.filled_qty),
+                'filled_avg_price': float(order.filled_avg_price),
+                'filled_at': order.filled_at
+            })
+
+    rebuilt_positions = {}
+    for ticker, pos in broker_positions.items():
+        broker_qty = abs(float(pos.qty))
+        self.logger.log(f"\nProcessing {ticker} ({side.upper()}): {broker_qty:.0f} units")
+
+        if ticker not in orders_by_ticker:
+            self.logger.log(f"  ⚠️  No {side.upper()} orders found in history. Using broker avg price.")
+            n = self._get_n_for_rebuild(ticker, datetime.now())
+            rebuilt_positions[ticker] = self._create_single_pyramid_unit(pos, n)
+            continue
+
+        # Sort orders chronologically
+        ticker_orders = sorted(orders_by_ticker[ticker], key=lambda x: x['filled_at'])
+
+        # Filter out orders that have been closed out
+        exit_qty_for_ticker = sum(o.filled_qty for o in exit_orders if o.symbol == ticker)
+        # This part is tricky. A simple FIFO for exits is assumed.
+        # A more robust solution would trace every buy/sell pair.
+
+        # For now, we use the most recent orders that sum up to the current position size
+        cumulative_qty = 0
+        relevant_orders = []
+        for order in reversed(ticker_orders):
+            if cumulative_qty < broker_qty:
+                relevant_orders.append(order)
+                cumulative_qty += order['filled_qty']
+        relevant_orders.reverse() # Back to chronological
+
+        if not relevant_orders:
+            self.logger.log(f"  ⚠️  Could not determine relevant entry orders for {ticker}. Using broker avg price.")
+            n = self._get_n_for_rebuild(ticker, datetime.now())
+            rebuilt_positions[ticker] = self._create_single_pyramid_unit(pos, n)
+            continue
+
+        self.logger.log(f"  Found {len(relevant_orders)} relevant entry orders.")
+
+        # Group orders into pyramid levels (orders within 1 day)
+        pyramid_levels = self._group_orders_into_pyramids(relevant_orders)
+        self.logger.log(f"  Reconstructed {len(pyramid_levels)} pyramid level(s).")
+
+        # Reconstruct pyramid_units list
+        pyramid_units = []
+        for i, level_orders in enumerate(pyramid_levels, 1):
+            total_qty = sum(o['filled_qty'] for o in level_orders)
+            total_value = sum(o['filled_qty'] * o['filled_avg_price'] for o in level_orders)
+            avg_price = total_value / total_qty
+            entry_date = level_orders[0]['filled_at']
+            n = self._get_n_for_rebuild(ticker, entry_date)
+            order_ids = ",".join(o['id'] for o in level_orders)
+
+            pyramid_units.append({
+                'units': total_qty,
+                'entry_price': avg_price,
+                'entry_n': n,
+                'entry_value': total_value,
+                'entry_date': entry_date.isoformat(),
+                'order_id': order_ids,
+                'grouped_orders': len(level_orders)
+            })
+            self.logger.log(f"    Level {i}: {total_qty:.0f} units @ ${avg_price:.2f}, N=${n:.2f}")
+
+        # Final verification and stop price calculation
+        reconstructed_qty = sum(p['units'] for p in pyramid_units)
+        if abs(reconstructed_qty - broker_qty) > 0.01:
+            self.logger.log(f"  ⚠️  Mismatch: Reconstructed {reconstructed_qty:.0f} units, broker has {broker_qty:.0f}", 'WARNING')
+
+        last_entry_price = pyramid_units[-1]['entry_price']
+        last_n = pyramid_units[-1]['entry_n']
+        stop_price = self.position_manager.calculate_stop_price(last_entry_price, last_n, side)
+
+        rebuilt_positions[ticker] = {
+            'pyramid_units': pyramid_units,
+            'entry_date': pyramid_units[0]['entry_date'],
+            'stop_price': stop_price,
+            'initial_n': pyramid_units[0]['entry_n'],
+            'initial_units': pyramid_units[0]['units']
+        }
+        self.logger.log(f"  Stop Price: ${stop_price:.2f}")
+
+    return rebuilt_positions
+
+  def _get_n_for_rebuild(self, ticker, end_date):
+      hist = self.data_provider.get_historical_data(ticker, 60, end_date=end_date.date())
+      if hist is not None and len(hist) >= 20:
+          hist_with_n = self.indicator_calculator.calculate_atr(hist)
+          n_value = hist_with_n['N'].iloc[-1]
+          if pd.notna(n_value) and n_value > 0:
+              return float(n_value)
+      return None # Sentinel for fallback
+
+  def _create_single_pyramid_unit(self, position, n_value):
+      avg_price = float(position.avg_entry_price)
+      qty = abs(float(position.qty))
+      n = n_value if n_value else avg_price * 0.02 # Fallback N
+
+      stop_price = self.position_manager.calculate_stop_price(avg_price, n, position.side.name.lower())
+
+      return {
+          'pyramid_units': [{
+              'units': qty,
+              'entry_price': avg_price,
+              'entry_n': n,
+              'entry_value': qty * avg_price,
+              'entry_date': datetime.now().isoformat(),
+              'order_id': 'UNKNOWN_REBUILT'
+          }],
+          'entry_date': datetime.now().isoformat(),
+          'stop_price': stop_price,
+          'initial_n': n,
+          'initial_units': qty
+      }
+
+  def _group_orders_into_pyramids(self, orders):
+      if not orders:
+          return []
+      pyramid_levels = []
+      current_level = [orders[0]]
+      for i in range(1, len(orders)):
+          time_diff = (orders[i]['filled_at'] - orders[i-1]['filled_at']).total_seconds()
+          if time_diff < 86400: # Within 1 day
+              current_level.append(orders[i])
+          else:
+              pyramid_levels.append(current_level)
+              current_level = [orders[i]]
+      pyramid_levels.append(current_level)
+      return pyramid_levels
 
 
 def main():

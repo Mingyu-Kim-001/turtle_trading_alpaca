@@ -1,0 +1,210 @@
+[2025-11-02 13:17:31] [INFO] Turtle Trading System initialized
+[2025-11-02 13:17:47] [INFO] Turtle Trading System initialized
+[2025-11-02 13:22:39] [INFO] Turtle Trading System initialized
+[2025-11-02 13:22:39] [INFO] ============================================================
+[2025-11-02 13:22:39] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:22:39] [INFO] ============================================================
+[2025-11-02 13:22:39] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:22:40] [INFO] Found 1 open positions at broker
+[2025-11-02 13:22:40] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:22:40] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:22:58] [INFO] Turtle Trading System initialized
+[2025-11-02 13:22:58] [INFO] ============================================================
+[2025-11-02 13:22:58] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:22:58] [INFO] ============================================================
+[2025-11-02 13:22:58] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:22:58] [INFO] Found 1 open positions at broker
+[2025-11-02 13:22:58] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:22:58] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:22:58] [INFO] Found 33 filled BUY orders in history
+[2025-11-02 13:22:58] [INFO] 
+🔄 Step 3: Grouping orders by ticker...
+[2025-11-02 13:22:58] [INFO] 
+🏗️  Step 4: Reconstructing pyramid units...
+[2025-11-02 13:22:58] [INFO] 
+Processing AMZN:
+[2025-11-02 13:22:58] [INFO]   Found 3 pyramid level(s)
+[2025-11-02 13:23:15] [INFO] Turtle Trading System initialized
+[2025-11-02 13:23:15] [INFO] ============================================================
+[2025-11-02 13:23:15] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:23:15] [INFO] ============================================================
+[2025-11-02 13:23:15] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:23:15] [INFO] Found 1 open positions at broker
+[2025-11-02 13:23:15] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:23:15] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:23:15] [INFO] Found 33 filled BUY orders in history
+[2025-11-02 13:23:15] [INFO] 
+🔄 Step 3: Grouping orders by ticker...
+[2025-11-02 13:23:15] [INFO] 
+🏗️  Step 4: Reconstructing pyramid units...
+[2025-11-02 13:23:15] [INFO] 
+Processing AMZN:
+[2025-11-02 13:23:15] [INFO]   Found 3 pyramid level(s)
+[2025-11-02 13:23:44] [INFO] Turtle Trading System initialized
+[2025-11-02 13:23:44] [INFO] ============================================================
+[2025-11-02 13:23:44] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:23:44] [INFO] ============================================================
+[2025-11-02 13:23:44] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:23:45] [INFO] Found 1 open positions at broker
+[2025-11-02 13:23:45] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:23:45] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:23:45] [INFO] Found 33 filled BUY orders in history
+[2025-11-02 13:23:45] [INFO] 
+🔄 Step 3: Grouping orders by ticker...
+[2025-11-02 13:23:45] [INFO] 
+🏗️  Step 4: Reconstructing pyramid units...
+[2025-11-02 13:23:45] [INFO] 
+Processing AMZN:
+[2025-11-02 13:23:45] [INFO]   Found 3 pyramid level(s)
+[2025-11-02 13:23:45] [INFO]     Level 1: 374 units @ $227.62, N=$nan (2 order(s))
+[2025-11-02 13:23:45] [INFO]     Level 2: 27 units @ $229.23, N=$nan (3 order(s))
+[2025-11-02 13:23:45] [INFO]     Level 3: 92 units @ $248.29, N=$nan (4 order(s))
+[2025-11-02 13:23:45] [WARNING]   ⚠️  WARNING: Reconstructed 493 units, but broker shows 92 units
+[2025-11-02 13:23:45] [INFO]   Stop Price: $nan
+[2025-11-02 13:23:45] [INFO] 
+✅ Step 5: Building complete state...
+[2025-11-02 13:23:45] [INFO] 
+Rebuilt state summary:
+[2025-11-02 13:23:45] [INFO]   Positions: 1
+[2025-11-02 13:23:45] [INFO]   Total pyramid levels: 3
+[2025-11-02 13:23:45] [INFO] 
+🔍 DRY RUN - State NOT saved
+[2025-11-02 13:23:45] [INFO] Run with --apply flag to save the rebuilt state
+[2025-11-02 13:23:45] [INFO] 
+============================================================
+[2025-11-02 13:24:34] [INFO] Turtle Trading System initialized
+[2025-11-02 13:24:34] [INFO] ============================================================
+[2025-11-02 13:24:34] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:24:34] [INFO] ============================================================
+[2025-11-02 13:24:34] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:24:35] [INFO] Found 1 open positions at broker
+[2025-11-02 13:24:35] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:24:35] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:24:35] [INFO] Found 33 filled BUY orders in history
+[2025-11-02 13:24:35] [INFO] Found 6 filled SELL orders in history
+[2025-11-02 13:24:35] [INFO] 
+🔄 Step 3: Grouping orders by ticker...
+[2025-11-02 13:24:35] [INFO]   AMZN: Using 4 most recent orders (total sold: 401)
+[2025-11-02 13:24:35] [INFO] 
+🏗️  Step 4: Reconstructing pyramid units...
+[2025-11-02 13:24:35] [INFO] 
+Processing AMZN:
+[2025-11-02 13:24:35] [INFO]   Found 1 pyramid level(s)
+[2025-11-02 13:24:35] [INFO]     Level 1: 92 units @ $248.29, N=$5.48 (4 order(s))
+[2025-11-02 13:24:35] [INFO]   Stop Price: $237.33
+[2025-11-02 13:24:35] [INFO] 
+✅ Step 5: Building complete state...
+[2025-11-02 13:24:35] [INFO] 
+Rebuilt state summary:
+[2025-11-02 13:24:35] [INFO]   Positions: 1
+[2025-11-02 13:24:35] [INFO]   Total pyramid levels: 1
+[2025-11-02 13:24:35] [INFO] 
+🔍 DRY RUN - State NOT saved
+[2025-11-02 13:24:35] [INFO] Run with --apply flag to save the rebuilt state
+[2025-11-02 13:24:35] [INFO] 
+============================================================
+[2025-11-02 13:25:20] [INFO] Turtle Trading System initialized
+[2025-11-02 13:25:20] [INFO] ============================================================
+[2025-11-02 13:25:20] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:25:20] [INFO] ============================================================
+[2025-11-02 13:25:20] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:25:20] [INFO] Found 1 open positions at broker
+[2025-11-02 13:25:20] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:25:20] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:25:20] [INFO] Found 33 filled BUY orders in history
+[2025-11-02 13:25:20] [INFO] Found 6 filled SELL orders in history
+[2025-11-02 13:25:20] [INFO] 
+🔄 Step 3: Grouping orders by ticker...
+[2025-11-02 13:25:20] [INFO]   AMZN: Using 4 most recent orders (total sold: 401)
+[2025-11-02 13:25:20] [INFO] 
+🏗️  Step 4: Reconstructing pyramid units...
+[2025-11-02 13:25:20] [INFO] 
+Processing AMZN:
+[2025-11-02 13:25:20] [INFO]   Found 1 pyramid level(s)
+[2025-11-02 13:25:20] [INFO]     Level 1: 92 units @ $248.29, N=$5.48 (4 order(s))
+[2025-11-02 13:25:20] [INFO]   Stop Price: $237.33
+[2025-11-02 13:25:20] [INFO] 
+✅ Step 5: Building complete state...
+[2025-11-02 13:25:20] [INFO] 
+Rebuilt state summary:
+[2025-11-02 13:25:20] [INFO]   Positions: 1
+[2025-11-02 13:25:20] [INFO]   Total pyramid levels: 1
+[2025-11-02 13:25:20] [INFO] 
+🔍 DRY RUN - State NOT saved
+[2025-11-02 13:25:20] [INFO] Run with --apply flag to save the rebuilt state
+[2025-11-02 13:25:20] [INFO] 
+============================================================
+[2025-11-02 13:25:27] [INFO] Turtle Trading System initialized
+[2025-11-02 13:25:34] [INFO] ============================================================
+[2025-11-02 13:25:34] [INFO] REBUILDING STATE FROM BROKER
+[2025-11-02 13:25:34] [INFO] ============================================================
+[2025-11-02 13:25:34] [INFO] 
+📊 Step 1: Fetching current broker positions...
+[2025-11-02 13:25:35] [INFO] Found 1 open positions at broker
+[2025-11-02 13:25:35] [INFO]   - AMZN: 92 units @ $248.29
+[2025-11-02 13:25:35] [INFO] 
+📜 Step 2: Fetching order history (last 90 days)...
+[2025-11-02 13:25:35] [INFO] Found 33 filled BUY orders in history
+[2025-11-02 13:25:35] [INFO] Found 6 filled SELL orders in history
+[2025-11-02 13:25:35] [INFO] 
+🔄 Step 3: Grouping orders by ticker...
+[2025-11-02 13:25:35] [INFO]   AMZN: Using 4 most recent orders (total sold: 401)
+[2025-11-02 13:25:35] [INFO] 
+🏗️  Step 4: Reconstructing pyramid units...
+[2025-11-02 13:25:35] [INFO] 
+Processing AMZN:
+[2025-11-02 13:25:35] [INFO]   Found 1 pyramid level(s)
+[2025-11-02 13:25:35] [INFO]     Level 1: 92 units @ $248.29, N=$5.48 (4 order(s))
+[2025-11-02 13:25:35] [INFO]   Stop Price: $237.33
+[2025-11-02 13:25:35] [INFO] 
+✅ Step 5: Building complete state...
+[2025-11-02 13:25:35] [INFO] 
+Rebuilt state summary:
+[2025-11-02 13:25:35] [INFO]   Positions: 1
+[2025-11-02 13:25:35] [INFO]   Total pyramid levels: 1
+[2025-11-02 13:25:35] [INFO] 
+💾 Saving rebuilt state to trading_state.json...
+[2025-11-02 13:25:35] [INFO]   Old state backed up to: trading_state_backup_20251102_132535.json
+[2025-11-02 13:25:35] [INFO]   ✅ State successfully rebuilt and saved!
+[2025-11-02 13:25:35] [INFO] 
+============================================================
+[2025-11-02 13:29:51] [INFO] Turtle Trading System initialized
+[2025-11-02 13:29:51] [INFO] ============================================================
+[2025-11-02 13:29:51] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-11-02 13:29:51] [INFO] ============================================================
+[2025-11-02 13:29:51] [INFO] State snapshot saved: EOD_start
+[2025-11-02 13:29:53] [INFO] State snapshot saved: EOD_complete
+[2025-11-02 13:29:53] [INFO] Found 9 potential entry signals
+[2025-11-02 13:42:07] [INFO] Turtle Trading System initialized
+[2025-11-02 13:42:07] [INFO] ============================================================
+[2025-11-02 13:42:07] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-11-02 13:42:07] [INFO] ============================================================
+[2025-11-02 13:42:07] [INFO] State snapshot saved: EOD_start
+[2025-11-02 13:43:45] [INFO] State snapshot saved: EOD_complete
+[2025-11-02 13:43:45] [INFO] Found 205 potential entry signals
+[2025-11-02 13:51:07] [INFO] Turtle Trading System initialized
+[2025-11-02 13:51:07] [INFO] ============================================================
+[2025-11-02 13:51:07] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-11-02 13:51:07] [INFO] ============================================================
+[2025-11-02 13:51:07] [INFO] State snapshot saved: EOD_start
+[2025-11-02 13:51:09] [INFO] State snapshot saved: EOD_complete
+[2025-11-02 13:51:09] [INFO] Found 9 potential entry signals
+[2025-11-02 20:31:00] [INFO] Turtle Trading System initialized
+[2025-11-02 20:31:00] [INFO] ============================================================
+[2025-11-02 20:31:00] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-11-02 20:31:00] [INFO] ============================================================
+[2025-11-02 20:31:00] [INFO] State snapshot saved: EOD_start
+[2025-11-02 20:31:02] [INFO] State snapshot saved: EOD_complete
+[2025-11-02 20:31:02] [INFO] Found 9 potential entry signals

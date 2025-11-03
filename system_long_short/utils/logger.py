@@ -8,7 +8,7 @@ from datetime import datetime
 class DailyLogger:
   """Log daily trading activities"""
 
-  def __init__(self, log_dir='logs'):
+  def __init__(self, log_dir='logs/system_long_short'):
     self.log_dir = log_dir
     os.makedirs(log_dir, exist_ok=True)
     self.today = datetime.now().strftime('%Y-%m-%d')
@@ -44,13 +44,15 @@ class DailyLogger:
       json.dump(self.orders, f, indent=2)
 
   def log_state_snapshot(self, state, label='snapshot'):
-    """Log a snapshot of trading state"""
+    """Log a snapshot of trading state for long-short system"""
     snapshot = {
       'timestamp': datetime.now().isoformat(),
       'label': label,
-      'positions': state.positions,
+      'long_positions': state.long_positions,
+      'short_positions': state.short_positions,
       'entry_queue': state.entry_queue,
-      'position_count': len(state.positions),
+      'long_position_count': len(state.long_positions),
+      'short_position_count': len(state.short_positions),
       'queue_count': len(state.entry_queue)
     }
     self.state_snapshots.append(snapshot)

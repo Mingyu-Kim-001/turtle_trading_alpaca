@@ -7,27 +7,44 @@ from datetime import datetime
 class StateManager:
   """Manage trading state persistence for long and short positions"""
 
-  def __init__(self, state_file='trading_state_ls.json'):
+  def __init__(self, state_file='system_long_short/trading_state_ls.json'):
     self.state_file = state_file
     self.load_state()
 
   def load_state(self):
-    """Load state from file"""
+    """Load state from file, handling empty or malformed JSON"""
     try:
-      with open(self.state_file, 'r') as f:
-        data = json.load(f)
-        self.long_positions = data.get('long_positions', {})
-        self.short_positions = data.get('short_positions', {})
-        self.entry_queue = data.get('entry_queue', [])
-        self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
-        self.pending_entry_orders = data.get('pending_entry_orders', {})
-        self.last_updated = data.get('last_updated', None)
-        print(f"State loaded: long_positions={len(self.long_positions)}, "
-           f"short_positions={len(self.short_positions)}, "
-           f"pending_pyramids={len(self.pending_pyramid_orders)}, "
-           f"pending_entries={len(self.pending_entry_orders)}")
+        with open(self.state_file, 'r') as f:
+            content = f.read()
+            if not content:
+                print("State file is empty, initializing new state")
+                self._initialize_new_state()
+                return
+
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError:
+                print("State file is malformed, initializing new state")
+                self._initialize_new_state()
+                return
+
+            self.long_positions = data.get('long_positions', {})
+            self.short_positions = data.get('short_positions', {})
+            self.entry_queue = data.get('entry_queue', [])
+            self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
+            self.pending_entry_orders = data.get('pending_entry_orders', {})
+            self.last_updated = data.get('last_updated', None)
+            print(f"State loaded: long_positions={len(self.long_positions)}, "
+                  f"short_positions={len(self.short_positions)}, "
+                  f"pending_pyramids={len(self.pending_pyramid_orders)}, "
+                  f"pending_entries={len(self.pending_entry_orders)}")
+
     except FileNotFoundError:
-      print("No existing state found, initializing new state")
+        print("No existing state found, initializing new state")
+        self._initialize_new_state()
+
+  def _initialize_new_state(self):
+      """Initialize a new, empty state and save it"""
       self.long_positions = {}
       self.short_positions = {}
       self.entry_queue = []

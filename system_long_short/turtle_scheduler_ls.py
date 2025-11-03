@@ -8,13 +8,13 @@ This script runs the appropriate workflows at the right times:
 - 1:15 PM PT: Post-Market Routine
 
 Usage:
-  python turtle_scheduler_ls.py
+  python -m system_long_short.turtle_scheduler_ls
 """
 
 import schedule
 import time
 from datetime import datetime
-from turtle_trading_ls import TurtleTradingLS
+from .turtle_trading_ls import TurtleTradingLS
 import os
 
 

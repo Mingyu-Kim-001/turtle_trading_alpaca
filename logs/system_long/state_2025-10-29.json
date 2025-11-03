@@ -1,0 +1,1430 @@
+[
+  {
+    "timestamp": "2025-10-30T05:03:58.765476",
+    "label": "EOD_start",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "META",
+        "entry_price": 758.4,
+        "current_price": 751.44,
+        "n": 16.566240000000004,
+        "proximity": 0.9262216544234965
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 203.15,
+        "current_price": 201.03,
+        "n": 5.839740000000001,
+        "proximity": 1.0545689698055039
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 116.85,
+        "current_price": 115.03,
+        "n": 1.909730000000001,
+        "proximity": 1.5821959488828943
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 542.07,
+        "n": 8.656145000000027,
+        "proximity": 2.1491689265224005
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 460.55,
+        "n": 20.818469999999998,
+        "proximity": 2.2147432417761346
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 346.9,
+        "n": 6.192669999999993,
+        "proximity": 2.334966849236098
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 314.59,
+        "current_price": 305.36,
+        "n": 6.9501500000000025,
+        "proximity": 3.0226617762640693
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 586.075,
+        "current_price": 565.93,
+        "n": 10.759740000000004,
+        "proximity": 3.5596275157705186
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 151.37,
+        "n": 2.3566499999999992,
+        "proximity": 3.983616304419635
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.93,
+        "n": 2.9975249999999987,
+        "proximity": 4.038945059647987
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 504.97,
+        "current_price": 481.44,
+        "n": 6.244874999999999,
+        "proximity": 4.88742107012297
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 11
+  },
+  {
+    "timestamp": "2025-10-30T05:04:00.500302",
+    "label": "EOD_complete",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T06:36:32.211544",
+    "label": "intraday_0636",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T06:36:34.276656",
+    "label": "market_open",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T06:50:17.913119",
+    "label": "intraday_0650",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T07:00:20.520907",
+    "label": "intraday_0700",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T07:16:21.728435",
+    "label": "intraday_0716",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T07:34:21.395307",
+    "label": "intraday_0734",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T07:41:13.957267",
+    "label": "intraday_0741",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  },
+  {
+    "timestamp": "2025-10-30T07:52:01.367381",
+    "label": "intraday_0752",
+    "risk_pot": 1287.8783599999983,
+    "positions": {
+      "GOOGL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 156,
+            "entry_price": 265.999872,
+            "entry_n": 6.382629999999997,
+            "entry_value": 41495.980032,
+            "entry_date": "2025-10-27T08:02:49.738696"
+          }
+        ],
+        "entry_date": "2025-10-27T08:02:49.738754",
+        "stop_price": 253.234612
+      },
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 374.0,
+            "entry_price": 227.61500000000004,
+            "entry_n": 5.297995000000002,
+            "entry_value": 85128.01000000001,
+            "entry_date": "2025-10-27T16:37:43.491868+00:00",
+            "order_id": "e0b38cea-aa03-41ed-ae13-b9c7305ee948,cbfb8ebc-8d1e-45ea-a729-dbb3b31741a9",
+            "grouped_orders": 2
+          },
+          {
+            "units": 27.0,
+            "entry_price": 229.22925899999998,
+            "entry_n": 5.297995000000002,
+            "entry_value": 6189.189993,
+            "entry_date": "2025-10-29T18:05:09.606953+00:00",
+            "order_id": "f671649c-3282-47c9-b9d6-9e4994a0e51e,cfb9a8c7-0efd-4c6f-ab73-aa5b5de192fc,61246de4-ec6d-416b-b50d-0e7c69c6b953",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T16:37:43.491868+00:00",
+        "stop_price": 218.63326899999998
+      },
+      "AAPL": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 195.0,
+            "entry_price": 266.62,
+            "entry_n": 5.055995,
+            "entry_value": 51990.9,
+            "entry_date": "2025-10-27T19:14:58.922039+00:00",
+            "order_id": "6ea9512d-01d7-424e-98f2-b103ba996443",
+            "grouped_orders": 1
+          },
+          {
+            "units": 28.0,
+            "entry_price": 267.75321428571425,
+            "entry_n": 5.055995,
+            "entry_value": 7497.089999999999,
+            "entry_date": "2025-10-29T15:26:27.792846+00:00",
+            "order_id": "9a98ddb6-000a-4881-a223-a560bac0a4a5,ef4eb0d6-76ee-4330-b133-6f870df6ec28,7959d675-3297-4d0e-ad18-a48dd9d7e00e",
+            "grouped_orders": 3
+          }
+        ],
+        "entry_date": "2025-10-27T19:14:58.922039+00:00",
+        "stop_price": 257.64122428571426
+      },
+      "META": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 6.0,
+            "entry_price": 750.9200000000001,
+            "entry_n": 16.189490000000006,
+            "entry_value": 4505.52,
+            "entry_date": "2025-10-29T15:58:30.056180+00:00",
+            "order_id": "1d099055-c759-41e0-abdd-3ec621efe76c,eda6ae86-e029-40a5-87df-39960ae380a2",
+            "grouped_orders": 2
+          }
+        ],
+        "entry_date": "2025-10-29T15:58:30.056180+00:00",
+        "stop_price": 718.5410200000001
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 116.45,
+        "n": 1.9353550000000013,
+        "proximity": 0.5152425933877152
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 470.75,
+        "current_price": 461.51,
+        "n": 20.393969999999996,
+        "proximity": 2.002123464280299
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.1199,
+        "current_price": 305.51,
+        "n": 6.810900000000004,
+        "proximity": 2.163562567510059
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 553.72,
+        "current_price": 541.55,
+        "n": 8.692460000000025,
+        "proximity": 2.247253254547147
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.04,
+        "n": 6.185735000000001,
+        "proximity": 2.4873937403400324
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 341.28,
+        "n": 6.339169999999993,
+        "proximity": 4.020159399906244
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 186.6,
+        "n": 2.9870249999999983,
+        "proximity": 4.222936763129686
+      }
+    ],
+    "position_count": 4,
+    "queue_count": 7
+  }
+]

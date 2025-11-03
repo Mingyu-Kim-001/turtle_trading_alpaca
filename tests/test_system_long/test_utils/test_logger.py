@@ -6,7 +6,7 @@ import json
 import tempfile
 import shutil
 from datetime import datetime
-from system.utils.logger import DailyLogger
+from system_long.utils.logger import DailyLogger
 
 
 class TestDailyLogger(unittest.TestCase):

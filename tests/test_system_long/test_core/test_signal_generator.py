@@ -3,7 +3,7 @@
 import unittest
 import pandas as pd
 import numpy as np
-from system.core.signal_generator import SignalGenerator
+from system_long.core.signal_generator import SignalGenerator
 
 
 class TestSignalGenerator(unittest.TestCase):

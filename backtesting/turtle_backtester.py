@@ -7,7 +7,7 @@ import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from system.core.indicators import IndicatorCalculator
+from system_long.core.indicators import IndicatorCalculator
 
 class TurtleBacktester:
   def __init__(self, initial_equity=10_000, risk_per_unit_pct=0.001, max_positions=10, enable_logging=True):
