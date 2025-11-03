@@ -48,6 +48,7 @@ class IndicatorCalculator:
     df = df.copy()
     df['high_20'] = df['high'].rolling(window=entry_period).max()
     df['high_55'] = df['high'].rolling(window=long_entry_period).max()
+    df['high_10'] = df['high'].rolling(window=exit_period).max()  # For short exits
     df['low_10'] = df['low'].rolling(window=exit_period).min()
     df['low_20'] = df['low'].rolling(window=entry_period).min()
     return df

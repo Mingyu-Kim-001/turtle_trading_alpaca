@@ -10,7 +10,7 @@ sys.path.append(project_root)
 from system.core.indicators import IndicatorCalculator
 
 class TurtleBacktester:
-  def __init__(self, initial_equity=10_000, risk_per_unit_pct=0.001, max_positions=10):
+  def __init__(self, initial_equity=10_000, risk_per_unit_pct=0.001, max_positions=10, enable_logging=True):
     self.initial_equity = initial_equity
     self.cash = initial_equity
     self.risk_per_unit_pct = risk_per_unit_pct
@@ -21,6 +21,7 @@ class TurtleBacktester:
     self.cash_history = []
     self.equity_history = []
     self.unit_history = []
+    self.enable_logging = enable_logging
 
   def _calculate_indicators(self, df):
     """Calculate all necessary indicators."""
@@ -139,9 +140,29 @@ class TurtleBacktester:
   def _close_position(self, ticker, exit_price, today_date, exit_reason):
     position = self.positions.pop(ticker)
     pnl = position['units'] * (exit_price - position['entry_price'])
-    
+
     self.cash += position['units'] * exit_price
-    
+
+    # Log exit details
+    if self.enable_logging:
+      pnl_pct = (exit_price - position['entry_price']) / position['entry_price'] * 100
+      duration = (today_date - position['entry_date']).days
+
+      print(f"\n{'='*80}")
+      print(f"EXIT: {ticker} [{exit_reason}]")
+      print(f"{'='*80}")
+      print(f"  Entry Date:       {position['entry_date'].strftime('%Y-%m-%d')}")
+      print(f"  Exit Date:        {today_date.strftime('%Y-%m-%d')}")
+      print(f"  Duration:         {duration} days")
+      print(f"  Entry Price:      ${position['entry_price']:.2f}")
+      print(f"  Exit Price:       ${exit_price:.2f}")
+      print(f"  Entry N:          ${position['n_value']:.2f}")
+      print(f"  Stop Price:       ${position['stop_price']:.2f}")
+      print(f"  Pyramid Count:    {position['pyramid_count']} unit(s)")
+      print(f"  Total Units:      {position['units']:.2f}")
+      print(f"  P&L:              ${pnl:,.2f} ({pnl_pct:+.2f}%)")
+      print(f"{'='*80}")
+
     self.trades.append({
       'ticker': ticker,
       'entry_date': position['entry_date'],
@@ -186,7 +207,9 @@ if __name__ == "__main__":
     if os.path.exists(data_path):
       all_data[ticker] = pd.read_csv(data_path, index_col='timestamp', parse_dates=True)
 
-  backtester = TurtleBacktester()
+  # Set enable_logging=False for full backtest (too verbose)
+  # Set enable_logging=True to see detailed exit information
+  backtester = TurtleBacktester(enable_logging=False)
   final_equity, all_trades, final_cash, cash_history, equity_history, unit_history = backtester.run(all_data)
 
   # Generate Summary Report
