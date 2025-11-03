@@ -198,7 +198,7 @@ if __name__ == "__main__":
 
   data_dir = os.path.join(project_root, "data/alpaca_daily")
   all_files = os.listdir(data_dir)
-  csv_files = [f for f in all_files if f.endswith('_alpaca_daily.csv')]
+  csv_files = sorted([f for f in all_files if f.endswith('_alpaca_daily.csv')])
 
   all_data = {}
   for file_name in csv_files:
