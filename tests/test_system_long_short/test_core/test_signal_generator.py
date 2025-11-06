@@ -180,6 +180,202 @@ class TestSignalGeneratorLongShort(unittest.TestCase):
     )
     self.assertFalse(is_pyramid)
 
+  # REGRESSION TESTS FOR BUG FIXES
+
+  def test_short_pyramid_regression_jnj_bug(self):
+    """
+    REGRESSION TEST: Prevent JNJ bug where price moved UP but pyramid triggered
+
+    Bug scenario:
+    - Entry: $185.91, N: $2.78
+    - Pyramid trigger: $184.52 (entry - 0.5N)
+    - Current: $186.30 (MOVED UP, not down!)
+    - Old buggy logic: $186.30 < $184.52 * 1.01 = $186.37 ✓ (WRONG!)
+    - New correct logic: Should NOT trigger
+    """
+    last_entry_price = 185.91
+    current_price = 186.30  # Price INCREASED (wrong direction for short pyramid)
+    initial_n = 2.78
+
+    # Should NOT trigger pyramid when price moves against us
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.5
+    )
+    self.assertFalse(is_pyramid,
+      "Pyramid should NOT trigger when price moves UP for short positions")
+
+  def test_short_pyramid_prevents_false_trigger_with_small_n(self):
+    """
+    Test that small N values don't cause false triggers due to percentage-based margins
+
+    When N is small relative to price, a percentage-based margin can be larger
+    than the actual threshold distance, causing false triggers.
+    """
+    last_entry_price = 200.0
+    initial_n = 2.0  # Small N
+
+    # Price barely moved down (0.1N instead of 0.5N)
+    current_price = 199.8  # 200 - 0.1*2 = 199.8
+
+    # Pyramid trigger at 199.0 (200 - 0.5*2)
+    # Old logic: 199.8 < 199.0 * 1.01 = 201.0 ✓ (FALSE TRIGGER!)
+    # New logic: 199.8 > 199.0 + 0.02*2 = 199.04 (correctly prevents)
+
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.5
+    )
+    self.assertFalse(is_pyramid,
+      "Should not trigger pyramid when price moved only 0.1N instead of 0.5N")
+
+  def test_short_pyramid_correctly_triggers_at_threshold(self):
+    """Test that pyramid correctly triggers when price reaches threshold"""
+    last_entry_price = 185.91
+    current_price = 184.50  # Just at threshold (185.91 - 0.5*2.78 ≈ 184.52)
+    initial_n = 2.78
+
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.5
+    )
+    self.assertTrue(is_pyramid,
+      "Pyramid should trigger when price reaches the 0.5N threshold")
+
+  def test_short_pyramid_multiple_threshold_values(self):
+    """Test pyramid triggering with different threshold values"""
+    last_entry_price = 100.0
+    initial_n = 2.0
+
+    # Test 0.25N threshold (more aggressive pyramiding)
+    # Trigger: 100 - 0.25*2 = 99.5, Tolerance: 0.02*2 = 0.04
+    # Should trigger at or below 99.5 + 0.04 = 99.54
+    current_price = 99.5  # At trigger
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.25
+    )
+    self.assertTrue(is_pyramid)
+
+    # Test 1.0N threshold (more conservative pyramiding)
+    # Trigger: 100 - 1.0*2 = 98, Tolerance: 0.02*2 = 0.04
+    # Should trigger at or below 98 + 0.04 = 98.04
+    current_price = 98.0  # At trigger
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=1.0
+    )
+    self.assertTrue(is_pyramid)
+
+    # Not reached 1.0N threshold yet (above tolerance band)
+    current_price = 98.5  # 98.5 > 98.04, should not trigger
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=1.0
+    )
+    self.assertFalse(is_pyramid)
+
+  def test_long_pyramid_prevents_false_trigger_with_small_n(self):
+    """
+    Test that long pyramid also prevents false triggers with small N
+    Ensures consistency between long and short pyramid logic
+    """
+    last_entry_price = 200.0
+    initial_n = 2.0
+
+    # Price barely moved up (0.1N instead of 0.5N)
+    current_price = 200.2  # 200 + 0.1*2 = 200.2
+
+    # Pyramid trigger at 201.0 (200 + 0.5*2)
+    # Tolerance: 0.02*2 = 0.04
+    # Should trigger at >= 201.0 - 0.04 = 200.96
+    # 200.2 < 200.96, so should NOT trigger
+    is_pyramid = SignalGenerator.check_long_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.5
+    )
+    self.assertFalse(is_pyramid,
+      "Should not trigger pyramid when price moved only 0.1N instead of 0.5N")
+
+  def test_short_pyramid_direction_check(self):
+    """
+    Test that short pyramids only trigger when price moves DOWN
+    Critical for preventing the JNJ-style bug
+    """
+    last_entry_price = 100.0
+    initial_n = 2.0
+
+    test_cases = [
+      # (current_price, should_trigger, description)
+      (101.0, False, "Price moved UP 1.0N - should NOT trigger"),
+      (100.5, False, "Price moved UP 0.5N - should NOT trigger"),
+      (100.2, False, "Price moved UP 0.2N - should NOT trigger"),
+      (100.0, False, "Price unchanged - should NOT trigger"),
+      (99.8, False, "Price moved DOWN 0.2N - not enough, should NOT trigger"),
+      (99.0, True,  "Price moved DOWN 0.5N - should trigger"),
+      (98.5, True,  "Price moved DOWN 0.75N - should trigger"),
+      (98.0, True,  "Price moved DOWN 1.0N - should trigger"),
+    ]
+
+    for current_price, expected_trigger, description in test_cases:
+      is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+        last_entry_price, current_price, initial_n, threshold=0.5
+      )
+      self.assertEqual(is_pyramid, expected_trigger,
+        f"Failed: {description} (price={current_price})")
+
+  def test_long_pyramid_direction_check(self):
+    """
+    Test that long pyramids only trigger when price moves UP
+    Mirror test of short pyramid direction check
+    """
+    last_entry_price = 100.0
+    initial_n = 2.0
+
+    # Pyramid trigger: 100 + 0.5*2 = 101.0
+    # Tolerance: 0.02*2 = 0.04
+    # Should trigger at >= 101.0 - 0.04 = 100.96
+
+    test_cases = [
+      # (current_price, should_trigger, description)
+      (99.0, False, "Price moved DOWN 1.0N - should NOT trigger"),
+      (99.5, False, "Price moved DOWN 0.5N - should NOT trigger"),
+      (99.8, False, "Price moved DOWN 0.2N - should NOT trigger"),
+      (100.0, False, "Price unchanged - should NOT trigger"),
+      (100.2, False, "Price moved UP 0.2N - not enough, should NOT trigger"),
+      (100.96, True,  "Price at trigger threshold - should trigger"),
+      (101.0, True,  "Price moved UP 0.5N - should trigger"),
+      (101.5, True,  "Price moved UP 0.75N - should trigger"),
+      (102.0, True,  "Price moved UP 1.0N - should trigger"),
+    ]
+
+    for current_price, expected_trigger, description in test_cases:
+      is_pyramid = SignalGenerator.check_long_pyramid_opportunity(
+        last_entry_price, current_price, initial_n, threshold=0.5
+      )
+      self.assertEqual(is_pyramid, expected_trigger,
+        f"Failed: {description} (price={current_price})")
+
+  def test_pyramid_tolerance_is_based_on_n_not_price(self):
+    """
+    Verify that tolerance is based on N value, not price percentage
+    This prevents the bug where percentage-based margins exceed threshold distances
+    """
+    # High price, low N scenario
+    last_entry_price = 1000.0
+    initial_n = 5.0
+
+    # Pyramid trigger for short: 1000 - 0.5*5 = 997.5
+    # Tolerance: 0.02 * 5 = 0.1
+    # Should trigger at: 997.5 + 0.1 = 997.6
+
+    # Just above trigger (should NOT trigger)
+    current_price = 997.7
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.5
+    )
+    self.assertFalse(is_pyramid, "Should not trigger just above threshold")
+
+    # At trigger (should trigger)
+    current_price = 997.5
+    is_pyramid = SignalGenerator.check_short_pyramid_opportunity(
+      last_entry_price, current_price, initial_n, threshold=0.5
+    )
+    self.assertTrue(is_pyramid, "Should trigger at threshold")
+
 
 if __name__ == '__main__':
   unittest.main()

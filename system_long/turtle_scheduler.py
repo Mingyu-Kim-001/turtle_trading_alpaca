@@ -14,7 +14,7 @@ Usage:
 import schedule
 import time
 from datetime import datetime
-from turtle_trading import TurtleTrading
+from .turtle_trading import TurtleTrading
 import os
 
 

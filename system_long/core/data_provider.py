@@ -84,7 +84,8 @@ class DataProvider:
     """
     try:
       end = datetime.now()
-      start = end - timedelta(minutes=15)
+      # Use 24-hour lookback to ensure we get data even when market is closed
+      start = end - timedelta(hours=24)
 
       request_params = StockBarsRequest(
         symbol_or_symbols=ticker,
@@ -125,7 +126,9 @@ class DataProvider:
 
     try:
       end = datetime.now()
-      start = end - timedelta(minutes=15)
+      # Use 24-hour lookback to ensure we get data even when market is closed
+      # This will return the most recent available price
+      start = end - timedelta(hours=24)
 
       # Alpaca API supports multi-symbol requests
       request_params = StockBarsRequest(

@@ -3,7 +3,7 @@
 import pandas as pd
 from datetime import datetime, timedelta
 from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockBarsRequest
+from alpaca.data.requests import StockBarsRequest, StockLatestTradeRequest
 from alpaca.data.timeframe import TimeFrame
 
 from ..utils.decorators import retry_on_connection_error
@@ -74,7 +74,7 @@ class DataProvider:
   @retry_on_connection_error(max_retries=3, initial_delay=2, backoff=2)
   def get_current_price(self, ticker):
     """
-    Get current price for a ticker
+    Get current price for a ticker using latest trade data
 
     Args:
       ticker: Stock ticker symbol
@@ -83,28 +83,15 @@ class DataProvider:
       Current price as float, or None if error
     """
     try:
-      end = datetime.now()
-      start = end - timedelta(minutes=15)
+      # Use latest trade request for real-time price
+      request = StockLatestTradeRequest(symbol_or_symbols=ticker)
+      latest_trade = self.data_client.get_stock_latest_trade(request)
 
-      request_params = StockBarsRequest(
-        symbol_or_symbols=ticker,
-        timeframe=TimeFrame.Minute,
-        start=start,
-        end=end
-      )
-
-      bars = self.data_client.get_stock_bars(request_params)
-      df = bars.df
-
-      if df.empty:
+      if ticker in latest_trade:
+        return float(latest_trade[ticker].price)
+      else:
         return None
 
-      if isinstance(df.index, pd.MultiIndex):
-        latest_price = df.loc[ticker, 'close'].iloc[-1]
-      else:
-        latest_price = df['close'].iloc[-1]
-
-      return float(latest_price)
     except Exception as e:
       print(f"Error getting current price for {ticker}: {e}")
       return None
@@ -112,7 +99,7 @@ class DataProvider:
   @retry_on_connection_error(max_retries=3, initial_delay=2, backoff=2)
   def get_current_prices_batch(self, tickers):
     """
-    Get current prices for multiple tickers in a single API call (batch)
+    Get current prices for multiple tickers using latest trade data (REAL-TIME)
 
     Args:
       tickers: List of stock ticker symbols
@@ -124,46 +111,23 @@ class DataProvider:
       return {}
 
     try:
-      end = datetime.now()
-      start = end - timedelta(minutes=15)
+      # Use latest trade request for real-time prices (batch)
+      request = StockLatestTradeRequest(symbol_or_symbols=tickers)
+      latest_trades = self.data_client.get_stock_latest_trade(request)
 
-      # Alpaca API supports multi-symbol requests
-      request_params = StockBarsRequest(
-        symbol_or_symbols=tickers,
-        timeframe=TimeFrame.Minute,
-        start=start,
-        end=end
-      )
-
-      bars = self.data_client.get_stock_bars(request_params)
-      df = bars.df
-
-      if df.empty:
-        return {ticker: None for ticker in tickers}
-
-      # Extract latest price for each ticker
+      # Extract prices for each ticker
       prices = {}
       for ticker in tickers:
         try:
-          if isinstance(df.index, pd.MultiIndex):
-            ticker_data = df.loc[ticker]
-            if not ticker_data.empty:
-              latest_price = ticker_data['close'].iloc[-1]
-              prices[ticker] = float(latest_price)
-            else:
-              prices[ticker] = None
+          if ticker in latest_trades:
+            prices[ticker] = float(latest_trades[ticker].price)
           else:
-            # Single ticker case (shouldn't happen with batch, but handle it)
-            prices[ticker] = float(df['close'].iloc[-1])
-        except (KeyError, IndexError):
-          prices[ticker] = None
-
-      # Ensure all requested tickers are in result
-      for ticker in tickers:
-        if ticker not in prices:
+            prices[ticker] = None
+        except (KeyError, AttributeError) as e:
           prices[ticker] = None
 
       return prices
+
     except Exception as e:
       print(f"Error getting batch prices for {len(tickers)} tickers: {e}")
       # Return None for all tickers on error

@@ -5,6 +5,16 @@ This module orchestrates all components to implement the Turtle Trading strategy
 with support for both long and short positions.
 """
 
+import sys
+import os
+import inspect
+
+# Add the project root to the Python path
+# This allows the script to be run from anywhere and still find the correct modules
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+project_root = os.path.dirname(current_dir)
+sys.path.insert(0, project_root)
+
 import os
 import time
 import json
@@ -12,10 +22,10 @@ import pandas as pd
 from datetime import datetime, timedelta
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
-from alpaca.trading.enums import QueryOrderStatus
+from alpaca.trading.enums import QueryOrderStatus, OrderStatus
 
-from .utils import DailyLogger, SlackNotifier, StateManager
-from .core import (
+from system_long_short.utils import DailyLogger, SlackNotifier, StateManager
+from system_long_short.core import (
   DataProvider,
   IndicatorCalculator,
   SignalGenerator,
@@ -547,7 +557,13 @@ class TurtleTradingLS:
       if self.signal_generator.check_long_pyramid_opportunity(
           last_entry_price, current_price, initial_n):
         pyramid_trigger = last_entry_price + 0.5 * initial_n
-        self.logger.log(f"Long pyramid opportunity for {ticker}: ${current_price:.2f} > ${pyramid_trigger * 0.99:.2f}")
+        pyramid_level = len(position['pyramid_units']) + 1
+
+        # Log detailed pyramid trigger information
+        self.logger.log_pyramid_trigger(
+          ticker, 'LONG', pyramid_level, pyramid_trigger,
+          current_price, last_entry_price, initial_n
+        )
 
         # Use same units as initial entry
         units = initial_units
@@ -556,15 +572,40 @@ class TurtleTradingLS:
         buying_power = self.order_manager.get_buying_power()
 
         if cost <= buying_power:
+          # Mark as pending BEFORE placing order to prevent duplicate triggers
+          self.state.pending_pyramid_orders[ticker] = 'PLACING'
+          self.state.save_state()
+          self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
+
           success = self.enter_long_position(ticker, units, pyramid_trigger, initial_n)
-          if not success:
-            # Track pending order
+
+          if success:
+            # Order filled immediately, position updated, remove pending marker
+            if ticker in self.state.pending_pyramid_orders:
+              del self.state.pending_pyramid_orders[ticker]
+              self.state.save_state()
+              self.logger.log(f"Removed pending marker for {ticker} (filled immediately)")
+          else:
+            # Track actual pending order
             open_orders = self.order_manager.get_open_orders(ticker)
+            order_found = False
             for order in open_orders:
               if order.side.name == 'BUY':
                 self.state.pending_pyramid_orders[ticker] = str(order.id)
+                # Clear timestamp since we found the order
+                if ticker in self.state.placing_marker_timestamps:
+                  del self.state.placing_marker_timestamps[ticker]
                 self.state.save_state()
+                self.logger.log(f"Updated pending marker for {ticker} with order ID: {order.id}")
+                order_found = True
                 break
+
+            if not order_found:
+              # Order placement likely failed - remove PLACING marker
+              self.logger.log(f"Could not find open order for {ticker}, order placement may have failed. Removing PLACING marker.", 'WARNING')
+              if ticker in self.state.pending_pyramid_orders:
+                del self.state.pending_pyramid_orders[ticker]
+                self.state.save_state()
 
   def check_short_pyramid_opportunities(self):
     """Check if any short positions can pyramid"""
@@ -606,7 +647,13 @@ class TurtleTradingLS:
       if self.signal_generator.check_short_pyramid_opportunity(
           last_entry_price, current_price, initial_n):
         pyramid_trigger = last_entry_price - 0.5 * initial_n
-        self.logger.log(f"Short pyramid opportunity for {ticker}: ${current_price:.2f} < ${pyramid_trigger * 1.01:.2f}")
+        pyramid_level = len(position['pyramid_units']) + 1
+
+        # Log detailed pyramid trigger information
+        self.logger.log_pyramid_trigger(
+          ticker, 'SHORT', pyramid_level, pyramid_trigger,
+          current_price, last_entry_price, initial_n
+        )
 
         # Use same units as initial entry
         units = initial_units
@@ -615,15 +662,40 @@ class TurtleTradingLS:
         buying_power = self.order_manager.get_buying_power()
 
         if margin_required <= buying_power:
+          # Mark as pending BEFORE placing order to prevent duplicate triggers
+          self.state.pending_pyramid_orders[ticker] = 'PLACING'
+          self.state.save_state()
+          self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
+
           success = self.enter_short_position(ticker, units, pyramid_trigger, initial_n)
-          if not success:
-            # Track pending order
+
+          if success:
+            # Order filled immediately, position updated, remove pending marker
+            if ticker in self.state.pending_pyramid_orders:
+              del self.state.pending_pyramid_orders[ticker]
+              self.state.save_state()
+              self.logger.log(f"Removed pending marker for {ticker} (filled immediately)")
+          else:
+            # Track actual pending order
             open_orders = self.order_manager.get_open_orders(ticker)
+            order_found = False
             for order in open_orders:
               if order.side.name == 'SELL':
                 self.state.pending_pyramid_orders[ticker] = str(order.id)
+                # Clear timestamp since we found the order
+                if ticker in self.state.placing_marker_timestamps:
+                  del self.state.placing_marker_timestamps[ticker]
                 self.state.save_state()
+                self.logger.log(f"Updated pending marker for {ticker} with order ID: {order.id}")
+                order_found = True
                 break
+
+            if not order_found:
+              # Order placement likely failed - remove PLACING marker
+              self.logger.log(f"Could not find open order for {ticker}, order placement may have failed. Removing PLACING marker.", 'WARNING')
+              if ticker in self.state.pending_pyramid_orders:
+                del self.state.pending_pyramid_orders[ticker]
+                self.state.save_state()
 
   def process_entry_queue(self):
     """Process pending entry signals"""
@@ -674,18 +746,23 @@ class TurtleTradingLS:
       # Check entry trigger
       if side == 'long':
         entry_trigger = signal['entry_price'] * 0.99
+        current_str = f"${current_price:.2f}" if current_price is not None else "None"
+        self.logger.log(f"[DEBUG] LONG {ticker}: entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price >= entry_trigger:
           units = self.position_manager.calculate_position_size(
             total_equity, signal['n']
           )
           cost = units * signal['entry_price']
+          self.logger.log(f"[DEBUG] {ticker}: units={units}, cost=${cost:,.2f}, buying_power=${buying_power:,.2f}")
 
           if cost <= buying_power:
+            self.logger.log(f"[DEBUG] {ticker}: Attempting long entry")
             success = self.enter_long_position(ticker, units, signal['entry_price'], signal['n'])
             if success:
               processed.append(ticker)
               buying_power -= cost
             else:
+              self.logger.log(f"[DEBUG] {ticker}: Long entry FAILED", 'WARNING')
               # Track pending order
               open_orders = self.order_manager.get_open_orders(ticker)
               for order in open_orders:
@@ -693,9 +770,15 @@ class TurtleTradingLS:
                   self.state.pending_entry_orders[ticker] = str(order.id)
                   self.state.save_state()
                   break
+          else:
+            self.logger.log(f"[DEBUG] {ticker}: BLOCKED - insufficient buying power (need ${cost:,.2f}, have ${buying_power:,.2f})", 'WARNING')
+        else:
+          self.logger.log(f"[DEBUG] {ticker}: Price not at trigger yet ({current_price:.2f} < {entry_trigger:.2f})")
 
       else:  # short
         entry_trigger = signal['entry_price'] * 1.01
+        current_str = f"${current_price:.2f}" if current_price is not None else "None"
+        self.logger.log(f"[DEBUG] SHORT {ticker}: entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price <= entry_trigger:
           units = self.position_manager.calculate_position_size(
             total_equity, signal['n']
@@ -703,13 +786,16 @@ class TurtleTradingLS:
           margin_required = self.position_manager.calculate_margin_required(
             units, signal['entry_price']
           )
+          self.logger.log(f"[DEBUG] {ticker}: units={units}, margin=${margin_required:,.2f}, buying_power=${buying_power:,.2f}")
 
           if margin_required <= buying_power:
+            self.logger.log(f"[DEBUG] {ticker}: Attempting short entry")
             success = self.enter_short_position(ticker, units, signal['entry_price'], signal['n'])
             if success:
               processed.append(ticker)
               buying_power -= margin_required
             else:
+              self.logger.log(f"[DEBUG] {ticker}: Short entry FAILED", 'WARNING')
               # Track pending order
               open_orders = self.order_manager.get_open_orders(ticker)
               for order in open_orders:
@@ -717,11 +803,217 @@ class TurtleTradingLS:
                   self.state.pending_entry_orders[ticker] = str(order.id)
                   self.state.save_state()
                   break
+          else:
+            self.logger.log(f"[DEBUG] {ticker}: BLOCKED - insufficient buying power (need ${margin_required:,.2f}, have ${buying_power:,.2f})", 'WARNING')
+        else:
+          self.logger.log(f"[DEBUG] {ticker}: Price not at trigger yet ({current_price:.2f} > {entry_trigger:.2f})")
 
     # Remove processed signals
     self.state.entry_queue = [s for s in self.state.entry_queue if s['ticker'] not in processed]
     if processed:
       self.state.save_state()
+
+  def update_entry_queue(self):
+    """Update the entry queue with fresh signals during intraday monitoring."""
+    self.logger.log("Updating entry queue...")
+
+    if self.enable_shorts:
+      if self.check_shortability:
+        shortable_for_signals = self.shortable_tickers - self.htb_exclusions
+      else:
+        shortable_for_signals = set(self.universe) - self.htb_exclusions
+    else:
+      shortable_for_signals = None
+
+    signals = self.signal_generator.generate_entry_signals(
+      self.universe,
+      self.data_provider,
+      self.indicator_calculator,
+      self.state.long_positions,
+      self.state.short_positions,
+      self.enable_shorts,
+      shortable_for_signals
+    )
+
+    self.state.entry_queue = signals
+    self.state.save_state()
+    self.logger.log(f"Entry queue updated with {len(signals)} signals.")
+
+  def check_pending_orders(self):
+    """Check status of pending orders and update state if they are filled or canceled."""
+    self.logger.log("Checking status of pending orders...")
+
+    # Track timestamps for PLACING markers (to timeout zombie markers)
+    if not hasattr(self.state, 'placing_marker_timestamps'):
+      self.state.placing_marker_timestamps = {}
+
+    # Check pending entry orders
+    for ticker, order_id in list(self.state.pending_entry_orders.items()):
+      try:
+        order = self.trading_client.get_order_by_id(order_id)
+
+        if order.status == OrderStatus.FILLED:
+          self.logger.log(f"Pending entry order for {ticker} ({order_id}) has FILLED. Updating position state.")
+
+          # Get filled details
+          filled_qty = float(order.filled_qty)
+          filled_price = float(order.filled_avg_price)
+          side = order.side.name.lower()
+
+          # Get current data to calculate N
+          df = self.data_provider.get_historical_data(ticker, days=30)
+          if df is not None:
+            df = self.indicator_calculator.calculate_indicators(df)
+            n = df['N'].iloc[-1]
+
+            # Create position based on side
+            if side == 'buy':  # Long position
+              if ticker not in self.state.long_positions:
+                self.state.long_positions[ticker] = self.position_manager.create_new_long_position(
+                  filled_qty, filled_price, n, order_id
+                )
+                self.logger.log(f"Created long position for {ticker}: {filled_qty:.0f} units @ ${filled_price:.2f}")
+
+                # Send notification
+                stop_price = self.state.long_positions[ticker]['stop_price']
+                total_equity = self.get_total_equity()
+                self.slack.send_summary("🟢 LONG ENTRY EXECUTED (Pending Order Filled)", {
+                  "Ticker": ticker,
+                  "Type": "Long initial entry",
+                  "Units": int(filled_qty),
+                  "Price": f"${filled_price:.2f}",
+                  "Cost": f"${filled_qty * filled_price:,.2f}",
+                  "Stop Price": f"${stop_price:.2f}",
+                  "Total Equity": f"${total_equity:,.2f}"
+                })
+            else:  # Short position
+              if ticker not in self.state.short_positions:
+                self.state.short_positions[ticker] = self.position_manager.create_new_short_position(
+                  filled_qty, filled_price, n, order_id
+                )
+                self.logger.log(f"Created short position for {ticker}: {filled_qty:.0f} units @ ${filled_price:.2f}")
+
+                # Send notification
+                stop_price = self.state.short_positions[ticker]['stop_price']
+                total_equity = self.get_total_equity()
+                margin_required = self.position_manager.calculate_margin_required(filled_qty, filled_price)
+                self.slack.send_summary("🔴 SHORT ENTRY EXECUTED (Pending Order Filled)", {
+                  "Ticker": ticker,
+                  "Type": "Short initial entry",
+                  "Units": int(filled_qty),
+                  "Price": f"${filled_price:.2f}",
+                  "Margin": f"${margin_required:,.2f}",
+                  "Stop Price": f"${stop_price:.2f}",
+                  "Total Equity": f"${total_equity:,.2f}"
+                })
+
+          del self.state.pending_entry_orders[ticker]
+          self.state.save_state()
+
+        elif order.status in [OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
+          self.logger.log(f"Pending entry order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+          del self.state.pending_entry_orders[ticker]
+          self.state.save_state()
+
+      except Exception as e:
+        self.logger.log(f"Could not get status for pending entry order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+        del self.state.pending_entry_orders[ticker]
+        self.state.save_state()
+
+    # Check pending pyramid orders
+    for ticker, order_id in list(self.state.pending_pyramid_orders.items()):
+      # Handle 'PLACING' marker - these are temporary and will be updated or removed
+      if order_id == 'PLACING':
+        # Track how long this marker has been stuck
+        if ticker not in self.state.placing_marker_timestamps:
+          self.state.placing_marker_timestamps[ticker] = datetime.now().isoformat()
+          self.logger.log(f"Found PLACING marker for {ticker}, tracking timeout", 'INFO')
+        else:
+          # Check if marker has been stuck for more than 2 minutes (2 monitoring cycles)
+          marker_time = datetime.fromisoformat(self.state.placing_marker_timestamps[ticker])
+          elapsed = (datetime.now() - marker_time).total_seconds()
+          if elapsed > 120:  # 2 minutes
+            self.logger.log(f"PLACING marker for {ticker} stuck for {elapsed:.0f}s, order likely failed. Removing marker.", 'WARNING')
+            del self.state.pending_pyramid_orders[ticker]
+            del self.state.placing_marker_timestamps[ticker]
+            self.state.save_state()
+          else:
+            self.logger.log(f"Found PLACING marker for {ticker} ({elapsed:.0f}s elapsed), waiting for update", 'INFO')
+        continue
+
+      try:
+        order = self.trading_client.get_order_by_id(order_id)
+
+        if order.status == OrderStatus.FILLED:
+          self.logger.log(f"Pending pyramid order for {ticker} ({order_id}) has FILLED. Updating position state.")
+
+          # Get filled details
+          filled_qty = float(order.filled_qty)
+          filled_price = float(order.filled_avg_price)
+          side = order.side.name.lower()
+
+          # Update the position with the new pyramid unit
+          if side == 'buy' and ticker in self.state.long_positions:
+            position = self.state.long_positions[ticker]
+            initial_n = position.get('initial_n')
+            pyramid_level = len(position['pyramid_units']) + 1
+
+            self.state.long_positions[ticker] = self.position_manager.add_pyramid_unit(
+              position, filled_qty, filled_price, initial_n, order_id
+            )
+            self.logger.log(f"Added pyramid unit to long position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}")
+
+            # Send notification
+            stop_price = self.state.long_positions[ticker]['stop_price']
+            total_equity = self.get_total_equity()
+            self.slack.send_summary("🟢 LONG PYRAMID EXECUTED (Pending Order Filled)", {
+              "Ticker": ticker,
+              "Type": f"Long pyramid level {pyramid_level}",
+              "Units": int(filled_qty),
+              "Price": f"${filled_price:.2f}",
+              "Cost": f"${filled_qty * filled_price:,.2f}",
+              "Stop Price": f"${stop_price:.2f}",
+              "Total Equity": f"${total_equity:,.2f}"
+            })
+
+          elif side == 'sell' and ticker in self.state.short_positions:
+            position = self.state.short_positions[ticker]
+            initial_n = position.get('initial_n')
+            pyramid_level = len(position['pyramid_units']) + 1
+
+            self.state.short_positions[ticker] = self.position_manager.add_pyramid_unit(
+              position, filled_qty, filled_price, initial_n, order_id
+            )
+            self.logger.log(f"Added pyramid unit to short position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}")
+
+            # Send notification
+            stop_price = self.state.short_positions[ticker]['stop_price']
+            total_equity = self.get_total_equity()
+            margin_required = self.position_manager.calculate_margin_required(filled_qty, filled_price)
+            self.slack.send_summary("🔴 SHORT PYRAMID EXECUTED (Pending Order Filled)", {
+              "Ticker": ticker,
+              "Type": f"Short pyramid level {pyramid_level}",
+              "Units": int(filled_qty),
+              "Price": f"${filled_price:.2f}",
+              "Margin": f"${margin_required:,.2f}",
+              "Stop Price": f"${stop_price:.2f}",
+              "Total Equity": f"${total_equity:,.2f}"
+            })
+          else:
+            self.logger.log(f"Warning: Filled pyramid order for {ticker} but position not found or side mismatch", 'WARNING')
+
+          del self.state.pending_pyramid_orders[ticker]
+          self.state.save_state()
+
+        elif order.status in [OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
+          self.logger.log(f"Pending pyramid order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+          del self.state.pending_pyramid_orders[ticker]
+          self.state.save_state()
+
+      except Exception as e:
+        self.logger.log(f"Could not get status for pending pyramid order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+        del self.state.pending_pyramid_orders[ticker]
+        self.state.save_state()
 
   def daily_eod_analysis(self):
     """Run end-of-day analysis to generate entry signals"""
@@ -806,6 +1098,12 @@ class TurtleTradingLS:
     self.logger.log("="*60)
 
     try:
+      # Check status of pending orders first
+      self.check_pending_orders()
+      time.sleep(0.5)
+
+      # Update the entry queue at the beginning of each cycle
+      self.update_entry_queue()
       time.sleep(0.5)
 
       self.logger.log_state_snapshot(self.state, f'intraday_{datetime.now().strftime("%H%M")}')
@@ -1119,7 +1417,7 @@ class TurtleTradingLS:
         ticker_orders = sorted(orders_by_ticker[ticker], key=lambda x: x['filled_at'])
 
         # Filter out orders that have been closed out
-        exit_qty_for_ticker = sum(o.filled_qty for o in exit_orders if o.symbol == ticker)
+        exit_qty_for_ticker = sum(float(o.filled_qty) for o in exit_orders if o.symbol == ticker)
         # This part is tricky. A simple FIFO for exits is assumed.
         # A more robust solution would trace every buy/sell pair.
 
@@ -1170,9 +1468,14 @@ class TurtleTradingLS:
         if abs(reconstructed_qty - broker_qty) > 0.01:
             self.logger.log(f"  ⚠️  Mismatch: Reconstructed {reconstructed_qty:.0f} units, broker has {broker_qty:.0f}", 'WARNING')
 
-        last_entry_price = pyramid_units[-1]['entry_price']
-        last_n = pyramid_units[-1]['entry_n']
-        stop_price = self.position_manager.calculate_stop_price(last_entry_price, last_n, side)
+        temp_position = {
+            'pyramid_units': pyramid_units,
+            'initial_n': pyramid_units[0]['entry_n']
+        }
+        if side == 'long':
+            stop_price = self.position_manager.calculate_long_stop(temp_position)
+        else:
+            stop_price = self.position_manager.calculate_short_stop(temp_position)
 
         rebuilt_positions[ticker] = {
             'pyramid_units': pyramid_units,
@@ -1198,8 +1501,17 @@ class TurtleTradingLS:
       avg_price = float(position.avg_entry_price)
       qty = abs(float(position.qty))
       n = n_value if n_value else avg_price * 0.02 # Fallback N
+      side = position.side.name.lower()
 
-      stop_price = self.position_manager.calculate_stop_price(avg_price, n, position.side.name.lower())
+      temp_pos = {
+          'pyramid_units': [{'entry_price': avg_price, 'entry_n': n}],
+          'initial_n': n
+      }
+
+      if side == 'long':
+          stop_price = self.position_manager.calculate_long_stop(temp_pos)
+      else:
+          stop_price = self.position_manager.calculate_short_stop(temp_pos)
 
       return {
           'pyramid_units': [{
@@ -1256,7 +1568,6 @@ def main():
   print("  - system.intraday_monitor()       # Every 5 minutes during market")
   print("  - system.post_market_routine()    # After market close")
   print("\nLogs are stored in ./logs/")
-
 
 if __name__ == "__main__":
   main()

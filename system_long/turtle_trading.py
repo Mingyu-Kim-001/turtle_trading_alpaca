@@ -11,7 +11,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
-from alpaca.trading.enums import QueryOrderStatus
+from alpaca.trading.enums import QueryOrderStatus, OrderStatus
 
 from .utils import DailyLogger, SlackNotifier, StateManager
 from .core import (
@@ -463,21 +463,27 @@ class TurtleTrading:
       current_price = current_prices.get(ticker)
 
       if current_price is None:
+        self.logger.log(f"[DEBUG] {ticker}: Failed to fetch current price")
         continue
 
       entry_trigger = signal['entry_price'] * 0.99
+      current_str = f"${current_price:.2f}" if current_price is not None else "None"
+      self.logger.log(f"[DEBUG] LONG {ticker}: entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
       if current_price >= entry_trigger:
         units = self.position_manager.calculate_position_size(
           total_equity, signal['n']
         )
         cost = units * signal['entry_price']
+        self.logger.log(f"[DEBUG] {ticker}: units={units}, cost=${cost:,.2f}, buying_power=${buying_power:,.2f}")
 
         if cost <= buying_power:
+          self.logger.log(f"[DEBUG] {ticker}: Attempting long entry")
           success = self.enter_position(ticker, units, signal['entry_price'], signal['n'])
           if success:
             processed.append(ticker)
             buying_power -= cost
           else:
+            self.logger.log(f"[DEBUG] {ticker}: Long entry FAILED", 'WARNING')
             # Track pending order
             open_orders = self.order_manager.get_open_orders(ticker)
             for order in open_orders:
@@ -486,13 +492,60 @@ class TurtleTrading:
                 self.state.save_state()
                 break
         else:
-          self.logger.log(f"Insufficient buying power for {ticker}")
+          self.logger.log(f"[DEBUG] {ticker}: BLOCKED - insufficient buying power (need ${cost:,.2f}, have ${buying_power:,.2f})", 'WARNING')
           break
+      else:
+        self.logger.log(f"[DEBUG] {ticker}: Price not at trigger yet ({current_price:.2f} < {entry_trigger:.2f})")
 
     # Remove processed signals
     self.state.entry_queue = [s for s in self.state.entry_queue if s['ticker'] not in processed]
     if processed:
       self.state.save_state()
+
+  def update_entry_queue(self):
+    """Update the entry queue with fresh signals during intraday monitoring."""
+    self.logger.log("Updating entry queue...")
+
+    signals = self.signal_generator.generate_entry_signals(
+      self.universe,
+      self.data_provider,
+      self.indicator_calculator,
+      self.state.positions
+    )
+
+    self.state.entry_queue = signals
+    self.state.save_state()
+    self.logger.log(f"Entry queue updated with {len(signals)} signals.")
+
+  def check_pending_orders(self):
+    """Check status of pending orders and update state if they are filled or canceled."""
+    self.logger.log("Checking status of pending orders...")
+    
+    # Check pending entry orders
+    for ticker, order_id in list(self.state.pending_entry_orders.items()):
+        try:
+            order = self.trading_client.get_order_by_id(order_id)
+            if order.status in [OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
+                self.logger.log(f"Pending entry order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+                del self.state.pending_entry_orders[ticker]
+                self.state.save_state()
+        except Exception as e:
+            self.logger.log(f"Could not get status for pending entry order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+            del self.state.pending_entry_orders[ticker]
+            self.state.save_state()
+
+    # Check pending pyramid orders
+    for ticker, order_id in list(self.state.pending_pyramid_orders.items()):
+        try:
+            order = self.trading_client.get_order_by_id(order_id)
+            if order.status in [OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
+                self.logger.log(f"Pending pyramid order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+                del self.state.pending_pyramid_orders[ticker]
+                self.state.save_state()
+        except Exception as e:
+            self.logger.log(f"Could not get status for pending pyramid order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+            del self.state.pending_pyramid_orders[ticker]
+            self.state.save_state()
 
   def daily_eod_analysis(self):
     """Run end-of-day analysis to generate entry signals"""
@@ -552,6 +605,12 @@ class TurtleTrading:
     self.logger.log("="*60)
 
     try:
+      # Check status of pending orders first
+      self.check_pending_orders()
+      time.sleep(0.5)
+
+      # Update the entry queue at the beginning of each cycle
+      self.update_entry_queue()
       time.sleep(0.5)
 
       self.logger.log_state_snapshot(self.state, f'intraday_{datetime.now().strftime("%H%M")}')

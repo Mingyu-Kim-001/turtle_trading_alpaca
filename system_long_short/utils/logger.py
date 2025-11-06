@@ -51,9 +51,13 @@ class DailyLogger:
       'long_positions': state.long_positions,
       'short_positions': state.short_positions,
       'entry_queue': state.entry_queue,
+      'pending_pyramid_orders': state.pending_pyramid_orders,
+      'pending_entry_orders': state.pending_entry_orders,
       'long_position_count': len(state.long_positions),
       'short_position_count': len(state.short_positions),
-      'queue_count': len(state.entry_queue)
+      'queue_count': len(state.entry_queue),
+      'pending_pyramid_count': len(state.pending_pyramid_orders),
+      'pending_entry_count': len(state.pending_entry_orders)
     }
     self.state_snapshots.append(snapshot)
 
@@ -61,8 +65,26 @@ class DailyLogger:
     with open(self.state_log_file, 'w') as f:
       json.dump(self.state_snapshots, f, indent=2)
 
-    self.log(f"State snapshot saved: {label}")
+    self.log(f"State snapshot saved: {label} (pending_pyramids={len(state.pending_pyramid_orders)}, pending_entries={len(state.pending_entry_orders)})")
 
   def get_daily_orders(self):
     """Get all orders logged today"""
     return self.orders
+
+  def log_pyramid_trigger(self, ticker, side, level, trigger_price, current_price, last_entry_price, n_value):
+    """Log pyramid trigger event for debugging"""
+    log_entry = {
+      'timestamp': datetime.now().isoformat(),
+      'ticker': ticker,
+      'side': side,
+      'level': level,
+      'trigger_price': trigger_price,
+      'current_price': current_price,
+      'last_entry_price': last_entry_price,
+      'n_value': n_value,
+      'price_move_in_n': (current_price - last_entry_price) / n_value if n_value > 0 else 0
+    }
+
+    self.log(f"PYRAMID TRIGGER: {ticker} {side} L{level} | "
+         f"Current: ${current_price:.2f} | Last Entry: ${last_entry_price:.2f} | "
+         f"Trigger: ${trigger_price:.2f} | Move: {log_entry['price_move_in_n']:.2f}N")

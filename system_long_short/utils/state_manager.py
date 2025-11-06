@@ -33,6 +33,7 @@ class StateManager:
             self.entry_queue = data.get('entry_queue', [])
             self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
             self.pending_entry_orders = data.get('pending_entry_orders', {})
+            self.placing_marker_timestamps = data.get('placing_marker_timestamps', {})
             self.last_updated = data.get('last_updated', None)
             print(f"State loaded: long_positions={len(self.long_positions)}, "
                   f"short_positions={len(self.short_positions)}, "
@@ -50,6 +51,7 @@ class StateManager:
       self.entry_queue = []
       self.pending_pyramid_orders = {}
       self.pending_entry_orders = {}
+      self.placing_marker_timestamps = {}  # Track PLACING marker timestamps for timeout
       self.last_updated = None
       self.save_state()
 
@@ -61,6 +63,7 @@ class StateManager:
       'entry_queue': self.entry_queue,
       'pending_pyramid_orders': self.pending_pyramid_orders,
       'pending_entry_orders': self.pending_entry_orders,
+      'placing_marker_timestamps': getattr(self, 'placing_marker_timestamps', {}),
       'last_updated': datetime.now().isoformat()
     }
 

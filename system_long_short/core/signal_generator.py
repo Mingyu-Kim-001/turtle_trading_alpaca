@@ -140,8 +140,10 @@ class SignalGenerator:
 
     pyramid_trigger = last_entry_price + threshold * initial_n
 
-    # Check if price has reached trigger (with 1% margin)
-    return current_price > pyramid_trigger * 0.99
+    # Check if price has moved up sufficiently (use small absolute tolerance based on N)
+    # Using 2% of N as tolerance instead of percentage of price to avoid false triggers
+    tolerance = 0.02 * initial_n
+    return current_price >= pyramid_trigger - tolerance
 
   @staticmethod
   def check_short_pyramid_opportunity(last_entry_price, current_price, initial_n, threshold=0.5):
@@ -162,8 +164,10 @@ class SignalGenerator:
 
     pyramid_trigger = last_entry_price - threshold * initial_n
 
-    # Check if price has reached trigger (with 1% margin)
-    return current_price < pyramid_trigger * 1.01
+    # Check if price has moved down sufficiently (use small absolute tolerance based on N)
+    # Using 2% of N as tolerance instead of percentage of price to avoid false triggers
+    tolerance = 0.02 * initial_n
+    return current_price <= pyramid_trigger + tolerance
 
   @staticmethod
   def generate_entry_signals(universe, data_provider, indicator_calculator,

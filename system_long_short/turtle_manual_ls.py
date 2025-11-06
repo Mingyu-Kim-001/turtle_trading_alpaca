@@ -214,32 +214,64 @@ def main():
     print("  - Clear all positions from state")
     print("\n🚨 This action CANNOT be undone!")
 
-    # Show current positions
-    total_positions = len(system.state.long_positions) + len(system.state.short_positions)
-    if total_positions > 0:
-      print("\nPositions to be closed:")
-      for ticker, pos in system.state.long_positions.items():
-        total_units = sum(p['units'] for p in pos['pyramid_units'])
-        entry_value = sum(p['entry_value'] for p in pos['pyramid_units'])
-        print(f"  - {ticker} (LONG): {total_units:.0f} units (entry: ${entry_value:,.2f})")
+    # Fetch positions directly from broker
+    print("\nFetching positions from broker...")
+    try:
+      broker_positions = system.trading_client.get_all_positions()
 
-      for ticker, pos in system.state.short_positions.items():
-        total_units = sum(p['units'] for p in pos['pyramid_units'])
-        entry_value = sum(p['entry_value'] for p in pos['pyramid_units'])
-        print(f"  - {ticker} (SHORT): {total_units:.0f} units (entry: ${entry_value:,.2f})")
-    else:
-      print("\nNo open positions to close.")
-      sys.exit(0)
+      if not broker_positions:
+        print("\nNo open positions at broker to close.")
+        sys.exit(0)
 
-    print("\n" + "="*60)
-    response = input("\nType 'EXIT ALL NOW' to confirm (anything else to cancel): ")
+      print("\nPositions to be closed (from broker):")
+      for position in broker_positions:
+        ticker = position.symbol
+        qty = float(position.qty)
+        side = "LONG" if position.side.value == "long" else "SHORT"
+        avg_entry = float(position.avg_entry_price)
+        current = float(position.current_price)
+        value = abs(qty * current)
+        print(f"  - {ticker} ({side}): {abs(qty):.0f} units @ ${avg_entry:.2f} (current: ${current:.2f}, value: ${value:,.2f})")
 
-    if response != 'EXIT ALL NOW':
-      print("\nExit cancelled.")
-      sys.exit(0)
+      print("\n" + "="*60)
 
-    print("\n🔥 Executing market exit for all positions...")
-    system.exit_all_positions_market()
+      # Check for --force flag
+      if '--force' not in sys.argv:
+        response = input("\nType 'EXIT ALL NOW' to confirm (anything else to cancel): ")
+        if response != 'EXIT ALL NOW':
+          print("\nExit cancelled.")
+          sys.exit(0)
+      else:
+        print("\n⚠️  --force flag detected: Skipping confirmation...")
+
+      print("\n🔥 Closing all positions at market price...")
+      from alpaca.trading.requests import ClosePositionRequest
+
+      for position in broker_positions:
+        ticker = position.symbol
+        side = "LONG" if position.side.value == "long" else "SHORT"
+        print(f"  Closing {ticker} ({side})...")
+        try:
+          system.trading_client.close_position(ticker)
+          print(f"    ✓ {ticker} closed")
+        except Exception as e:
+          print(f"    ✗ Error closing {ticker}: {e}")
+
+      # Clear state
+      print("\n🧹 Clearing state file...")
+      system.state.long_positions = {}
+      system.state.short_positions = {}
+      system.state.entry_queue = []
+      system.state.pending_pyramid_orders = {}
+      system.state.pending_entry_orders = {}
+      system.state.save_state()
+      print("  ✓ State cleared and saved")
+
+    except Exception as e:
+      print(f"\nError fetching broker positions: {e}")
+      import traceback
+      traceback.print_exc()
+      sys.exit(1)
 
   else:
     print(f"Unknown command: {command}")
