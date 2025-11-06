@@ -13,22 +13,15 @@ Usage:
 
 import schedule
 import time
-import json
 from datetime import datetime
-from turtle_live_trading import TurtleTrading, load_config
-
-
-def load_config_local(config_path, key):
-  """Load configuration from JSON file"""
-  with open(config_path, 'r') as f:
-    config = json.load(f)
-    return config[key]
+from .turtle_trading import TurtleTrading
+import os
 
 
 # Initialize trading system globally
-alpaca_key = load_config_local('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_KEY')
-alpaca_secret = load_config_local('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_SECRET')
-slack_token = load_config_local('./.config/personal_slack_token.json', 'PERSONAL_SLACK_TOKEN')
+alpaca_key = os.environ.get('ALPACA_PAPER_KEY')
+alpaca_secret = os.environ.get('ALPACA_PAPER_SECRET')
+slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
 slack_channel = 'C09M9NNU8JH'
 
 system = TurtleTrading(

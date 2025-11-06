@@ -2,19 +2,24 @@
 Manual Testing Script for Turtle Trading System
 
 Run specific workflows manually for testing:
-  python turtle_manual.py eod       # Run EOD analysis
-  python turtle_manual.py open      # Run market open setup
-  python turtle_manual.py monitor   # Run single intraday monitor cycle
-  python turtle_manual.py close     # Run post-market routine
-  python turtle_manual.py status    # Show current system status
-  python turtle_manual.py align     # Align state with broker (dry-run)
-  python turtle_manual.py align --apply  # Align state with broker (apply changes)
-  python turtle_manual.py exit-all  # EXIT ALL POSITIONS AT MARKET PRICE (DANGEROUS!)
+  python -m system.turtle_manual eod       # Run EOD analysis
+  python -m system.turtle_manual open      # Run market open setup
+  python -m system.turtle_manual monitor   # Run single intraday monitor cycle
+  python -m system.turtle_manual close     # Run post-market routine
+  python -m system.turtle_manual status    # Show current system status
+  python -m system.turtle_manual align            # Rebuild state from broker (dry-run)
+  python -m system.turtle_manual align --apply    # Rebuild state from broker (apply changes)
+  python -m system.turtle_manual exit-all  # EXIT ALL POSITIONS AT MARKET PRICE (DANGEROUS!)
+
+The 'align' command rebuilds trading_state.json from:
+  - Current broker positions
+  - Historical order fills from Alpaca
+  - Recalculated N values from historical price data
 """
 
 import sys
-import json
-from turtle_live_trading import TurtleTrading, load_config
+import os
+from .turtle_trading import TurtleTrading
 
 
 def show_status(system):
@@ -30,9 +35,8 @@ def show_status(system):
     print(f"  Equity: ${float(account.equity):,.2f}")
     print(f"  Cash: ${float(account.cash):,.2f}")
     print(f"  Buying Power: ${float(account.buying_power):,.2f}")
-    
+
     print(f"\nTrading State:")
-    print(f"  Risk Pot: ${system.state.risk_pot:,.2f}")
     print(f"  Open Positions: {len(system.state.positions)}")
     print(f"  Entry Queue: {len(system.state.entry_queue)}")
     
@@ -108,9 +112,9 @@ def main():
   command = sys.argv[1].lower()
   
   # Load configuration
-  alpaca_key = load_config('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_KEY')
-  alpaca_secret = load_config('./.config/alpaca_api_keys.json', 'ALPACA_PAPER_SECRET')
-  slack_token = load_config('./.config/personal_slack_token.json', 'PERSONAL_SLACK_TOKEN')
+  alpaca_key = os.environ.get('ALPACA_PAPER_KEY')
+  alpaca_secret = os.environ.get('ALPACA_PAPER_SECRET')
+  slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
   slack_channel = 'C09M9NNU8JH'
   
   # Initialize system
@@ -142,31 +146,35 @@ def main():
     show_status(system)
     
   elif command == 'align':
-    # Check if --apply flag is present
+    # Check for --apply flag
     apply_changes = '--apply' in sys.argv
-    
+
+    print("\n" + "="*60)
+    print("STATE REBUILD FROM BROKER")
+    print("="*60)
+    print("\nThis will:")
+    print("  - Fetch your current positions from Alpaca")
+    print("  - Reconstruct pyramid_units from order history")
+    print("  - Recalculate N values from historical data")
+    print("  - Rebuild trading_state.json without risk_pot")
+
     if apply_changes:
-      print("\n" + "="*60)
-      print("⚠️  WARNING: You are about to APPLY changes to trading_state.json")
-      print("="*60)
-      print("\nThis will:")
-      print("  - Backup your current state")
-      print("  - Update positions to match broker")
-      print("  - Recalculate risk pot")
-      print("\nA backup will be saved before any changes.")
-      
-      response = input("\nAre you sure you want to proceed? (yes/no): ")
-      
-      if response.lower() != 'yes':
-        print("\nAlignment cancelled.")
-        sys.exit(0)
-      
-      print("\nProceeding with alignment...")
-      system.align_state_with_broker(dry_run=False)
+      print("\n⚠️  --apply flag detected: Changes WILL be saved!")
+      print("Your old state will be backed up automatically.")
     else:
-      print("\nRunning DRY RUN - no changes will be applied")
-      print("Use 'python turtle_manual.py align --apply' to actually apply changes\n")
-      system.align_state_with_broker(dry_run=True)
+      print("\n🔍 DRY RUN MODE (no changes will be saved)")
+      print("Use 'python -m system.turtle_manual align --apply' to save changes")
+
+    print("\n" + "="*60)
+
+    if apply_changes:
+      response = input("\nType 'REBUILD' to confirm (anything else to cancel): ")
+      if response != 'REBUILD':
+        print("\nRebuild cancelled.")
+        sys.exit(0)
+
+    # Run the rebuild
+    system.rebuild_state_from_broker(lookback_days=90, dry_run=not apply_changes)
   
   elif command == 'exit-all':
     print("\n" + "="*60)

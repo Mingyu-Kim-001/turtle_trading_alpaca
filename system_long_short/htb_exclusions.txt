@@ -1,0 +1,15 @@
+# Hard-to-Borrow (HTB) Exclusion List
+#
+# Add tickers here that you want to exclude from short selling
+# Common reasons:
+# - Known high borrow rates
+# - Frequently unavailable shares
+# - High short squeeze risk
+# - Regulatory restrictions
+#
+# Format: One ticker per line (lines starting with # are ignored)
+#
+# Example HTB stocks (update based on your experience):
+# GME
+# AMC
+# BBBY
