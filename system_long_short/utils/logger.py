@@ -12,24 +12,41 @@ class DailyLogger:
     self.log_dir = log_dir
     os.makedirs(log_dir, exist_ok=True)
     self.today = datetime.now().strftime('%Y-%m-%d')
-    self.log_file = os.path.join(log_dir, f'trading_{self.today}.log')
-    self.order_log_file = os.path.join(log_dir, f'orders_{self.today}.json')
-    self.state_log_file = os.path.join(log_dir, f'state_{self.today}.json')
     self.orders = []
     self.state_snapshots = []
 
+  def _get_log_files(self):
+    """Get current log file paths based on today's date"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    return {
+      'log_file': os.path.join(self.log_dir, f'trading_{today}.log'),
+      'order_log_file': os.path.join(self.log_dir, f'orders_{today}.json'),
+      'state_log_file': os.path.join(self.log_dir, f'state_{today}.json')
+    }
+
+  def _check_date_rollover(self):
+    """Check if date has changed and reset daily data if so"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    if today != self.today:
+      self.today = today
+      self.orders = []
+      self.state_snapshots = []
+
   def log(self, message, level='INFO'):
     """Log a message with timestamp"""
+    self._check_date_rollover()
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_line = f"[{timestamp}] [{level}] {message}\n"
 
     print(log_line.strip())
 
-    with open(self.log_file, 'a') as f:
+    log_file = self._get_log_files()['log_file']
+    with open(log_file, 'a') as f:
       f.write(log_line)
 
   def log_order(self, order_type, ticker, status, details):
     """Log order details"""
+    self._check_date_rollover()
     order_entry = {
       'timestamp': datetime.now().isoformat(),
       'type': order_type,
@@ -40,11 +57,13 @@ class DailyLogger:
     self.orders.append(order_entry)
 
     # Save to file
-    with open(self.order_log_file, 'w') as f:
+    order_log_file = self._get_log_files()['order_log_file']
+    with open(order_log_file, 'w') as f:
       json.dump(self.orders, f, indent=2)
 
   def log_state_snapshot(self, state, label='snapshot'):
     """Log a snapshot of trading state for long-short system"""
+    self._check_date_rollover()
     snapshot = {
       'timestamp': datetime.now().isoformat(),
       'label': label,
@@ -62,7 +81,8 @@ class DailyLogger:
     self.state_snapshots.append(snapshot)
 
     # Save to file
-    with open(self.state_log_file, 'w') as f:
+    state_log_file = self._get_log_files()['state_log_file']
+    with open(state_log_file, 'w') as f:
       json.dump(self.state_snapshots, f, indent=2)
 
     self.log(f"State snapshot saved: {label} (pending_pyramids={len(state.pending_pyramid_orders)}, pending_entries={len(state.pending_entry_orders)})")

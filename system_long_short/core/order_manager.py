@@ -67,9 +67,11 @@ class OrderManager:
         self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
         return False, None, None
 
-      # Calculate prices
-      stop_price = round(target_price * self.entry_margin, 2)
-      limit_price = round(stop_price * 1.005, 2)
+      # Calculate prices - for longs, enter at or near current market price
+      # BUY STOP triggers when price RISES to stop, so set stop at/below target to trigger immediately
+      # Set limit above target as maximum acceptable buy price
+      stop_price = round(target_price * self.entry_margin, 2)  # At or below trigger (triggers immediately)
+      limit_price = round(target_price * 1.01, 2)  # Maximum acceptable buy price (allow 1% slippage)
 
       order_type = f"Long Pyramid Level {pyramid_level}" if is_pyramid else "Long Initial Entry"
       self._log(f"Placing {order_type.lower()} order for {ticker}: "
@@ -162,9 +164,11 @@ class OrderManager:
         self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
         return False, None, None
 
-      # Calculate prices - for shorts, stop is ABOVE target
-      stop_price = round(target_price * 1.01, 2)  # Slightly above for shorts
-      limit_price = round(stop_price * 0.995, 2)
+      # Calculate prices - for shorts, enter at or near current market price
+      # SELL STOP triggers when price FALLS to stop, so set stop at/above target to trigger immediately
+      # Set limit below target as minimum acceptable sell price
+      stop_price = round(target_price * (2 - self.entry_margin), 2)  # At or above trigger (triggers immediately)
+      limit_price = round(target_price * 0.99, 2)  # Minimum acceptable sell price (allow 1% slippage)
 
       order_type = f"Short Pyramid Level {pyramid_level}" if is_pyramid else "Short Initial Entry"
       self._log(f"Placing {order_type.lower()} order for {ticker}: "

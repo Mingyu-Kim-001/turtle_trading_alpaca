@@ -95,6 +95,9 @@ class TurtleTradingLS:
     self.logger.log("Turtle Trading System (Long/Short) initialized")
     self.logger.log(f"Short selling: {'enabled' if enable_shorts else 'disabled'}")
 
+    # Check for zombie orders on startup
+    self.reconcile_zombie_orders()
+
   def load_universe(self, universe_file):
     """Load ticker universe from file"""
     if os.path.exists(universe_file):
@@ -187,6 +190,53 @@ class TurtleTradingLS:
       return False
 
     return True
+
+  def reconcile_zombie_orders(self):
+    """
+    Check for zombie orders on startup - orders that exist in Alpaca but aren't tracked in state.
+    This can happen if the system crashes or has connection errors after placing an order.
+    """
+    self.logger.log("Checking for zombie orders...")
+
+    try:
+      # Get all open orders from Alpaca
+      from alpaca.trading.requests import GetOrdersRequest
+      from alpaca.trading.enums import QueryOrderStatus
+      request = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+      open_orders = self.trading_client.get_orders(filter=request)
+
+      # Build set of tracked order IDs
+      tracked_order_ids = set(self.state.pending_entry_orders.values())
+      tracked_order_ids.update(
+        oid for oid in self.state.pending_pyramid_orders.values() if oid != 'PLACING'
+      )
+
+      # Find zombie orders
+      zombies = []
+      for order in open_orders:
+        order_id = str(order.id)
+        if order_id not in tracked_order_ids:
+          zombies.append(order)
+
+      if zombies:
+        self.logger.log(f"Found {len(zombies)} zombie order(s):", 'WARNING')
+        for order in zombies:
+          self.logger.log(f"  - {order.symbol} {order.side.name} {order.qty} @ stop=${order.stop_price} (Order ID: {order.id})", 'WARNING')
+
+        # Cancel all zombie orders
+        for order in zombies:
+          try:
+            self.logger.log(f"Canceling zombie order for {order.symbol} (ID: {order.id})", 'WARNING')
+            self.order_manager.cancel_order(str(order.id))
+            self.logger.log(f"✓ Canceled zombie order for {order.symbol}", 'WARNING')
+          except Exception as cancel_error:
+            self.logger.log(f"Failed to cancel zombie order {order.id} for {order.symbol}: {cancel_error}", 'ERROR')
+
+      else:
+        self.logger.log("No zombie orders found.")
+
+    except Exception as e:
+      self.logger.log(f"Error checking for zombie orders: {e}", 'ERROR')
 
   def get_total_equity(self):
     """
@@ -916,7 +966,15 @@ class TurtleTradingLS:
           self.state.save_state()
 
       except Exception as e:
-        self.logger.log(f"Could not get status for pending entry order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+        self.logger.log(f"Could not get status for pending entry order {order_id} ({ticker}): {e}. Attempting to cancel order.", 'WARNING')
+        try:
+          # Try to cancel the order before removing from tracking to avoid zombie orders
+          self.order_manager.cancel_order(order_id)
+          self.logger.log(f"Successfully canceled pending entry order {order_id} ({ticker})", 'WARNING')
+        except Exception as cancel_error:
+          self.logger.log(f"Failed to cancel order {order_id} ({ticker}): {cancel_error}. Manual intervention may be required.", 'ERROR')
+
+        # Remove from tracking after attempting cancellation
         del self.state.pending_entry_orders[ticker]
         self.state.save_state()
 
@@ -1011,7 +1069,15 @@ class TurtleTradingLS:
           self.state.save_state()
 
       except Exception as e:
-        self.logger.log(f"Could not get status for pending pyramid order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+        self.logger.log(f"Could not get status for pending pyramid order {order_id} ({ticker}): {e}. Attempting to cancel order.", 'WARNING')
+        try:
+          # Try to cancel the order before removing from tracking to avoid zombie orders
+          self.order_manager.cancel_order(order_id)
+          self.logger.log(f"Successfully canceled pending pyramid order {order_id} ({ticker})", 'WARNING')
+        except Exception as cancel_error:
+          self.logger.log(f"Failed to cancel order {order_id} ({ticker}): {cancel_error}. Manual intervention may be required.", 'ERROR')
+
+        # Remove from tracking after attempting cancellation
         del self.state.pending_pyramid_orders[ticker]
         self.state.save_state()
 
