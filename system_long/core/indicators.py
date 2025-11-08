@@ -51,6 +51,7 @@ class IndicatorCalculator:
     df['high_10'] = df['high'].rolling(window=exit_period).max()  # For short exits
     df['low_10'] = df['low'].rolling(window=exit_period).min()
     df['low_20'] = df['low'].rolling(window=entry_period).min()
+    df['low_55'] = df['low'].rolling(window=long_entry_period).min()  # For 55-day system
     return df
 
   @staticmethod

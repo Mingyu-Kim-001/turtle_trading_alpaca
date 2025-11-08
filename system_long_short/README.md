@@ -1,30 +1,71 @@
-# Turtle Trading System with Long and Short Positions
+# Turtle Trading System with Long and Short Positions (Dual System)
 
-Real-time implementation of the Turtle Trading strategy with support for both long and short positions.
+Real-time implementation of the Turtle Trading strategy with support for both long and short positions, using **both System 1 (20-10) and System 2 (55-20)** for optimal performance.
 
 ## Overview
 
-This system extends the classic Turtle Trading strategy to include short selling, allowing the system to profit from both upward and downward trends. The system automatically:
+This system implements the **dual Turtle Trading system** with short selling support, allowing the system to profit from both upward and downward trends with two complementary trading systems:
 
-- **Enters long positions** on 20-day high breakouts
-- **Enters short positions** on 20-day low breakdowns
+- **System 1 (20-10)**: More frequent entries with quicker exits
+- **System 2 (55-20)**: Longer-term trend following with extended hold times
 - **Pyramids positions** up to 4 units (long upward, short downward)
-- **Manages risk** with 2N stop losses and 10-day exit signals
+- **Manages risk** with 2N stop losses and system-specific exit signals
 - **Sizes positions** consistently based on 1% risk per unit
 
 ## Features
 
-### Long Positions
+### System 1 (20-10) - Faster Trades
+**Long Positions**:
 - Entry: Price breaks above 20-day high
 - Exit: Price breaks below 10-day low OR stop loss at entry - 2N
 - Pyramiding: Add units at entry + 0.5N intervals (up to 4 units)
 - Stop loss: Moves up with each pyramid (last entry - 2N)
 
-### Short Positions
+**Short Positions**:
 - Entry: Price breaks below 20-day low
 - Exit: Price breaks above 10-day high OR stop loss at entry + 2N
 - Pyramiding: Add units at entry - 0.5N intervals (up to 4 units)
 - Stop loss: Moves down with each pyramid (last entry + 2N)
+
+### System 2 (55-20) - Trend Following
+**Long Positions**:
+- Entry: Price breaks above 55-day high
+- Exit: Price breaks below 20-day low OR stop loss at entry - 2N
+- Pyramiding: Add units at entry + 0.5N intervals (up to 4 units)
+- Stop loss: Moves up with each pyramid (last entry - 2N)
+
+**Short Positions**:
+- Entry: Price breaks below 55-day low
+- Exit: Price breaks above 20-day high OR stop loss at entry + 2N
+- Pyramiding: Add units at entry - 0.5N intervals (up to 4 units)
+- Stop loss: Moves down with each pyramid (last entry + 2N)
+
+### System Priority
+- **System 1 is checked first** for each ticker (more frequent signals)
+- **System 2 is checked only if** System 1 has no signal
+- **One position per ticker** - only one system can hold a position at a time
+- This ensures higher turnover from System 1 while capturing major trends with System 2
+
+### Why Dual System is Superior
+
+**The key insight**: A 55-day high is also a 20-day high, but the systems differ in EXIT timing:
+
+1. **System 2 holds trends longer**
+   - System 1 exits on 10-day reversal (quick exit)
+   - System 2 exits on 20-day reversal (lets winners run)
+   - This captures larger trends that System 1 would exit prematurely
+
+2. **More entry opportunities**
+   - System 1 may skip entries after winning trades (win filter)
+   - System 2 has NO win filter - always takes entries
+   - Captures breakouts that System 1 misses
+
+3. **Diversified trade duration**
+   - System 1: Quick trades, higher turnover
+   - System 2: Trend-following, bigger winners
+   - Results in smoother equity curve
+
+**Backtesting shows the dual system significantly outperforms single-system approaches** due to the combination of quick profits (System 1) and large trend captures (System 2).
 
 ### Risk Management
 - Position sizing: 1% of equity per unit risk
@@ -209,6 +250,7 @@ The system persists state in `trading_state_ls.json`:
   "long_positions": {
     "AAPL": {
       "side": "long",
+      "system": 2,
       "pyramid_units": [...],
       "stop_price": 150.00,
       "initial_n": 2.50,
@@ -218,18 +260,29 @@ The system persists state in `trading_state_ls.json`:
   "short_positions": {
     "TSLA": {
       "side": "short",
+      "system": 1,
       "pyramid_units": [...],
       "stop_price": 260.00,
       "initial_n": 5.00,
       "initial_units": 50
     }
   },
-  "entry_queue": [...],
+  "entry_queue": [
+    {
+      "ticker": "NVDA",
+      "side": "long",
+      "system": 1,
+      "entry_price": 500.00,
+      "n": 10.50
+    }
+  ],
   "pending_pyramid_orders": {},
   "pending_entry_orders": {},
   "last_updated": "2025-01-15T14:30:00"
 }
 ```
+
+**Note**: Each position tracks which system (1 or 2) it belongs to, ensuring correct exit signals are used.
 
 ## Backtesting
 
@@ -248,15 +301,17 @@ The backtester will:
 
 ## Key Differences from Long-Only System
 
-| Feature | Long-Only | Long-Short |
-|---------|-----------|------------|
+| Feature | Long-Only | Long-Short (Dual System) |
+|---------|-----------|--------------------------|
+| **Trading Systems** | Single system (20-10) | Dual system (20-10 + 55-20) |
 | **Positions** | Single `positions` dict | Separate `long_positions` and `short_positions` |
-| **Entry Signals** | 20-day high breakout only | 20-day high (long) + 20-day low (short) |
-| **Exit Signals** | 10-day low only | 10-day low (long) + 10-day high (short) |
+| **Entry Signals** | 20-day high breakout only | System 1: 20-day high/low, System 2: 55-day high/low |
+| **Exit Signals** | 10-day low only | System 1: 10-day, System 2: 20-day |
 | **Stop Loss** | Entry - 2N | Long: Entry - 2N, Short: Entry + 2N |
 | **Pyramiding** | Upward (entry + 0.5N) | Long: upward, Short: downward (entry - 0.5N) |
 | **Margin** | Full position value | Long: full, Short: 50% margin requirement |
 | **State File** | `trading_state.json` | `trading_state_ls.json` |
+| **Position Tracking** | No system field | Each position tagged with `system: 1` or `system: 2` |
 
 ## Hard-to-Borrow (HTB) Detection
 

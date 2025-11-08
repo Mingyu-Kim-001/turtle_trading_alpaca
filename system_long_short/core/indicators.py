@@ -34,7 +34,7 @@ class IndicatorCalculator:
   @staticmethod
   def calculate_donchian_channels(df, entry_period=20, exit_period=10, long_entry_period=55):
     """
-    Calculate Donchian Channels for entry and exit signals
+    Calculate Donchian Channels for dual system (System 1: 20-10, System 2: 55-20)
 
     Args:
       df: DataFrame with OHLC data
@@ -43,14 +43,24 @@ class IndicatorCalculator:
       long_entry_period: Period for System 2 entry (default 55)
 
     Returns:
-      DataFrame with Donchian channel columns added
+      DataFrame with Donchian channel columns added:
+        - high_20, low_20: System 1 entry, System 2 exit
+        - high_10, low_10: System 1 exit
+        - high_55, low_55: System 2 entry
     """
     df = df.copy()
+    # System 1 entry (20-day)
     df['high_20'] = df['high'].rolling(window=entry_period).max()
-    df['high_55'] = df['high'].rolling(window=long_entry_period).max()
-    df['high_10'] = df['high'].rolling(window=exit_period).max()  # For short exits
-    df['low_10'] = df['low'].rolling(window=exit_period).min()
     df['low_20'] = df['low'].rolling(window=entry_period).min()
+
+    # System 1 exit (10-day)
+    df['high_10'] = df['high'].rolling(window=exit_period).max()
+    df['low_10'] = df['low'].rolling(window=exit_period).min()
+
+    # System 2 entry (55-day), exits use 20-day (already calculated above)
+    df['high_55'] = df['high'].rolling(window=long_entry_period).max()
+    df['low_55'] = df['low'].rolling(window=long_entry_period).min()
+
     return df
 
   @staticmethod

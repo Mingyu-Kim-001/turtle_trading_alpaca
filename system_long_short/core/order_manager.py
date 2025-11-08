@@ -17,7 +17,7 @@ class OrderManager:
   """Handle order execution, tracking, and reconciliation for long and short positions"""
 
   def __init__(self, trading_client, logger=None, notifier=None,
-        entry_margin=0.99, exit_margin=1.01):
+        entry_margin=0.99, exit_margin=1.01, max_slippage=0.005):
     """
     Initialize order manager
 
@@ -27,12 +27,14 @@ class OrderManager:
       notifier: SlackNotifier instance (optional)
       entry_margin: Margin for entry stop orders (default 0.99)
       exit_margin: Margin for exit stop orders (default 1.01)
+      max_slippage: Maximum slippage for limit prices (default 0.005 = 0.5%)
     """
     self.trading_client = trading_client
     self.logger = logger
     self.notifier = notifier
     self.entry_margin = entry_margin
     self.exit_margin = exit_margin
+    self.max_slippage = max_slippage
 
   def _log(self, message, level='INFO'):
     """Helper to log message"""
@@ -67,9 +69,11 @@ class OrderManager:
         self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
         return False, None, None
 
-      # Calculate prices
-      stop_price = round(target_price * self.entry_margin, 2)
-      limit_price = round(stop_price * 1.005, 2)
+      # Calculate prices - for longs, enter at target price
+      # Stop price is the target entry price
+      # Limit is above target to allow for slippage
+      stop_price = round(target_price, 2)  # Target entry price
+      limit_price = round(target_price * (1 + self.max_slippage), 2)  # Maximum acceptable buy price
 
       order_type = f"Long Pyramid Level {pyramid_level}" if is_pyramid else "Long Initial Entry"
       self._log(f"Placing {order_type.lower()} order for {ticker}: "
@@ -162,9 +166,11 @@ class OrderManager:
         self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
         return False, None, None
 
-      # Calculate prices - for shorts, stop is ABOVE target
-      stop_price = round(target_price * 1.01, 2)  # Slightly above for shorts
-      limit_price = round(stop_price * 0.995, 2)
+      # Calculate prices - for shorts, enter at target price
+      # Stop price is the target entry price
+      # Limit is below target to allow for slippage
+      stop_price = round(target_price, 2)  # Target entry price
+      limit_price = round(target_price * (1 - self.max_slippage), 2)  # Minimum acceptable sell price
 
       order_type = f"Short Pyramid Level {pyramid_level}" if is_pyramid else "Short Initial Entry"
       self._log(f"Placing {order_type.lower()} order for {ticker}: "

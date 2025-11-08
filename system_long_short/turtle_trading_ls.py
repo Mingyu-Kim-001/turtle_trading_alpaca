@@ -39,7 +39,7 @@ class TurtleTradingLS:
 
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
         universe_file='system_long_short/ticker_universe.txt', paper=True,
-        entry_margin=0.99, exit_margin=1.01,
+        entry_margin=0.99, exit_margin=1.01, max_slippage=0.005,
         enable_shorts=True, check_shortability=False):
     """
     Initialize Turtle Trading System with Long/Short support
@@ -53,6 +53,7 @@ class TurtleTradingLS:
       paper: Whether to use paper trading
       entry_margin: Margin for entry orders
       exit_margin: Margin for exit orders
+      max_slippage: Maximum slippage for limit prices (default 0.005 = 0.5%)
       enable_shorts: Whether to enable short selling
       check_shortability: Whether to check if tickers are shortable
     """
@@ -72,7 +73,8 @@ class TurtleTradingLS:
       self.logger,
       self.slack,
       entry_margin,
-      exit_margin
+      exit_margin,
+      max_slippage
     )
 
     # Load ticker universe
@@ -94,6 +96,9 @@ class TurtleTradingLS:
 
     self.logger.log("Turtle Trading System (Long/Short) initialized")
     self.logger.log(f"Short selling: {'enabled' if enable_shorts else 'disabled'}")
+
+    # Check for zombie orders on startup
+    self.reconcile_zombie_orders()
 
   def load_universe(self, universe_file):
     """Load ticker universe from file"""
@@ -188,6 +193,53 @@ class TurtleTradingLS:
 
     return True
 
+  def reconcile_zombie_orders(self):
+    """
+    Check for zombie orders on startup - orders that exist in Alpaca but aren't tracked in state.
+    This can happen if the system crashes or has connection errors after placing an order.
+    """
+    self.logger.log("Checking for zombie orders...")
+
+    try:
+      # Get all open orders from Alpaca
+      from alpaca.trading.requests import GetOrdersRequest
+      from alpaca.trading.enums import QueryOrderStatus
+      request = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+      open_orders = self.trading_client.get_orders(filter=request)
+
+      # Build set of tracked order IDs
+      tracked_order_ids = set(self.state.pending_entry_orders.values())
+      tracked_order_ids.update(
+        oid for oid in self.state.pending_pyramid_orders.values() if oid != 'PLACING'
+      )
+
+      # Find zombie orders
+      zombies = []
+      for order in open_orders:
+        order_id = str(order.id)
+        if order_id not in tracked_order_ids:
+          zombies.append(order)
+
+      if zombies:
+        self.logger.log(f"Found {len(zombies)} zombie order(s):", 'WARNING')
+        for order in zombies:
+          self.logger.log(f"  - {order.symbol} {order.side.name} {order.qty} @ stop=${order.stop_price} (Order ID: {order.id})", 'WARNING')
+
+        # Cancel all zombie orders
+        for order in zombies:
+          try:
+            self.logger.log(f"Canceling zombie order for {order.symbol} (ID: {order.id})", 'WARNING')
+            self.order_manager.cancel_order(str(order.id))
+            self.logger.log(f"✓ Canceled zombie order for {order.symbol}", 'WARNING')
+          except Exception as cancel_error:
+            self.logger.log(f"Failed to cancel zombie order {order.id} for {order.symbol}: {cancel_error}", 'ERROR')
+
+      else:
+        self.logger.log("No zombie orders found.")
+
+    except Exception as e:
+      self.logger.log(f"Error checking for zombie orders: {e}", 'ERROR')
+
   def get_total_equity(self):
     """
     Calculate total equity (cash + long positions value + short unrealized P&L)
@@ -228,7 +280,7 @@ class TurtleTradingLS:
         self.logger.log(f"Error calculating total equity manually: {e2}", 'ERROR')
         return 10000  # Fallback value
 
-  def enter_long_position(self, ticker, units, target_price, n):
+  def enter_long_position(self, ticker, units, target_price, n, system=1):
     """Enter or pyramid a long position"""
     is_pyramid = ticker in self.state.long_positions
     pyramid_level = len(self.state.long_positions[ticker]['pyramid_units']) + 1 if is_pyramid else 1
@@ -250,9 +302,9 @@ class TurtleTradingLS:
         reason = f"Long pyramid level {pyramid_level}"
       else:
         self.state.long_positions[ticker] = self.position_manager.create_new_long_position(
-          units, filled_price, n, order_id
+          units, filled_price, n, order_id, system
         )
-        reason = "Long initial entry"
+        reason = f"Long initial entry (S{system})"
 
       self.state.save_state()
 
@@ -274,7 +326,7 @@ class TurtleTradingLS:
 
     return False
 
-  def enter_short_position(self, ticker, units, target_price, n):
+  def enter_short_position(self, ticker, units, target_price, n, system=1):
     """Enter or pyramid a short position"""
     # Double-check shortability (in case signal was stale)
     if not self._is_ticker_shortable(ticker):
@@ -307,9 +359,9 @@ class TurtleTradingLS:
         reason = f"Short pyramid level {pyramid_level}"
       else:
         self.state.short_positions[ticker] = self.position_manager.create_new_short_position(
-          units, filled_price, n, order_id
+          units, filled_price, n, order_id, system
         )
-        reason = "Short initial entry"
+        reason = f"Short initial entry (S{system})"
 
       self.state.save_state()
 
@@ -489,9 +541,13 @@ class TurtleTradingLS:
       if current_price is None:
         continue
 
-      if self.signal_generator.check_long_exit_signal(df, current_price):
-        self.logger.log(f"Long exit signal for {ticker}")
-        self.exit_long_position(ticker, current_price, 'Exit signal (10-day low)')
+      # Get system from position (default to 1 for backwards compatibility)
+      system = position.get('system', 1)
+      exit_level = '10-day' if system == 1 else '20-day'
+
+      if self.signal_generator.check_long_exit_signal(df, current_price, system):
+        self.logger.log(f"Long exit signal for {ticker} (System {system})")
+        self.exit_long_position(ticker, current_price, f'Exit signal ({exit_level} low, S{system})')
 
   def check_short_exit_signals(self):
     """Check if any short positions hit exit signals"""
@@ -513,9 +569,13 @@ class TurtleTradingLS:
       if current_price is None:
         continue
 
-      if self.signal_generator.check_short_exit_signal(df, current_price):
-        self.logger.log(f"Short exit signal for {ticker}")
-        self.exit_short_position(ticker, current_price, 'Exit signal (10-day high)')
+      # Get system from position (default to 1 for backwards compatibility)
+      system = position.get('system', 1)
+      exit_level = '10-day' if system == 1 else '20-day'
+
+      if self.signal_generator.check_short_exit_signal(df, current_price, system):
+        self.logger.log(f"Short exit signal for {ticker} (System {system})")
+        self.exit_short_position(ticker, current_price, f'Exit signal ({exit_level} high, S{system})')
 
   def check_long_pyramid_opportunities(self):
     """Check if any long positions can pyramid"""
@@ -556,19 +616,25 @@ class TurtleTradingLS:
 
       if self.signal_generator.check_long_pyramid_opportunity(
           last_entry_price, current_price, initial_n):
-        pyramid_trigger = last_entry_price + 0.5 * initial_n
+        pyramid_entry_price = last_entry_price + 0.5 * initial_n
         pyramid_level = len(position['pyramid_units']) + 1
 
         # Log detailed pyramid trigger information
         self.logger.log_pyramid_trigger(
-          ticker, 'LONG', pyramid_level, pyramid_trigger,
+          ticker, 'LONG', pyramid_level, pyramid_entry_price,
           current_price, last_entry_price, initial_n
         )
+
+        # Check if current price is within trigger threshold (like entry queue logic)
+        trigger_threshold = pyramid_entry_price * 0.99
+        if current_price < trigger_threshold:
+          self.logger.log(f"LONG {ticker}: Price not at trigger yet ({current_price:.2f} < {trigger_threshold:.2f})")
+          continue
 
         # Use same units as initial entry
         units = initial_units
 
-        cost = units * pyramid_trigger
+        cost = units * pyramid_entry_price
         buying_power = self.order_manager.get_buying_power()
 
         if cost <= buying_power:
@@ -577,7 +643,7 @@ class TurtleTradingLS:
           self.state.save_state()
           self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
 
-          success = self.enter_long_position(ticker, units, pyramid_trigger, initial_n)
+          success = self.enter_long_position(ticker, units, pyramid_entry_price, initial_n)
 
           if success:
             # Order filled immediately, position updated, remove pending marker
@@ -646,19 +712,25 @@ class TurtleTradingLS:
 
       if self.signal_generator.check_short_pyramid_opportunity(
           last_entry_price, current_price, initial_n):
-        pyramid_trigger = last_entry_price - 0.5 * initial_n
+        pyramid_entry_price = last_entry_price - 0.5 * initial_n
         pyramid_level = len(position['pyramid_units']) + 1
 
         # Log detailed pyramid trigger information
         self.logger.log_pyramid_trigger(
-          ticker, 'SHORT', pyramid_level, pyramid_trigger,
+          ticker, 'SHORT', pyramid_level, pyramid_entry_price,
           current_price, last_entry_price, initial_n
         )
+
+        # Check if current price is within trigger threshold (like entry queue logic)
+        trigger_threshold = pyramid_entry_price * 1.01
+        if current_price > trigger_threshold:
+          self.logger.log(f"SHORT {ticker}: Price not at trigger yet ({current_price:.2f} > {trigger_threshold:.2f})")
+          continue
 
         # Use same units as initial entry
         units = initial_units
 
-        margin_required = self.position_manager.calculate_margin_required(units, pyramid_trigger)
+        margin_required = self.position_manager.calculate_margin_required(units, pyramid_entry_price)
         buying_power = self.order_manager.get_buying_power()
 
         if margin_required <= buying_power:
@@ -667,7 +739,7 @@ class TurtleTradingLS:
           self.state.save_state()
           self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
 
-          success = self.enter_short_position(ticker, units, pyramid_trigger, initial_n)
+          success = self.enter_short_position(ticker, units, pyramid_entry_price, initial_n)
 
           if success:
             # Order filled immediately, position updated, remove pending marker
@@ -746,8 +818,9 @@ class TurtleTradingLS:
       # Check entry trigger
       if side == 'long':
         entry_trigger = signal['entry_price'] * 0.99
+        system = signal.get('system', 1)  # Get system from signal
         current_str = f"${current_price:.2f}" if current_price is not None else "None"
-        self.logger.log(f"[DEBUG] LONG {ticker}: entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
+        self.logger.log(f"[DEBUG] LONG {ticker} (S{system}): entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price >= entry_trigger:
           units = self.position_manager.calculate_position_size(
             total_equity, signal['n']
@@ -756,8 +829,8 @@ class TurtleTradingLS:
           self.logger.log(f"[DEBUG] {ticker}: units={units}, cost=${cost:,.2f}, buying_power=${buying_power:,.2f}")
 
           if cost <= buying_power:
-            self.logger.log(f"[DEBUG] {ticker}: Attempting long entry")
-            success = self.enter_long_position(ticker, units, signal['entry_price'], signal['n'])
+            self.logger.log(f"[DEBUG] {ticker}: Attempting long entry (S{system})")
+            success = self.enter_long_position(ticker, units, signal['entry_price'], signal['n'], system)
             if success:
               processed.append(ticker)
               buying_power -= cost
@@ -777,8 +850,9 @@ class TurtleTradingLS:
 
       else:  # short
         entry_trigger = signal['entry_price'] * 1.01
+        system = signal.get('system', 1)  # Get system from signal
         current_str = f"${current_price:.2f}" if current_price is not None else "None"
-        self.logger.log(f"[DEBUG] SHORT {ticker}: entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
+        self.logger.log(f"[DEBUG] SHORT {ticker} (S{system}): entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price <= entry_trigger:
           units = self.position_manager.calculate_position_size(
             total_equity, signal['n']
@@ -789,8 +863,8 @@ class TurtleTradingLS:
           self.logger.log(f"[DEBUG] {ticker}: units={units}, margin=${margin_required:,.2f}, buying_power=${buying_power:,.2f}")
 
           if margin_required <= buying_power:
-            self.logger.log(f"[DEBUG] {ticker}: Attempting short entry")
-            success = self.enter_short_position(ticker, units, signal['entry_price'], signal['n'])
+            self.logger.log(f"[DEBUG] {ticker}: Attempting short entry (S{system})")
+            success = self.enter_short_position(ticker, units, signal['entry_price'], signal['n'], system)
             if success:
               processed.append(ticker)
               buying_power -= margin_required
@@ -916,7 +990,15 @@ class TurtleTradingLS:
           self.state.save_state()
 
       except Exception as e:
-        self.logger.log(f"Could not get status for pending entry order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+        self.logger.log(f"Could not get status for pending entry order {order_id} ({ticker}): {e}. Attempting to cancel order.", 'WARNING')
+        try:
+          # Try to cancel the order before removing from tracking to avoid zombie orders
+          self.order_manager.cancel_order(order_id)
+          self.logger.log(f"Successfully canceled pending entry order {order_id} ({ticker})", 'WARNING')
+        except Exception as cancel_error:
+          self.logger.log(f"Failed to cancel order {order_id} ({ticker}): {cancel_error}. Manual intervention may be required.", 'ERROR')
+
+        # Remove from tracking after attempting cancellation
         del self.state.pending_entry_orders[ticker]
         self.state.save_state()
 
@@ -1011,7 +1093,15 @@ class TurtleTradingLS:
           self.state.save_state()
 
       except Exception as e:
-        self.logger.log(f"Could not get status for pending pyramid order {order_id} ({ticker}): {e}. Removing from pending list.", 'WARNING')
+        self.logger.log(f"Could not get status for pending pyramid order {order_id} ({ticker}): {e}. Attempting to cancel order.", 'WARNING')
+        try:
+          # Try to cancel the order before removing from tracking to avoid zombie orders
+          self.order_manager.cancel_order(order_id)
+          self.logger.log(f"Successfully canceled pending pyramid order {order_id} ({ticker})", 'WARNING')
+        except Exception as cancel_error:
+          self.logger.log(f"Failed to cancel order {order_id} ({ticker}): {cancel_error}. Manual intervention may be required.", 'ERROR')
+
+        # Remove from tracking after attempting cancellation
         del self.state.pending_pyramid_orders[ticker]
         self.state.save_state()
 
@@ -1081,9 +1171,8 @@ class TurtleTradingLS:
     account = self.trading_client.get_account()
 
     summary = {
-      "Buying Power": f"${float(account.buying_power):,.2f}",
       "Equity": f"${float(account.equity):,.2f}",
-      "Cash": f"${float(account.cash):,.2f}",
+      "Buying Power": f"${float(account.buying_power):,.2f}",
       "Long Positions": len(self.state.long_positions),
       "Short Positions": len(self.state.short_positions),
       "Entry Queue": len(self.state.entry_queue)
@@ -1165,7 +1254,7 @@ class TurtleTradingLS:
     summary = {
       "Daily P&L": f"${self.daily_pnl:,.2f}",
       "Equity": f"${float(account.equity):,.2f}",
-      "Cash": f"${float(account.cash):,.2f}",
+      "Buying Power": f"${float(account.buying_power):,.2f}",
       "Long Positions": len(self.state.long_positions),
       "Short Positions": len(self.state.short_positions),
       "Orders Placed": orders_placed,

@@ -29,16 +29,20 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 
 ## Features
 
-- **System 1 & 2 Entries**: Implements both Turtle Trading systems (20-day and 55-day breakouts).
-- **Risk-Based Position Sizing**: Calculates trade sizes based on a percentage of a dynamic risk pot.
-- **Pyramiding**: Adds to winning positions up to 4 times, spaced by 0.5N.
-- **Dynamic Stop-Loss**: Adjusts stop-loss orders based on the highest entry price of a pyramided position.
-- **Automated Scheduling**: Uses a scheduler to run trading workflows at appropriate market times.
-- **Backtesting Engine**: A vectorized backtester to evaluate strategy performance on historical data.
-- **Slack Integration**: Sends real-time alerts for trades, daily summaries, and system status.
-- **State Persistence**: Maintains the trading state (positions, risk pot) in a JSON file.
-- **Modular Architecture**: Refactored into focused, testable components for better maintainability.
-- **Comprehensive Testing**: 34+ unit tests covering core trading logic.
+- **Dual Trading Systems**: Implements both System 1 (20-10) and System 2 (55-20) for optimal performance
+  - System 1: 20-day entry, 10-day exit (faster trades, higher turnover)
+  - System 2: 55-day entry, 20-day exit (trend following, larger profits)
+- **Long and Short Positions**: Full support for both long and short selling
+- **Risk-Based Position Sizing**: Calculates trade sizes based on a percentage of a dynamic risk pot (1% per unit)
+- **Pyramiding**: Adds to winning positions up to 4 times, spaced by 0.5N
+- **Dynamic Stop-Loss**: Adjusts stop-loss orders based on the highest entry price of a pyramided position (2N stops)
+- **System-Specific Exits**: Each position uses the exit rules of its entry system
+- **Automated Scheduling**: Uses a scheduler to run trading workflows at appropriate market times
+- **Backtesting Engine**: Vectorized backtesters for both single and dual system strategies
+- **Slack Integration**: Sends real-time alerts for trades, daily summaries, and system status
+- **State Persistence**: Maintains the trading state (positions, risk pot) in a JSON file
+- **Modular Architecture**: Refactored into focused, testable components for better maintainability
+- **Comprehensive Testing**: 34+ unit tests covering core trading logic
 
 ## Project Structure
 
@@ -106,12 +110,14 @@ This ensures the two systems never interfere with each other.
 
 The system has been refactored into a modular architecture with clear separation of concerns:
 
-### Core Modules (`system_long/core/`)
+### Core Modules (`system_long/core/` and `system_long_short/core/`)
 - **DataProvider**: Fetches market data from Alpaca API with retry logic
-- **IndicatorCalculator**: Calculates ATR and Donchian Channels for signals
-- **SignalGenerator**: Generates entry, exit, and pyramid signals
-- **PositionManager**: Manages positions, pyramids, and risk calculations
-- **OrderManager**: Executes and tracks orders with error handling
+- **IndicatorCalculator**: Calculates ATR and Donchian Channels (10-day, 20-day, 55-day)
+- **SignalGenerator**: Generates dual system entry/exit signals with system priority
+  - System 1 (20-10): Faster entries/exits
+  - System 2 (55-20): Trend-following entries/exits
+- **PositionManager**: Manages positions, pyramids, and risk calculations for both long/short
+- **OrderManager**: Executes and tracks orders with error handling for both sides
 
 ### Utility Modules (`system_long/utils/`)
 - **DailyLogger**: Logs trading activities, orders, and state snapshots
@@ -202,15 +208,35 @@ python system_long_short/turtle_manual_ls.py
 
 ### Backtesting
 
-The `backtesting.py` script allows you to test the Turtle Trading strategy on historical data.
+The project includes multiple backtesting scripts to evaluate different strategies:
 
-1.  Make sure you have downloaded the historical data using the data gathering script.
-2.  Run the backtesting script:
-    ```bash
-    python backtesting/backtesting.py
-    ```
+**Dual System Backtester** (Recommended - matches live system):
+```bash
+# Long-short with both System 1 (20-10) and System 2 (55-20)
+python backtesting/turtle_long_short_dual_system_backtester.py
+```
 
-The script will run the backtest and generate a plot with the portfolio equity, drawdown, and number of open positions over time. It will also print a summary of the backtest results.
+**Single System Backtesters**:
+```bash
+# Long-short with System 2 only (55-20)
+python backtesting/turtle_long_short_55_20_backtester.py
+
+# Long-only original
+python backtesting/backtesting.py
+```
+
+**Prerequisites**:
+1. Download historical data using the data gathering script
+2. Ensure data is in `data/alpaca_daily/` directory
+
+**Output**:
+- Performance metrics (total return, win rate, avg win/loss, etc.)
+- Equity curves showing portfolio value over time
+- Position tracking (long units, short units, net exposure)
+- Trade-by-trade breakdown by system
+- Plots saved to `backtesting/turtle_*_plots/` directories
+
+**Backtesting shows the dual system significantly outperforms single-system approaches** due to complementary entry/exit timing.
 
 ### Running Tests
 
@@ -244,22 +270,41 @@ python -m unittest tests.test_system_long.test_core.test_position_manager.TestPo
 
 ## System Logic
 
-### Entry
+### Dual System Strategy
 
--   **System 1**: Enters a position when the price breaks above the 20-day high.
--   **System 2**: Enters a position when the price breaks above the 55-day high.
--   A filter is applied to System 1 to avoid re-entering a position shortly after a profitable exit.
+The `system_long_short` implementation uses **both System 1 and System 2** simultaneously:
+
+**System 1 (20-10) - Faster Trading**:
+- Entry: 20-day high breakout (long) or 20-day low breakdown (short)
+- Exit: 10-day low (long) or 10-day high (short)
+- Win filter: May skip entries after profitable trades
+
+**System 2 (55-20) - Trend Following**:
+- Entry: 55-day high breakout (long) or 55-day low breakdown (short)
+- Exit: 20-day low (long) or 20-day high (short)
+- No win filter: Always takes entries
+
+**Entry Priority**:
+- System 1 signals are checked first for each ticker
+- System 2 signals are checked only if System 1 has no signal
+- Only one position per ticker (first system to trigger gets it)
 
 ### Pyramiding
 
--   Up to 4 pyramid levels are allowed per position.
--   A new pyramid unit is added when the price moves up by 0.5N from the last entry price.
+-   Up to 4 pyramid levels are allowed per position
+-   Long positions: Add units when price moves up by 0.5N from the last entry
+-   Short positions: Add units when price moves down by 0.5N from the last entry
+-   All pyramids use the initial N value for consistency
 
 ### Exit
 
--   **Stop-Loss**: The entire position is exited if the price drops 2N below the highest entry price.
--   **System 1 Exit**: The position is exited if the price drops below the 10-day low.
--   **System 2 Exit**: The position is exited if the price drops below the 20-day low.
+-   **Stop-Loss**: 2N from the last pyramid entry price
+  - Long: Last entry - 2N
+  - Short: Last entry + 2N
+-   **Signal Exit**: Based on the position's entry system
+  - System 1 positions: Exit on 10-day reversal
+  - System 2 positions: Exit on 20-day reversal
+-   Each position remembers which system opened it and uses the appropriate exit rules
 
 ## Risk Management
 
