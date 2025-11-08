@@ -2,7 +2,6 @@
 graveyard/
 .DS_Store
 data/
-data_gathering/
 .python-version
 tickers_universe.txt
 __pycache__
