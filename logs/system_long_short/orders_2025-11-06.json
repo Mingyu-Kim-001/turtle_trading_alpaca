@@ -1,0 +1,52 @@
+[
+  {
+    "timestamp": "2025-11-06T12:42:12.343571",
+    "type": "SHORT_ENTRY",
+    "ticker": "META",
+    "status": "PLACED",
+    "details": {
+      "order_id": "41586fda-6b75-4168-ae52-60e97c6314c9",
+      "units": 4,
+      "stop_price": 626.46,
+      "limit_price": 614.05,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-06T12:42:15.592262",
+    "type": "SHORT_ENTRY",
+    "ticker": "META",
+    "status": "FILLED",
+    "details": {
+      "order_id": "41586fda-6b75-4168-ae52-60e97c6314c9",
+      "units": 4,
+      "filled_price": 620.1
+    }
+  },
+  {
+    "timestamp": "2025-11-06T12:42:17.228633",
+    "type": "LONG_ENTRY",
+    "ticker": "BRK.B",
+    "status": "PLACED",
+    "details": {
+      "order_id": "ed4654cc-35df-40e6-8f44-b641fc6a06a5",
+      "units": 15,
+      "stop_price": 493.01,
+      "limit_price": 502.97,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-11-06T12:42:20.417856",
+    "type": "LONG_ENTRY",
+    "ticker": "BRK.B",
+    "status": "FILLED",
+    "details": {
+      "order_id": "ed4654cc-35df-40e6-8f44-b641fc6a06a5",
+      "units": 15,
+      "filled_price": 493.43
+    }
+  }
+]

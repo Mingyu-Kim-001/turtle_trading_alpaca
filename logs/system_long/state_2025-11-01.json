@@ -1,0 +1,334 @@
+[
+  {
+    "timestamp": "2025-11-01T23:11:33.597940",
+    "label": "market_open",
+    "risk_pot": 14000,
+    "positions": {
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 92.0,
+            "entry_price": 248.293152,
+            "entry_n": 6.621245000000002,
+            "entry_value": 22842.969984,
+            "entry_date": "2025-10-31T15:30:50.575131+00:00",
+            "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812,6cde857c-5ed5-4d73-b54a-714550be317a,bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec,b2ce8801-359c-4efb-b77d-3a68aec5131a",
+            "grouped_orders": 4
+          }
+        ],
+        "entry_date": "2025-10-31T15:30:50.575131+00:00",
+        "stop_price": 235.050662
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.05,
+        "n": 7.033400000000003,
+        "proximity": 0.5851149332904655
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.4016,
+        "n": 19.092719999999993,
+        "proximity": 2.322165391181807
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.79,
+        "n": 5.280994999999995,
+        "proximity": 2.4114627571180516
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 113.8,
+        "n": 1.9272300000000009,
+        "proximity": 2.855887521968366
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 205.7455,
+        "n": 6.281735,
+        "proximity": 3.132219173687882
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.48,
+        "n": 2.9251499999999995,
+        "proximity": 3.183361629881155
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.355,
+        "n": 2.4226499999999986,
+        "proximity": 4.685577466662243
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 338.9,
+        "n": 6.529749999999993,
+        "proximity": 4.7506639126586085
+      }
+    ],
+    "position_count": 1,
+    "queue_count": 8
+  },
+  {
+    "timestamp": "2025-11-01T23:11:34.395240",
+    "label": "intraday_2311",
+    "risk_pot": 14000,
+    "positions": {
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 92.0,
+            "entry_price": 248.293152,
+            "entry_n": 6.621245000000002,
+            "entry_value": 22842.969984,
+            "entry_date": "2025-10-31T15:30:50.575131+00:00",
+            "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812,6cde857c-5ed5-4d73-b54a-714550be317a,bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec,b2ce8801-359c-4efb-b77d-3a68aec5131a",
+            "grouped_orders": 4
+          }
+        ],
+        "entry_date": "2025-10-31T15:30:50.575131+00:00",
+        "stop_price": 235.050662
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.05,
+        "n": 7.033400000000003,
+        "proximity": 0.5851149332904655
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.4016,
+        "n": 19.092719999999993,
+        "proximity": 2.322165391181807
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.79,
+        "n": 5.280994999999995,
+        "proximity": 2.4114627571180516
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 113.8,
+        "n": 1.9272300000000009,
+        "proximity": 2.855887521968366
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 205.7455,
+        "n": 6.281735,
+        "proximity": 3.132219173687882
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.48,
+        "n": 2.9251499999999995,
+        "proximity": 3.183361629881155
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.355,
+        "n": 2.4226499999999986,
+        "proximity": 4.685577466662243
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 338.9,
+        "n": 6.529749999999993,
+        "proximity": 4.7506639126586085
+      }
+    ],
+    "position_count": 1,
+    "queue_count": 8
+  },
+  {
+    "timestamp": "2025-11-01T23:11:34.405429",
+    "label": "market_close",
+    "risk_pot": 14000,
+    "positions": {
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 92.0,
+            "entry_price": 248.293152,
+            "entry_n": 6.621245000000002,
+            "entry_value": 22842.969984,
+            "entry_date": "2025-10-31T15:30:50.575131+00:00",
+            "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812,6cde857c-5ed5-4d73-b54a-714550be317a,bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec,b2ce8801-359c-4efb-b77d-3a68aec5131a",
+            "grouped_orders": 4
+          }
+        ],
+        "entry_date": "2025-10-31T15:30:50.575131+00:00",
+        "stop_price": 235.050662
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.05,
+        "n": 7.033400000000003,
+        "proximity": 0.5851149332904655
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.4016,
+        "n": 19.092719999999993,
+        "proximity": 2.322165391181807
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.79,
+        "n": 5.280994999999995,
+        "proximity": 2.4114627571180516
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 113.8,
+        "n": 1.9272300000000009,
+        "proximity": 2.855887521968366
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 205.7455,
+        "n": 6.281735,
+        "proximity": 3.132219173687882
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.48,
+        "n": 2.9251499999999995,
+        "proximity": 3.183361629881155
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.355,
+        "n": 2.4226499999999986,
+        "proximity": 4.685577466662243
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 338.9,
+        "n": 6.529749999999993,
+        "proximity": 4.7506639126586085
+      }
+    ],
+    "position_count": 1,
+    "queue_count": 8
+  },
+  {
+    "timestamp": "2025-11-01T23:11:34.564643",
+    "label": "EOD_start",
+    "risk_pot": 14000,
+    "positions": {
+      "AMZN": {
+        "system": 1,
+        "pyramid_units": [
+          {
+            "units": 92.0,
+            "entry_price": 248.293152,
+            "entry_n": 6.621245000000002,
+            "entry_value": 22842.969984,
+            "entry_date": "2025-10-31T15:30:50.575131+00:00",
+            "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812,6cde857c-5ed5-4d73-b54a-714550be317a,bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec,b2ce8801-359c-4efb-b77d-3a68aec5131a",
+            "grouped_orders": 4
+          }
+        ],
+        "entry_date": "2025-10-31T15:30:50.575131+00:00",
+        "stop_price": 235.050662
+      }
+    },
+    "entry_queue": [
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.05,
+        "n": 7.033400000000003,
+        "proximity": 0.5851149332904655
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.4016,
+        "n": 19.092719999999993,
+        "proximity": 2.322165391181807
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.79,
+        "n": 5.280994999999995,
+        "proximity": 2.4114627571180516
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 113.8,
+        "n": 1.9272300000000009,
+        "proximity": 2.855887521968366
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 205.7455,
+        "n": 6.281735,
+        "proximity": 3.132219173687882
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.48,
+        "n": 2.9251499999999995,
+        "proximity": 3.183361629881155
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.355,
+        "n": 2.4226499999999986,
+        "proximity": 4.685577466662243
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 338.9,
+        "n": 6.529749999999993,
+        "proximity": 4.7506639126586085
+      }
+    ],
+    "position_count": 1,
+    "queue_count": 8
+  }
+]

@@ -1,0 +1,1707 @@
+[
+  {
+    "timestamp": "2025-11-03T05:00:58.922316",
+    "label": "EOD_start",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 648.35,
+        "n": 21.167990000000003,
+        "proximity": 0.4287807511374987,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.12,
+        "n": 7.033400000000003,
+        "proximity": 0.5624839290305992,
+        "side": "long"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 477.54,
+        "n": 6.061519999999996,
+        "proximity": 0.7999329899066033,
+        "side": "short"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 101.18,
+        "n": 2.132455000000001,
+        "proximity": 0.9883376161296697,
+        "side": "short"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 551.99,
+        "n": 11.631984999999991,
+        "proximity": 1.5326364608054561,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 1.9281563655573142,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 2.264414444370553,
+        "side": "short"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 517.81,
+        "n": 9.554415000000024,
+        "proximity": 2.2807593518858167,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.56,
+        "n": 19.115219999999994,
+        "proximity": 2.2866654985106005,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 2.3522210563133945,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.37,
+        "n": 5.280994999999995,
+        "proximity": 2.570551466508854,
+        "side": "long"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 250.5,
+        "current_price": 244.22,
+        "n": 6.621245000000002,
+        "proximity": 2.571451969535665,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 2.9702970297029627,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 3.1397257372796137,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 3.475865687303248,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.19,
+        "n": 7.296499999999997,
+        "proximity": 3.6985668053629137,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 4.185009097845862,
+        "side": "long"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 4.675134667819379,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 202.49,
+        "n": 6.322735,
+        "proximity": 4.790310632623826,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 19
+  },
+  {
+    "timestamp": "2025-11-03T05:01:00.962903",
+    "label": "EOD_complete",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 648.35,
+        "n": 21.167990000000003,
+        "proximity": 0.4287807511374987,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.12,
+        "n": 7.033400000000003,
+        "proximity": 0.5624839290305992,
+        "side": "long"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 477.54,
+        "n": 6.061519999999996,
+        "proximity": 0.7999329899066033,
+        "side": "short"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 101.18,
+        "n": 2.132455000000001,
+        "proximity": 0.9883376161296697,
+        "side": "short"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 551.99,
+        "n": 11.631984999999991,
+        "proximity": 1.5326364608054561,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 1.9281563655573142,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 2.264414444370553,
+        "side": "short"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 517.81,
+        "n": 9.554415000000024,
+        "proximity": 2.2807593518858167,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.56,
+        "n": 19.115219999999994,
+        "proximity": 2.2866654985106005,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 2.3522210563133945,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.37,
+        "n": 5.280994999999995,
+        "proximity": 2.570551466508854,
+        "side": "long"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 250.5,
+        "current_price": 244.22,
+        "n": 6.621245000000002,
+        "proximity": 2.571451969535665,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 2.9702970297029627,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 3.1397257372796137,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 3.475865687303248,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.19,
+        "n": 7.296499999999997,
+        "proximity": 3.6985668053629137,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 4.185009097845862,
+        "side": "long"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 4.675134667819379,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 202.49,
+        "n": 6.322735,
+        "proximity": 4.790310632623826,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 19
+  },
+  {
+    "timestamp": "2025-11-03T06:25:01.907441",
+    "label": "market_open",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 648.35,
+        "n": 21.167990000000003,
+        "proximity": 0.4287807511374987,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.12,
+        "n": 7.033400000000003,
+        "proximity": 0.5624839290305992,
+        "side": "long"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 477.54,
+        "n": 6.061519999999996,
+        "proximity": 0.7999329899066033,
+        "side": "short"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 101.18,
+        "n": 2.132455000000001,
+        "proximity": 0.9883376161296697,
+        "side": "short"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 551.99,
+        "n": 11.631984999999991,
+        "proximity": 1.5326364608054561,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 1.9281563655573142,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 2.264414444370553,
+        "side": "short"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 517.81,
+        "n": 9.554415000000024,
+        "proximity": 2.2807593518858167,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 456.56,
+        "n": 19.115219999999994,
+        "proximity": 2.2866654985106005,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 2.3522210563133945,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.37,
+        "n": 5.280994999999995,
+        "proximity": 2.570551466508854,
+        "side": "long"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 250.5,
+        "current_price": 244.22,
+        "n": 6.621245000000002,
+        "proximity": 2.571451969535665,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 2.9702970297029627,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.87,
+        "n": 2.9476499999999985,
+        "proximity": 3.1397257372796137,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.36,
+        "n": 1.9389800000000008,
+        "proximity": 3.475865687303248,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.19,
+        "n": 7.296499999999997,
+        "proximity": 3.6985668053629137,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 340.74,
+        "n": 6.529749999999993,
+        "proximity": 4.185009097845862,
+        "side": "long"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 157.4,
+        "current_price": 150.37,
+        "n": 2.458399999999999,
+        "proximity": 4.675134667819379,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 202.49,
+        "n": 6.322735,
+        "proximity": 4.790310632623826,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 19
+  },
+  {
+    "timestamp": "2025-11-03T06:31:05.410056",
+    "label": "intraday_0631",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "AMZN",
+        "entry_price": 256.97,
+        "current_price": 256.2743,
+        "n": 6.973745000000004,
+        "proximity": 0.2714669399155689,
+        "side": "long"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 310.6445,
+        "n": 6.770310000000004,
+        "proximity": 0.7164137784509338,
+        "side": "long"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.98,
+        "n": 2.084705000000001,
+        "proximity": 0.7922360863537306,
+        "side": "short"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 548.115,
+        "n": 11.31473499999999,
+        "proximity": 0.8365032885434692,
+        "side": "short"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 479.145,
+        "n": 5.836524999999995,
+        "proximity": 1.1322251093092812,
+        "side": "short"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 654.42,
+        "n": 20.31449,
+        "proximity": 1.3523425323186806,
+        "side": "short"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 208.82,
+        "n": 6.431234999999999,
+        "proximity": 1.6137822047696586,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 340.235,
+        "n": 6.302249999999992,
+        "proximity": 1.7825914441488966,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 149.81,
+        "n": 2.3908999999999994,
+        "proximity": 1.899072158066884,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.22,
+        "n": 1.8794800000000016,
+        "proximity": 2.477674662931184,
+        "side": "long"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 454.94,
+        "n": 18.08571999999999,
+        "proximity": 2.6508990196509434,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 270.01,
+        "n": 5.149494999999999,
+        "proximity": 2.7073071367727133,
+        "side": "long"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 520.7775,
+        "n": 9.07141500000003,
+        "proximity": 2.8375841890250695,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.39,
+        "n": 2.8561499999999995,
+        "proximity": 2.892934869154408,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.39,
+        "n": 2.8561499999999995,
+        "proximity": 3.2326556611285118,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.22,
+        "n": 1.8794800000000016,
+        "proximity": 3.3575555944668127,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 280.785,
+        "n": 7.039499999999999,
+        "proximity": 3.8481400359705646,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 340.235,
+        "n": 6.302249999999992,
+        "proximity": 4.33964759651417,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 18
+  },
+  {
+    "timestamp": "2025-11-03T06:36:11.816539",
+    "label": "intraday_0636",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 257.9999,
+        "n": 7.055245000000004,
+        "proximity": 0.2325969893786771,
+        "side": "long"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 475.04,
+        "n": 5.971524999999997,
+        "proximity": 0.2778713371505543,
+        "side": "short"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 547.71,
+        "n": 11.344734999999991,
+        "proximity": 0.7631775939822285,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 310.41,
+        "n": 6.809035000000003,
+        "proximity": 0.7925002416159207,
+        "side": "long"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 101.135,
+        "n": 2.102705000000001,
+        "proximity": 0.9442823948188048,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 148.92,
+        "n": 2.4539,
+        "proximity": 1.3127853881278433,
+        "side": "short"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 654.74,
+        "n": 20.31449,
+        "proximity": 1.4005559458716375,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 339.91,
+        "n": 6.302249999999992,
+        "proximity": 1.6886822982554233,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 458.0801,
+        "n": 18.15871999999999,
+        "proximity": 1.9472358655178392,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.53,
+        "n": 6.4562349999999995,
+        "proximity": 2.245410302124991,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.18,
+        "n": 1.9039800000000013,
+        "proximity": 2.5135750569276496,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.36,
+        "n": 2.86515,
+        "proximity": 2.877468677001495,
+        "side": "short"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 268.9798,
+        "n": 5.191494999999998,
+        "proximity": 3.100678935741636,
+        "side": "long"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 522.69,
+        "n": 9.19041500000003,
+        "proximity": 3.193097246934139,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.36,
+        "n": 2.86515,
+        "proximity": 3.249097472924175,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.18,
+        "n": 1.9039800000000013,
+        "proximity": 3.323699421965319,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.24,
+        "n": 7.052499999999999,
+        "proximity": 3.6801308490968445,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 339.91,
+        "n": 6.302249999999992,
+        "proximity": 4.439410432173214,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 18
+  },
+  {
+    "timestamp": "2025-11-03T06:41:18.475326",
+    "label": "intraday_0641",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 475.3101,
+        "n": 5.975019999999995,
+        "proximity": 0.3345394932697517,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 311.76,
+        "n": 6.809035000000003,
+        "proximity": 0.3560431100846849,
+        "side": "long"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 546.6,
+        "n": 11.344734999999991,
+        "proximity": 0.561653860226866,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 463.9061,
+        "n": 18.454714999999993,
+        "proximity": 0.6669237589244934,
+        "side": "long"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.95,
+        "n": 2.102705000000001,
+        "proximity": 0.7627538385339238,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 148.311,
+        "n": 2.4669,
+        "proximity": 0.9075523730539228,
+        "side": "short"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 256.1516,
+        "n": 7.055245000000004,
+        "proximity": 0.9558402133736621,
+        "side": "long"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 654.76,
+        "n": 20.31449,
+        "proximity": 1.4035677194697205,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 339.185,
+        "n": 6.307749999999993,
+        "proximity": 1.4785441573182736,
+        "side": "short"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 208.815,
+        "n": 6.4562349999999995,
+        "proximity": 1.6162153102028096,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.0,
+        "n": 2.87915,
+        "proximity": 2.6914893617021285,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 113.9,
+        "n": 1.9039800000000013,
+        "proximity": 2.7655838454784822,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 113.9,
+        "n": 1.9039800000000013,
+        "proximity": 3.0860403863037758,
+        "side": "short"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 522.15,
+        "n": 9.19041500000003,
+        "proximity": 3.092980944173126,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.0,
+        "n": 2.87915,
+        "proximity": 3.4468085106382924,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 267.8401,
+        "n": 5.245994999999999,
+        "proximity": 3.5393878661186235,
+        "side": "long"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.39,
+        "n": 7.052499999999999,
+        "proximity": 3.6248622907708126,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 339.185,
+        "n": 6.307749999999993,
+        "proximity": 4.662647227913969,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 18
+  },
+  {
+    "timestamp": "2025-11-03T06:46:24.917924",
+    "label": "intraday_0646",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 474.29,
+        "n": 6.003524999999996,
+        "proximity": 0.12017963693099014,
+        "side": "short"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 257.43,
+        "n": 7.055245000000004,
+        "proximity": 0.45449248339355003,
+        "side": "long"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 467.0,
+        "current_price": 464.69,
+        "n": 18.49864499999999,
+        "proximity": 0.4971055972799075,
+        "side": "long"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 546.87,
+        "n": 11.344734999999991,
+        "proximity": 0.6107484411286104,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 310.86,
+        "n": 6.823535000000004,
+        "proximity": 0.6465933217525545,
+        "side": "long"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 148.1,
+        "n": 2.4763999999999995,
+        "proximity": 0.7663740715732552,
+        "side": "short"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.97,
+        "n": 2.102705000000001,
+        "proximity": 0.782410617014947,
+        "side": "short"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 653.2,
+        "n": 20.31449,
+        "proximity": 1.168095529699938,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 338.73,
+        "n": 6.3267499999999925,
+        "proximity": 1.3462049419891955,
+        "side": "short"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 208.375,
+        "n": 6.4562349999999995,
+        "proximity": 1.830785842831431,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.06,
+        "n": 1.9039800000000013,
+        "proximity": 2.6214273189549315,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.115,
+        "n": 2.87915,
+        "proximity": 2.750976796108769,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.06,
+        "n": 1.9039800000000013,
+        "proximity": 3.221988427143606,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.115,
+        "n": 2.87915,
+        "proximity": 3.3835685617840046,
+        "side": "long"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 523.76,
+        "n": 9.19041500000003,
+        "proximity": 3.390866045517029,
+        "side": "short"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 267.06,
+        "n": 5.275994999999997,
+        "proximity": 3.841833295888561,
+        "side": "long"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 280.575,
+        "n": 7.0844999999999985,
+        "proximity": 3.925866524102285,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 338.73,
+        "n": 6.3267499999999925,
+        "proximity": 4.80323561538688,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 18
+  },
+  {
+    "timestamp": "2025-11-03T06:51:31.735176",
+    "label": "intraday_0651",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "TSLA",
+        "entry_price": 468.87,
+        "current_price": 468.225,
+        "n": 18.682719999999993,
+        "proximity": 0.13775428479897095,
+        "side": "long"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 546.255,
+        "n": 11.344734999999991,
+        "proximity": 0.4988512690959392,
+        "side": "short"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.72,
+        "current_price": 476.13,
+        "n": 6.008524999999994,
+        "proximity": 0.506164282863917,
+        "side": "short"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.96,
+        "n": 2.102705000000001,
+        "proximity": 0.7725832012678159,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 148.605,
+        "n": 2.4783999999999993,
+        "proximity": 1.1035967834191223,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 309.44,
+        "n": 6.848535000000004,
+        "proximity": 1.1084539813857313,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 338.28,
+        "n": 6.343749999999991,
+        "proximity": 1.214969847463627,
+        "side": "short"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 255.383,
+        "n": 7.055245000000004,
+        "proximity": 1.2596766425329848,
+        "side": "long"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 654.18,
+        "n": 20.31449,
+        "proximity": 1.3161515179308296,
+        "side": "short"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.41,
+        "n": 6.4562349999999995,
+        "proximity": 2.3045658357841945,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.365,
+        "n": 1.9039800000000013,
+        "proximity": 2.3477462510383442,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 189.015,
+        "n": 2.87915,
+        "proximity": 2.8913049228897196,
+        "side": "long"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 522.735,
+        "n": 9.22791500000003,
+        "proximity": 3.201430935368784,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 189.015,
+        "n": 2.87915,
+        "proximity": 3.214030632489479,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.365,
+        "n": 1.9039800000000013,
+        "proximity": 3.4800856905521704,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 281.54,
+        "n": 7.0844999999999985,
+        "proximity": 3.569652624849028,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 266.73,
+        "n": 5.304744999999997,
+        "proximity": 3.970307052075123,
+        "side": "long"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 355.0,
+        "current_price": 338.28,
+        "n": 6.343749999999991,
+        "proximity": 4.942651058294912,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 18
+  },
+  {
+    "timestamp": "2025-11-03T06:56:38.313025",
+    "label": "intraday_0656",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.65,
+        "current_price": 473.8658,
+        "n": 6.031024999999997,
+        "proximity": 0.045540319643241095,
+        "side": "short"
+      },
+      {
+        "ticker": "MA",
+        "entry_price": 543.53,
+        "current_price": 544.15,
+        "n": 11.436234999999993,
+        "proximity": 0.11393917118441692,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 471.52,
+        "current_price": 470.045,
+        "n": 18.81521999999999,
+        "proximity": 0.313799742577831,
+        "side": "long"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.78,
+        "n": 2.102705000000001,
+        "proximity": 0.5953562214725088,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 337.25,
+        "n": 6.389749999999992,
+        "proximity": 0.9132690882134867,
+        "side": "short"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 148.57,
+        "n": 2.4783999999999993,
+        "proximity": 1.0802988490273877,
+        "side": "short"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 254.895,
+        "n": 7.055245000000004,
+        "proximity": 1.4535396928146933,
+        "side": "long"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 655.7028,
+        "n": 20.31449,
+        "proximity": 1.545334258142557,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 307.89,
+        "n": 6.9670350000000045,
+        "proximity": 1.6174607814479256,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.705,
+        "n": 6.4562349999999995,
+        "proximity": 2.159264341253211,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.5416,
+        "n": 1.9079800000000013,
+        "proximity": 2.1899467093178324,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.425,
+        "n": 2.87915,
+        "proximity": 2.910972535491582,
+        "side": "short"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 522.78,
+        "n": 9.22791500000003,
+        "proximity": 3.2097631891043985,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.425,
+        "n": 2.87915,
+        "proximity": 3.2134801645216813,
+        "side": "long"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 282.06,
+        "n": 7.0997499999999985,
+        "proximity": 3.378713748847753,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.5416,
+        "n": 1.9079800000000013,
+        "proximity": 3.628899893139259,
+        "side": "short"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 267.05,
+        "n": 5.304744999999997,
+        "proximity": 3.8457217749485046,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 17
+  },
+  {
+    "timestamp": "2025-11-03T07:01:44.727802",
+    "label": "intraday_0701",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "MA",
+        "entry_price": 543.0929,
+        "current_price": 543.625,
+        "n": 11.483089999999994,
+        "proximity": 0.09787997240745257,
+        "side": "short"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.15,
+        "current_price": 473.7365,
+        "n": 6.056024999999996,
+        "proximity": 0.12380300019103467,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 474.07,
+        "current_price": 472.49,
+        "n": 18.94271999999999,
+        "proximity": 0.3343986116108244,
+        "side": "long"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.83,
+        "n": 2.102705000000001,
+        "proximity": 0.6446494098978395,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 337.52,
+        "n": 6.390749999999992,
+        "proximity": 0.9925337757762402,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 309.145,
+        "n": 6.9670350000000045,
+        "proximity": 1.2049361949894137,
+        "side": "long"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 255.32,
+        "n": 7.055245000000004,
+        "proximity": 1.2846623844587302,
+        "side": "long"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 148.895,
+        "n": 2.4783999999999993,
+        "proximity": 1.296215453843317,
+        "side": "short"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 655.525,
+        "n": 20.31449,
+        "proximity": 1.518630105640506,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.5107,
+        "n": 1.912980000000001,
+        "proximity": 2.217522030692326,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 207.25,
+        "n": 6.4562349999999995,
+        "proximity": 2.3835464414957754,
+        "side": "long"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.67,
+        "n": 2.87915,
+        "proximity": 3.037048815391949,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.67,
+        "n": 2.87915,
+        "proximity": 3.079450893093763,
+        "side": "long"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 522.485,
+        "n": 9.22791500000003,
+        "proximity": 3.155114500894765,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.5107,
+        "n": 1.912980000000001,
+        "proximity": 3.6028947513201777,
+        "side": "short"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 267.37,
+        "n": 5.304744999999997,
+        "proximity": 3.7214347159367125,
+        "side": "long"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 280.7601,
+        "n": 7.0997499999999985,
+        "proximity": 3.8573501006731195,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 17
+  },
+  {
+    "timestamp": "2025-11-03T07:06:51.035379",
+    "label": "intraday_0706",
+    "long_positions": {},
+    "short_positions": {},
+    "entry_queue": [
+      {
+        "ticker": "MA",
+        "entry_price": 542.79,
+        "current_price": 543.52,
+        "n": 11.498234999999994,
+        "proximity": 0.1343096850161941,
+        "side": "short"
+      },
+      {
+        "ticker": "BRK.B",
+        "entry_price": 473.15,
+        "current_price": 473.9,
+        "n": 6.056024999999996,
+        "proximity": 0.15826123654779492,
+        "side": "short"
+      },
+      {
+        "ticker": "TSLA",
+        "entry_price": 474.07,
+        "current_price": 471.295,
+        "n": 18.94271999999999,
+        "proximity": 0.5888031912072008,
+        "side": "long"
+      },
+      {
+        "ticker": "WMT",
+        "entry_price": 100.18,
+        "current_price": 100.825,
+        "n": 2.102705000000001,
+        "proximity": 0.6397222910984339,
+        "side": "short"
+      },
+      {
+        "ticker": "V",
+        "entry_price": 334.17,
+        "current_price": 337.82,
+        "n": 6.390749999999992,
+        "proximity": 1.0804570481321347,
+        "side": "short"
+      },
+      {
+        "ticker": "AMZN",
+        "entry_price": 258.6,
+        "current_price": 255.08,
+        "n": 7.055245000000004,
+        "proximity": 1.3799592284773443,
+        "side": "long"
+      },
+      {
+        "ticker": "PG",
+        "entry_price": 146.965,
+        "current_price": 149.05,
+        "n": 2.4783999999999993,
+        "proximity": 1.398859443139891,
+        "side": "short"
+      },
+      {
+        "ticker": "JPM",
+        "entry_price": 312.87,
+        "current_price": 307.79,
+        "n": 6.9670350000000045,
+        "proximity": 1.6504759738782884,
+        "side": "long"
+      },
+      {
+        "ticker": "META",
+        "entry_price": 645.57,
+        "current_price": 657.2515,
+        "n": 20.33199,
+        "proximity": 1.7773257269097014,
+        "side": "short"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 117.05,
+        "current_price": 114.785,
+        "n": 1.913980000000001,
+        "proximity": 1.9732543450799327,
+        "side": "long"
+      },
+      {
+        "ticker": "NVDA",
+        "entry_price": 212.1899,
+        "current_price": 206.9061,
+        "n": 6.4562349999999995,
+        "proximity": 2.5537188125434604,
+        "side": "long"
+      },
+      {
+        "ticker": "MSFT",
+        "entry_price": 506.0,
+        "current_price": 521.12,
+        "n": 9.22791500000003,
+        "proximity": 2.9014430457476212,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 182.94,
+        "current_price": 188.55,
+        "n": 2.87915,
+        "proximity": 2.97533810660303,
+        "side": "short"
+      },
+      {
+        "ticker": "JNJ",
+        "entry_price": 194.48,
+        "current_price": 188.55,
+        "n": 2.87915,
+        "proximity": 3.1450543622381213,
+        "side": "long"
+      },
+      {
+        "ticker": "XOM",
+        "entry_price": 110.385,
+        "current_price": 114.785,
+        "n": 1.913980000000001,
+        "proximity": 3.833253473885953,
+        "side": "short"
+      },
+      {
+        "ticker": "GOOGL",
+        "entry_price": 291.59,
+        "current_price": 280.6,
+        "n": 7.0997499999999985,
+        "proximity": 3.916607270135407,
+        "side": "long"
+      },
+      {
+        "ticker": "AAPL",
+        "entry_price": 277.32,
+        "current_price": 266.525,
+        "n": 5.304744999999997,
+        "proximity": 4.050276709501929,
+        "side": "long"
+      }
+    ],
+    "long_position_count": 0,
+    "short_position_count": 0,
+    "queue_count": 17
+  }
+]
