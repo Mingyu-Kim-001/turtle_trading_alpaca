@@ -39,7 +39,7 @@ class TurtleTradingLS:
 
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
         universe_file='system_long_short/ticker_universe.txt', paper=True,
-        entry_margin=0.99, exit_margin=1.01,
+        entry_margin=0.99, exit_margin=1.01, max_slippage=0.005,
         enable_shorts=True, check_shortability=False):
     """
     Initialize Turtle Trading System with Long/Short support
@@ -53,6 +53,7 @@ class TurtleTradingLS:
       paper: Whether to use paper trading
       entry_margin: Margin for entry orders
       exit_margin: Margin for exit orders
+      max_slippage: Maximum slippage for limit prices (default 0.005 = 0.5%)
       enable_shorts: Whether to enable short selling
       check_shortability: Whether to check if tickers are shortable
     """
@@ -72,7 +73,8 @@ class TurtleTradingLS:
       self.logger,
       self.slack,
       entry_margin,
-      exit_margin
+      exit_margin,
+      max_slippage
     )
 
     # Load ticker universe
@@ -614,19 +616,25 @@ class TurtleTradingLS:
 
       if self.signal_generator.check_long_pyramid_opportunity(
           last_entry_price, current_price, initial_n):
-        pyramid_trigger = last_entry_price + 0.5 * initial_n
+        pyramid_entry_price = last_entry_price + 0.5 * initial_n
         pyramid_level = len(position['pyramid_units']) + 1
 
         # Log detailed pyramid trigger information
         self.logger.log_pyramid_trigger(
-          ticker, 'LONG', pyramid_level, pyramid_trigger,
+          ticker, 'LONG', pyramid_level, pyramid_entry_price,
           current_price, last_entry_price, initial_n
         )
+
+        # Check if current price is within trigger threshold (like entry queue logic)
+        trigger_threshold = pyramid_entry_price * 0.99
+        if current_price < trigger_threshold:
+          self.logger.log(f"LONG {ticker}: Price not at trigger yet ({current_price:.2f} < {trigger_threshold:.2f})")
+          continue
 
         # Use same units as initial entry
         units = initial_units
 
-        cost = units * pyramid_trigger
+        cost = units * pyramid_entry_price
         buying_power = self.order_manager.get_buying_power()
 
         if cost <= buying_power:
@@ -635,7 +643,7 @@ class TurtleTradingLS:
           self.state.save_state()
           self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
 
-          success = self.enter_long_position(ticker, units, pyramid_trigger, initial_n)
+          success = self.enter_long_position(ticker, units, pyramid_entry_price, initial_n)
 
           if success:
             # Order filled immediately, position updated, remove pending marker
@@ -704,19 +712,25 @@ class TurtleTradingLS:
 
       if self.signal_generator.check_short_pyramid_opportunity(
           last_entry_price, current_price, initial_n):
-        pyramid_trigger = last_entry_price - 0.5 * initial_n
+        pyramid_entry_price = last_entry_price - 0.5 * initial_n
         pyramid_level = len(position['pyramid_units']) + 1
 
         # Log detailed pyramid trigger information
         self.logger.log_pyramid_trigger(
-          ticker, 'SHORT', pyramid_level, pyramid_trigger,
+          ticker, 'SHORT', pyramid_level, pyramid_entry_price,
           current_price, last_entry_price, initial_n
         )
+
+        # Check if current price is within trigger threshold (like entry queue logic)
+        trigger_threshold = pyramid_entry_price * 1.01
+        if current_price > trigger_threshold:
+          self.logger.log(f"SHORT {ticker}: Price not at trigger yet ({current_price:.2f} > {trigger_threshold:.2f})")
+          continue
 
         # Use same units as initial entry
         units = initial_units
 
-        margin_required = self.position_manager.calculate_margin_required(units, pyramid_trigger)
+        margin_required = self.position_manager.calculate_margin_required(units, pyramid_entry_price)
         buying_power = self.order_manager.get_buying_power()
 
         if margin_required <= buying_power:
@@ -725,7 +739,7 @@ class TurtleTradingLS:
           self.state.save_state()
           self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
 
-          success = self.enter_short_position(ticker, units, pyramid_trigger, initial_n)
+          success = self.enter_short_position(ticker, units, pyramid_entry_price, initial_n)
 
           if success:
             # Order filled immediately, position updated, remove pending marker
