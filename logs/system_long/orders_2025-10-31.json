@@ -1,0 +1,702 @@
+[
+  {
+    "timestamp": "2025-10-31T08:16:55.278582",
+    "type": "ENTRY",
+    "ticker": "GOOGL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "dfab3f8e-a3a1-4214-b2c1-33f2ff5d3a3b",
+      "units": 21,
+      "stop_price": 266.95,
+      "limit_price": 268.28,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:16:58.386296",
+    "type": "ENTRY",
+    "ticker": "GOOGL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "dfab3f8e-a3a1-4214-b2c1-33f2ff5d3a3b",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:16:59.137379",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PLACED",
+    "details": {
+      "order_id": "6cde857c-5ed5-4d73-b54a-714550be317a",
+      "units": 23,
+      "stop_price": 248.0,
+      "limit_price": 249.24,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:17:02.248419",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PENDING",
+    "details": {
+      "order_id": "6cde857c-5ed5-4d73-b54a-714550be317a",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:17:02.822813",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "8dea3b90-70b9-48bb-97a7-4c79adededca",
+      "units": 29,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:17:05.937194",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "8dea3b90-70b9-48bb-97a7-4c79adededca",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:22:08.237313",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PLACED",
+    "details": {
+      "order_id": "bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec",
+      "units": 23,
+      "stop_price": 248.0,
+      "limit_price": 249.24,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:22:11.364380",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PENDING",
+    "details": {
+      "order_id": "bb8fb2eb-aa0e-4b44-95e6-6cdc9d019fec",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:22:11.933767",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "b014ed87-ecf7-454c-a232-a3feaea104e6",
+      "units": 29,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:22:15.041414",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "b014ed87-ecf7-454c-a232-a3feaea104e6",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:27:17.328828",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PLACED",
+    "details": {
+      "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812",
+      "units": 23,
+      "stop_price": 248.0,
+      "limit_price": 249.24,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:27:20.440805",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PENDING",
+    "details": {
+      "order_id": "56f13ebc-d3b6-45cb-b894-79aa7b3a7812",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:27:21.000151",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "9215d132-9157-42cc-aaf9-821e9062d3b2",
+      "units": 29,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:27:24.108834",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "9215d132-9157-42cc-aaf9-821e9062d3b2",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:32:26.535567",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PLACED",
+    "details": {
+      "order_id": "b2ce8801-359c-4efb-b77d-3a68aec5131a",
+      "units": 23,
+      "stop_price": 248.0,
+      "limit_price": 249.24,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:32:29.640759",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "FILLED",
+    "details": {
+      "order_id": "b2ce8801-359c-4efb-b77d-3a68aec5131a",
+      "units": 23,
+      "filled_price": 248.66,
+      "cost": 5719.18,
+      "risk_allocated": 304.5772700000001,
+      "new_risk_pot": 15159.31668099999
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:32:30.435504",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "17fb94ee-d048-483e-8793-8b3fe9fe2769",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:32:33.547912",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "17fb94ee-d048-483e-8793-8b3fe9fe2769",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:37:36.184244",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PLACED",
+    "details": {
+      "order_id": "ff02b9cb-6189-4723-b716-623dd3e1df48",
+      "units": 22,
+      "stop_price": 249.45,
+      "limit_price": 250.7,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:37:39.297074",
+    "type": "ENTRY",
+    "ticker": "AMZN",
+    "status": "PENDING",
+    "details": {
+      "order_id": "ff02b9cb-6189-4723-b716-623dd3e1df48",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:37:40.135079",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "cda8a297-f8fd-4454-b05a-80d35361241a",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:37:43.244855",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "cda8a297-f8fd-4454-b05a-80d35361241a",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:42:46.229163",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "989a8ca5-8cfd-4e55-9fef-83eac98863e9",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:42:49.341454",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "989a8ca5-8cfd-4e55-9fef-83eac98863e9",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:47:52.729425",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "7fb1db3a-1387-4cd6-945b-8f05bf6559ac",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:47:55.838339",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "7fb1db3a-1387-4cd6-945b-8f05bf6559ac",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:52:58.815094",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "7248ceed-28f4-4b8d-9a55-0bff503365fc",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:53:01.935144",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "7248ceed-28f4-4b8d-9a55-0bff503365fc",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:58:05.078050",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "730a3301-43cc-4f8f-b805-933655bfc0af",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T08:58:08.192285",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "730a3301-43cc-4f8f-b805-933655bfc0af",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:03:11.212873",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "dd60fce9-e271-447d-9b9e-b2fce7bdfdd6",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:03:14.331478",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "dd60fce9-e271-447d-9b9e-b2fce7bdfdd6",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:08:17.277109",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "c5d2d5e6-225d-41a7-8696-7ce19b53d711",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:08:20.398584",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "c5d2d5e6-225d-41a7-8696-7ce19b53d711",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:27:21.454856",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "534c6fd6-a7a9-4ad7-a89b-928c66891742",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:27:24.569957",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "534c6fd6-a7a9-4ad7-a89b-928c66891742",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:43:24.816450",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "ea55cb68-930f-455f-add2-60f4f9d599c8",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:43:27.927730",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "ea55cb68-930f-455f-add2-60f4f9d599c8",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:59:28.615848",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "94dc0c52-d38e-4397-b3aa-6b38f9230664",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T09:59:31.722809",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "94dc0c52-d38e-4397-b3aa-6b38f9230664",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:15:33.017419",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "1d71ea8d-278f-43ea-9567-70def944a02f",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:15:36.130085",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "1d71ea8d-278f-43ea-9567-70def944a02f",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:20:47.817832",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "aba4c4ec-0812-4a9c-9cbf-ccd986d000d4",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:20:50.927040",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "aba4c4ec-0812-4a9c-9cbf-ccd986d000d4",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:36:56.997560",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "be0a949f-ea4f-4cdd-a22a-5622d514d32d",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:37:00.115560",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "be0a949f-ea4f-4cdd-a22a-5622d514d32d",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:53:01.050751",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "4c6ac246-3763-4436-a2e4-8aa744de95d7",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T10:53:04.165745",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "4c6ac246-3763-4436-a2e4-8aa744de95d7",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:09:04.826696",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "ae27c64c-914c-4bad-8527-746956f496ad",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:09:07.931915",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "ae27c64c-914c-4bad-8527-746956f496ad",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:34:40.467112",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "d347db54-7ae8-4ec3-80db-4c191a468863",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:34:43.591512",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "d347db54-7ae8-4ec3-80db-4c191a468863",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:42:45.152462",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "9d179642-bc3e-4f30-beb9-2d0bd111ddf2",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:42:48.266542",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "9d179642-bc3e-4f30-beb9-2d0bd111ddf2",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:58:50.475741",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "ff31154f-29ce-4266-beba-66285c7cfbc2",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T11:58:53.589641",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "ff31154f-29ce-4266-beba-66285c7cfbc2",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-10-31T12:14:54.638131",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "9c528776-2bd1-49ad-925c-9f733f0976d2",
+      "units": 28,
+      "stop_price": 274.55,
+      "limit_price": 275.92,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-10-31T12:14:57.746220",
+    "type": "ENTRY",
+    "ticker": "AAPL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "9c528776-2bd1-49ad-925c-9f733f0976d2",
+      "status": "new"
+    }
+  }
+]

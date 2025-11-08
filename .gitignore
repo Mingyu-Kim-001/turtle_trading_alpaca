@@ -7,4 +7,3 @@ tickers_universe.txt
 __pycache__
 .env
 launch.json
-/logs/

@@ -1,0 +1,435 @@
+[
+  {
+    "timestamp": "2025-11-03T11:10:36.937607",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "6d9bdcb5-7d78-4ebe-92b3-a7a368ec6196",
+      "units": 14,
+      "stop_price": 309.74,
+      "limit_price": 311.29,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:10:40.046193",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "6d9bdcb5-7d78-4ebe-92b3-a7a368ec6196",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:15:47.056878",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "42493f7b-847c-44a6-b309-f8ff20b1a226",
+      "units": 14,
+      "stop_price": 309.74,
+      "limit_price": 311.29,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:15:50.162008",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "FILLED",
+    "details": {
+      "order_id": "42493f7b-847c-44a6-b309-f8ff20b1a226",
+      "units": 14,
+      "filled_price": 310.1
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:20:56.780217",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "6af8c8e6-b042-4831-a56d-d1e16a25c3fc",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:20:59.882461",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "6af8c8e6-b042-4831-a56d-d1e16a25c3fc",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:36:21.759476",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "bc89090c-99a3-48f9-84cb-bd779b4a70c2",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:36:24.867291",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "bc89090c-99a3-48f9-84cb-bd779b4a70c2",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:41:33.070321",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "851de34f-0208-4e11-ac5a-96b981f1e773",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:41:36.180001",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "851de34f-0208-4e11-ac5a-96b981f1e773",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:46:44.310802",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "78333ae0-ad8c-4bc8-b76e-2c1c0031f094",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:46:47.417358",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "78333ae0-ad8c-4bc8-b76e-2c1c0031f094",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:57:06.950471",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "17f2e598-0910-480a-96db-b63d52f10c4b",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T11:57:10.059041",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "17f2e598-0910-480a-96db-b63d52f10c4b",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:02:17.579822",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "974a6ae3-a12b-49ae-9a6d-8a1ec47cf9e7",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:02:20.682278",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "974a6ae3-a12b-49ae-9a6d-8a1ec47cf9e7",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:07:29.029428",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "2e68e25d-1ab6-470c-87f4-55606a73505e",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:07:32.130587",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "2e68e25d-1ab6-470c-87f4-55606a73505e",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:12:40.432239",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "701133aa-1497-46c3-a851-261810cb6767",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:12:43.540320",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "701133aa-1497-46c3-a851-261810cb6767",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:17:51.646333",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "39869b6e-5dfb-4832-85fc-20e6f25d7756",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:17:54.742761",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "39869b6e-5dfb-4832-85fc-20e6f25d7756",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:23:02.747709",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "c11abe4d-db7b-4da4-a549-d5453a31cbf3",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:23:05.843869",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "c11abe4d-db7b-4da4-a549-d5453a31cbf3",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:28:13.862466",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "c8c4674b-7524-43f8-a76b-fc674f46cfd5",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:28:16.967254",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "c8c4674b-7524-43f8-a76b-fc674f46cfd5",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:33:25.093298",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "2e836f4a-d1b8-4ca7-a8a6-1aee7d66cf78",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:33:28.200617",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "2e836f4a-d1b8-4ca7-a8a6-1aee7d66cf78",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:38:36.270804",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "10387afb-52fe-4e53-9470-738d6b61940b",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:38:39.373455",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "10387afb-52fe-4e53-9470-738d6b61940b",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:43:46.926228",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "865ba223-ae69-4ab1-8077-1d4620caebce",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:43:50.033606",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "865ba223-ae69-4ab1-8077-1d4620caebce",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:48:57.637074",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "819745ac-c9a4-46e3-96c1-d109c363b843",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:49:00.747070",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "819745ac-c9a4-46e3-96c1-d109c363b843",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:54:08.253846",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "5c6fc538-fd18-4245-8ecc-cf8b2d265c2b",
+      "units": 14,
+      "stop_price": 310.47,
+      "limit_price": 312.02,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-03T12:54:11.361723",
+    "type": "LONG_ENTRY",
+    "ticker": "JPM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "5c6fc538-fd18-4245-8ecc-cf8b2d265c2b",
+      "status": "new"
+    }
+  }
+]

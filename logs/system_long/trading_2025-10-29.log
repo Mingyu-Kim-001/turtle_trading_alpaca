@@ -1,0 +1,578 @@
+[2025-10-29 22:14:45] [INFO] Turtle Trading System initialized
+[2025-10-29 22:25:07] [INFO] Turtle Trading System initialized
+[2025-10-29 22:25:34] [INFO] Turtle Trading System initialized
+[2025-10-29 22:25:34] [INFO] ============================================================
+[2025-10-29 22:25:34] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:25:34] [INFO] ============================================================
+[2025-10-29 22:25:34] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:25:34] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:25:34] [INFO]   Quantity: 223.0
+[2025-10-29 22:25:34] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:25:34] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:25:34] [INFO]   Reconstructed 4 pyramid units from orders
+[2025-10-29 22:25:34] [INFO]   Stop Price: $257.67
+[2025-10-29 22:25:34] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:25:34] [INFO]   Quantity: 401.0
+[2025-10-29 22:25:34] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:25:34] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:25:35] [INFO]   Reconstructed 5 pyramid units from orders
+[2025-10-29 22:25:35] [INFO]   Stop Price: $218.65
+[2025-10-29 22:25:35] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:25:35] [INFO]   Quantity: 156.0
+[2025-10-29 22:25:35] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:25:35] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:25:35] [INFO]   Reconstructed 1 pyramid units from orders
+[2025-10-29 22:25:35] [INFO]   Stop Price: $253.09
+[2025-10-29 22:25:35] [INFO] 
+Broker position: META
+[2025-10-29 22:25:35] [INFO]   Quantity: 6.0
+[2025-10-29 22:25:35] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:25:35] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:25:35] [INFO]   Reconstructed 2 pyramid units from orders
+[2025-10-29 22:25:35] [INFO]   Stop Price: $718.55
+[2025-10-29 22:25:35] [INFO] 
+============================================================
+[2025-10-29 22:25:35] [INFO] COMPARISON
+[2025-10-29 22:25:35] [INFO] ============================================================
+[2025-10-29 22:25:35] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:25:35] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=5
+[2025-10-29 22:25:35] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=4
+[2025-10-29 22:25:35] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:25:35] [INFO] Calculated Risk Pot: $-3712.12
+[2025-10-29 22:25:35] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $-3712.12
+[2025-10-29 22:25:35] [INFO] 
+============================================================
+[2025-10-29 22:25:35] [INFO] SUMMARY
+[2025-10-29 22:25:35] [INFO] ============================================================
+[2025-10-29 22:25:35] [INFO] Found 4 changes needed:
+[2025-10-29 22:25:35] [INFO]   + ADD META: 6.0 units, 2 pyramid levels
+[2025-10-29 22:25:35] [INFO]   ↻ UPDATE AMZN: 401.0 units, 5 pyramid levels
+[2025-10-29 22:25:35] [INFO]   ↻ UPDATE AAPL: 223.0 units, 4 pyramid levels
+[2025-10-29 22:25:35] [INFO]   ↻ UPDATE Risk Pot: $-3712.12
+[2025-10-29 22:25:35] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:28:25] [INFO] Turtle Trading System initialized
+[2025-10-29 22:28:25] [INFO] ============================================================
+[2025-10-29 22:28:25] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:28:25] [INFO] ============================================================
+[2025-10-29 22:28:25] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:28:25] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:28:25] [INFO]   Quantity: 223.0
+[2025-10-29 22:28:25] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:28:25] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:28:26] [ERROR] Error aligning state: sequence item 0: expected str instance, UUID found
+[2025-10-29 22:28:26] [ERROR] Traceback (most recent call last):
+  File "/Users/mingyukim/Desktop/turtle_trading/system/turtle_live_trading.py", line 768, in align_state_with_broker
+    'order_id': ','.join(order_ids),
+                ~~~~~~~~^^^^^^^^^^^
+TypeError: sequence item 0: expected str instance, UUID found
+
+[2025-10-29 22:29:19] [INFO] Turtle Trading System initialized
+[2025-10-29 22:29:19] [INFO] ============================================================
+[2025-10-29 22:29:19] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:29:19] [INFO] ============================================================
+[2025-10-29 22:29:19] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:29:20] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:29:20] [INFO]   Quantity: 223.0
+[2025-10-29 22:29:20] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:29:20] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:29:20] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:29:20] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:29:20] [INFO]   Stop Price: $257.64
+[2025-10-29 22:29:20] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:29:20] [INFO]   Quantity: 401.0
+[2025-10-29 22:29:20] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:29:20] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:29:20] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:29:20] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:29:20] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:29:20] [INFO]   Stop Price: $218.63
+[2025-10-29 22:29:20] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:29:20] [INFO]   Quantity: 156.0
+[2025-10-29 22:29:20] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:29:20] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:29:20] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:29:20] [INFO]   Stop Price: $253.09
+[2025-10-29 22:29:20] [INFO] 
+Broker position: META
+[2025-10-29 22:29:20] [INFO]   Quantity: 6.0
+[2025-10-29 22:29:20] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:29:20] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:29:20] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:29:20] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:29:20] [INFO]   Stop Price: $718.54
+[2025-10-29 22:29:20] [INFO] 
+============================================================
+[2025-10-29 22:29:20] [INFO] COMPARISON
+[2025-10-29 22:29:20] [INFO] ============================================================
+[2025-10-29 22:29:20] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:29:20] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:29:20] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:29:20] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:29:20] [INFO] Calculated Risk Pot: $-3712.12
+[2025-10-29 22:29:20] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $-3712.12
+[2025-10-29 22:29:20] [INFO] 
+============================================================
+[2025-10-29 22:29:20] [INFO] SUMMARY
+[2025-10-29 22:29:20] [INFO] ============================================================
+[2025-10-29 22:29:20] [INFO] Found 4 changes needed:
+[2025-10-29 22:29:20] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:29:20] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:29:20] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:29:20] [INFO]   ↻ UPDATE Risk Pot: $-3712.12
+[2025-10-29 22:29:20] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:30:13] [INFO] Turtle Trading System initialized
+[2025-10-29 22:30:13] [INFO] ============================================================
+[2025-10-29 22:30:13] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:30:13] [INFO] ============================================================
+[2025-10-29 22:30:13] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:30:14] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:30:14] [INFO]   Quantity: 223.0
+[2025-10-29 22:30:14] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:30:14] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:30:14] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:30:14] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:30:14] [INFO]   Stop Price: $257.64
+[2025-10-29 22:30:14] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:30:14] [INFO]   Quantity: 401.0
+[2025-10-29 22:30:14] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:30:14] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:30:14] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:30:14] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:30:14] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:30:14] [INFO]   Stop Price: $218.63
+[2025-10-29 22:30:14] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:30:14] [INFO]   Quantity: 156.0
+[2025-10-29 22:30:14] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:30:14] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:30:14] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:30:14] [INFO]   Stop Price: $253.09
+[2025-10-29 22:30:14] [INFO] 
+Broker position: META
+[2025-10-29 22:30:14] [INFO]   Quantity: 6.0
+[2025-10-29 22:30:14] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:30:14] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:30:14] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:30:14] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:30:14] [INFO]   Stop Price: $718.54
+[2025-10-29 22:30:14] [INFO] 
+============================================================
+[2025-10-29 22:30:14] [INFO] COMPARISON
+[2025-10-29 22:30:14] [INFO] ============================================================
+[2025-10-29 22:30:14] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:30:14] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:30:14] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:30:14] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:30:14] [INFO] Calculated Risk Pot: $-3712.12
+[2025-10-29 22:30:14] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $-3712.12
+[2025-10-29 22:30:14] [INFO] 
+============================================================
+[2025-10-29 22:30:14] [INFO] SUMMARY
+[2025-10-29 22:30:14] [INFO] ============================================================
+[2025-10-29 22:30:14] [INFO] Found 4 changes needed:
+[2025-10-29 22:30:14] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:30:14] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:30:14] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:30:14] [INFO]   ↻ UPDATE Risk Pot: $-3712.12
+[2025-10-29 22:30:14] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:30:22] [INFO] Turtle Trading System initialized
+[2025-10-29 22:30:22] [INFO] ============================================================
+[2025-10-29 22:30:22] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:30:22] [INFO] ============================================================
+[2025-10-29 22:30:22] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:30:22] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:30:22] [INFO]   Quantity: 223.0
+[2025-10-29 22:30:22] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:30:22] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:30:23] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:30:23] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:30:23] [INFO]   Stop Price: $257.64
+[2025-10-29 22:30:23] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:30:23] [INFO]   Quantity: 401.0
+[2025-10-29 22:30:23] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:30:23] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:30:23] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:30:23] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:30:23] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:30:23] [INFO]   Stop Price: $218.63
+[2025-10-29 22:30:23] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:30:23] [INFO]   Quantity: 156.0
+[2025-10-29 22:30:23] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:30:23] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:30:23] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:30:23] [INFO]   Stop Price: $253.09
+[2025-10-29 22:30:23] [INFO] 
+Broker position: META
+[2025-10-29 22:30:23] [INFO]   Quantity: 6.0
+[2025-10-29 22:30:23] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:30:23] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:30:23] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:30:23] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:30:23] [INFO]   Stop Price: $718.54
+[2025-10-29 22:30:23] [INFO] 
+============================================================
+[2025-10-29 22:30:23] [INFO] COMPARISON
+[2025-10-29 22:30:23] [INFO] ============================================================
+[2025-10-29 22:30:23] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:30:23] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:30:23] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:30:23] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:30:23] [INFO] Calculated Risk Pot: $-3712.12
+[2025-10-29 22:30:23] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $-3712.12
+[2025-10-29 22:30:23] [INFO] 
+============================================================
+[2025-10-29 22:30:23] [INFO] SUMMARY
+[2025-10-29 22:30:23] [INFO] ============================================================
+[2025-10-29 22:30:23] [INFO] Found 4 changes needed:
+[2025-10-29 22:30:23] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:30:23] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:30:23] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:30:23] [INFO]   ↻ UPDATE Risk Pot: $-3712.12
+[2025-10-29 22:30:23] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:38:10] [INFO] Turtle Trading System initialized
+[2025-10-29 22:38:10] [INFO] ============================================================
+[2025-10-29 22:38:10] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:38:10] [INFO] ============================================================
+[2025-10-29 22:38:10] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:38:11] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:38:11] [INFO]   Quantity: 223.0
+[2025-10-29 22:38:11] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:38:11] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:38:11] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:38:11] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:38:11] [INFO]   Stop Price: $257.64
+[2025-10-29 22:38:11] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:38:11] [INFO]   Quantity: 401.0
+[2025-10-29 22:38:11] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:38:11] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:38:11] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:38:11] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:38:11] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:38:11] [INFO]   Stop Price: $218.63
+[2025-10-29 22:38:11] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:38:11] [INFO]   Quantity: 156.0
+[2025-10-29 22:38:11] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:38:11] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:38:11] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:38:11] [INFO]   Stop Price: $253.09
+[2025-10-29 22:38:11] [INFO] 
+Broker position: META
+[2025-10-29 22:38:11] [INFO]   Quantity: 6.0
+[2025-10-29 22:38:11] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:38:11] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:38:12] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:38:12] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:38:12] [INFO]   Stop Price: $718.54
+[2025-10-29 22:38:12] [INFO] 
+============================================================
+[2025-10-29 22:38:12] [INFO] COMPARISON
+[2025-10-29 22:38:12] [INFO] ============================================================
+[2025-10-29 22:38:12] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:38:12] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:38:12] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:38:12] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:38:12] [INFO] Calculated Risk Pot: $-3712.12
+[2025-10-29 22:38:12] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $-3712.12
+[2025-10-29 22:38:12] [INFO] 
+============================================================
+[2025-10-29 22:38:12] [INFO] SUMMARY
+[2025-10-29 22:38:12] [INFO] ============================================================
+[2025-10-29 22:38:12] [INFO] Found 4 changes needed:
+[2025-10-29 22:38:12] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:38:12] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:38:12] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:38:12] [INFO]   ↻ UPDATE Risk Pot: $-3712.12
+[2025-10-29 22:38:12] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:38:30] [INFO] Turtle Trading System initialized
+[2025-10-29 22:38:30] [INFO] ============================================================
+[2025-10-29 22:38:30] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:38:30] [INFO] ============================================================
+[2025-10-29 22:38:30] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:38:30] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:38:30] [INFO]   Quantity: 223.0
+[2025-10-29 22:38:30] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:38:30] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:38:31] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:38:31] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:38:31] [INFO]   Stop Price: $257.64
+[2025-10-29 22:38:31] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:38:31] [INFO]   Quantity: 401.0
+[2025-10-29 22:38:31] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:38:31] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:38:31] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:38:31] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:38:31] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:38:31] [INFO]   Stop Price: $218.63
+[2025-10-29 22:38:31] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:38:31] [INFO]   Quantity: 156.0
+[2025-10-29 22:38:31] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:38:31] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:38:31] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:38:31] [INFO]   Stop Price: $253.09
+[2025-10-29 22:38:31] [INFO] 
+Broker position: META
+[2025-10-29 22:38:31] [INFO]   Quantity: 6.0
+[2025-10-29 22:38:31] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:38:31] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:38:31] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:38:31] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:38:31] [INFO]   Stop Price: $718.54
+[2025-10-29 22:38:31] [INFO] 
+============================================================
+[2025-10-29 22:38:31] [INFO] COMPARISON
+[2025-10-29 22:38:31] [INFO] ============================================================
+[2025-10-29 22:38:31] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:38:31] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:38:31] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:38:31] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:38:31] [INFO] Calculated Risk Pot: $1287.88
+[2025-10-29 22:38:31] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $1287.88
+[2025-10-29 22:38:31] [INFO] 
+============================================================
+[2025-10-29 22:38:31] [INFO] SUMMARY
+[2025-10-29 22:38:31] [INFO] ============================================================
+[2025-10-29 22:38:31] [INFO] Found 4 changes needed:
+[2025-10-29 22:38:31] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:38:31] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:38:31] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:38:31] [INFO]   ↻ UPDATE Risk Pot: $1287.88
+[2025-10-29 22:38:31] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:48:12] [INFO] Turtle Trading System initialized
+[2025-10-29 22:48:12] [INFO] ============================================================
+[2025-10-29 22:48:12] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:48:12] [INFO] ============================================================
+[2025-10-29 22:48:12] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:48:12] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:48:12] [INFO]   Quantity: 223.0
+[2025-10-29 22:48:12] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:48:12] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:48:13] [ERROR] Error aligning state: sequence item 0: expected str instance, UUID found
+[2025-10-29 22:48:13] [ERROR] Traceback (most recent call last):
+  File "/Users/mingyukim/Desktop/turtle_trading/system/turtle_live_trading.py", line 789, in align_state_with_broker
+    'order_id': ','.join(order_ids),
+                ~~~~~~~~^^^^^^^^^^^
+TypeError: sequence item 0: expected str instance, UUID found
+
+[2025-10-29 22:51:33] [INFO] Turtle Trading System initialized
+[2025-10-29 22:51:33] [INFO] ============================================================
+[2025-10-29 22:51:33] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:51:33] [INFO] ============================================================
+[2025-10-29 22:51:33] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-29 22:51:33] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:51:33] [INFO]   Quantity: 223.0
+[2025-10-29 22:51:33] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:51:33] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:51:33] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:51:33] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:51:33] [INFO]   Stop Price: $257.64
+[2025-10-29 22:51:33] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:51:33] [INFO]   Quantity: 401.0
+[2025-10-29 22:51:33] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:51:33] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:51:34] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:51:34] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:51:34] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:51:34] [INFO]   Stop Price: $218.63
+[2025-10-29 22:51:34] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:51:34] [INFO]   Quantity: 156.0
+[2025-10-29 22:51:34] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:51:34] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:51:34] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:51:34] [INFO]   Stop Price: $253.09
+[2025-10-29 22:51:34] [INFO] 
+Broker position: META
+[2025-10-29 22:51:34] [INFO]   Quantity: 6.0
+[2025-10-29 22:51:34] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:51:34] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:51:34] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:51:34] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:51:34] [INFO]   Stop Price: $718.54
+[2025-10-29 22:51:34] [INFO] 
+============================================================
+[2025-10-29 22:51:34] [INFO] COMPARISON
+[2025-10-29 22:51:34] [INFO] ============================================================
+[2025-10-29 22:51:34] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:51:34] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:51:34] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:51:34] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:51:34] [INFO] Calculated Risk Pot: $1287.88
+[2025-10-29 22:51:34] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $1287.88
+[2025-10-29 22:51:34] [INFO] 
+============================================================
+[2025-10-29 22:51:34] [INFO] SUMMARY
+[2025-10-29 22:51:34] [INFO] ============================================================
+[2025-10-29 22:51:34] [INFO] Found 4 changes needed:
+[2025-10-29 22:51:34] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:51:34] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:51:34] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:51:34] [INFO]   ↻ UPDATE Risk Pot: $1287.88
+[2025-10-29 22:51:34] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-29 22:53:06] [INFO] Turtle Trading System initialized
+[2025-10-29 22:53:11] [INFO] ============================================================
+[2025-10-29 22:53:11] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-29 22:53:11] [INFO] ============================================================
+[2025-10-29 22:53:11] [INFO] 
+Broker position: AAPL
+[2025-10-29 22:53:11] [INFO]   Quantity: 223.0
+[2025-10-29 22:53:11] [INFO]   Avg Entry: $266.76
+[2025-10-29 22:53:11] [INFO]   Cost Basis: $59487.99
+[2025-10-29 22:53:12] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-29 22:53:12] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-29 22:53:12] [INFO]   Stop Price: $257.64
+[2025-10-29 22:53:12] [INFO] 
+Broker position: AMZN
+[2025-10-29 22:53:12] [INFO]   Quantity: 401.0
+[2025-10-29 22:53:12] [INFO]   Avg Entry: $227.72
+[2025-10-29 22:53:12] [INFO]   Cost Basis: $91317.20
+[2025-10-29 22:53:12] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-29 22:53:12] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-29 22:53:12] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-29 22:53:12] [INFO]   Stop Price: $218.63
+[2025-10-29 22:53:12] [INFO] 
+Broker position: GOOGL
+[2025-10-29 22:53:12] [INFO]   Quantity: 156.0
+[2025-10-29 22:53:12] [INFO]   Avg Entry: $266.00
+[2025-10-29 22:53:12] [INFO]   Cost Basis: $41495.98
+[2025-10-29 22:53:12] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-29 22:53:12] [INFO]   Stop Price: $253.09
+[2025-10-29 22:53:12] [INFO] 
+Broker position: META
+[2025-10-29 22:53:12] [INFO]   Quantity: 6.0
+[2025-10-29 22:53:12] [INFO]   Avg Entry: $750.92
+[2025-10-29 22:53:12] [INFO]   Cost Basis: $4505.52
+[2025-10-29 22:53:12] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-29 22:53:12] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-29 22:53:12] [INFO]   Stop Price: $718.54
+[2025-10-29 22:53:12] [INFO] 
+============================================================
+[2025-10-29 22:53:12] [INFO] COMPARISON
+[2025-10-29 22:53:12] [INFO] ============================================================
+[2025-10-29 22:53:12] [WARNING] ❌ Missing in state: META
+[2025-10-29 22:53:12] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-29 22:53:12] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-29 22:53:12] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-29 22:53:12] [INFO] Calculated Risk Pot: $1287.88
+[2025-10-29 22:53:12] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $1287.88
+[2025-10-29 22:53:12] [INFO] 
+============================================================
+[2025-10-29 22:53:12] [INFO] SUMMARY
+[2025-10-29 22:53:12] [INFO] ============================================================
+[2025-10-29 22:53:12] [INFO] Found 4 changes needed:
+[2025-10-29 22:53:12] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-29 22:53:12] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-29 22:53:12] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-29 22:53:12] [INFO]   ↻ UPDATE Risk Pot: $1287.88
+[2025-10-29 22:53:12] [WARNING] 
+Applying changes...
+[2025-10-29 22:53:12] [INFO] Backup saved to: trading_state_backup_20251029_225312.json
+[2025-10-29 22:53:12] [INFO]   ✅ Added META
+[2025-10-29 22:53:12] [INFO]   ✅ Updated AMZN
+[2025-10-29 22:53:12] [INFO]   ✅ Updated AAPL
+[2025-10-29 22:53:12] [INFO]   ✅ Updated risk pot to $1287.88
+[2025-10-29 22:53:12] [INFO] State snapshot saved: after_alignment
+[2025-10-29 22:53:12] [INFO] 
+✅ State alignment complete!
+[2025-10-29 23:00:13] [INFO] Turtle Trading System initialized
+[2025-10-29 23:38:28] [INFO] Turtle Trading System initialized
+[2025-10-30 05:03:58] [INFO] ============================================================
+[2025-10-30 05:03:58] [INFO] RUNNING END-OF-DAY ANALYSIS
+[2025-10-30 05:03:58] [INFO] ============================================================
+[2025-10-30 05:03:58] [INFO] State snapshot saved: EOD_start
+[2025-10-30 05:04:00] [INFO] State snapshot saved: EOD_complete
+[2025-10-30 05:04:00] [INFO] Found 7 potential entry signals
+[2025-10-30 06:36:32] [INFO] ============================================================
+[2025-10-30 06:36:32] [INFO] INTRADAY MONITOR - 2025-10-30 06:36:32
+[2025-10-30 06:36:32] [INFO] ============================================================
+[2025-10-30 06:36:32] [INFO] State snapshot saved: intraday_0636
+[2025-10-30 06:36:32] [INFO] 1. Checking position stops...
+[2025-10-30 06:36:32] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 06:36:33] [INFO] 2. Checking exit signals...
+[2025-10-30 06:36:33] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 06:36:34] [INFO] ============================================================
+[2025-10-30 06:36:34] [INFO] MARKET OPEN SETUP
+[2025-10-30 06:36:34] [INFO] ============================================================
+[2025-10-30 06:36:34] [INFO] State snapshot saved: market_open
+[2025-10-30 06:36:34] [INFO] Market open - Risk Pot: $1,287.88, Positions: 4
+[2025-10-30 06:50:17] [INFO] ============================================================
+[2025-10-30 06:50:17] [INFO] INTRADAY MONITOR - 2025-10-30 06:50:17
+[2025-10-30 06:50:17] [INFO] ============================================================
+[2025-10-30 06:50:17] [INFO] State snapshot saved: intraday_0650
+[2025-10-30 06:50:17] [INFO] 1. Checking position stops...
+[2025-10-30 06:50:18] [INFO] 2. Checking exit signals...
+[2025-10-30 06:50:19] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 07:00:20] [INFO] ============================================================
+[2025-10-30 07:00:20] [INFO] INTRADAY MONITOR - 2025-10-30 07:00:20
+[2025-10-30 07:00:20] [INFO] ============================================================
+[2025-10-30 07:00:20] [INFO] State snapshot saved: intraday_0700
+[2025-10-30 07:00:20] [INFO] 1. Checking position stops...
+[2025-10-30 07:00:20] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 07:00:21] [INFO] 2. Checking exit signals...
+[2025-10-30 07:00:22] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 07:16:21] [INFO] ============================================================
+[2025-10-30 07:16:21] [INFO] INTRADAY MONITOR - 2025-10-30 07:16:21
+[2025-10-30 07:16:21] [INFO] ============================================================
+[2025-10-30 07:16:21] [INFO] State snapshot saved: intraday_0716
+[2025-10-30 07:16:21] [INFO] 1. Checking position stops...
+[2025-10-30 07:16:21] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 07:16:22] [INFO] 2. Checking exit signals...
+[2025-10-30 07:16:23] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 07:34:21] [INFO] ============================================================
+[2025-10-30 07:34:21] [INFO] INTRADAY MONITOR - 2025-10-30 07:34:21
+[2025-10-30 07:34:21] [INFO] ============================================================
+[2025-10-30 07:34:21] [INFO] State snapshot saved: intraday_0734
+[2025-10-30 07:34:21] [INFO] 1. Checking position stops...
+[2025-10-30 07:34:22] [INFO] 2. Checking exit signals...
+[2025-10-30 07:34:22] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 07:41:13] [INFO] ============================================================
+[2025-10-30 07:41:13] [INFO] INTRADAY MONITOR - 2025-10-30 07:41:13
+[2025-10-30 07:41:13] [INFO] ============================================================
+[2025-10-30 07:41:13] [INFO] State snapshot saved: intraday_0741
+[2025-10-30 07:41:13] [INFO] 1. Checking position stops...
+[2025-10-30 07:41:14] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 07:41:14] [INFO] 2. Checking exit signals...
+[2025-10-30 07:41:15] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 07:52:01] [INFO] ============================================================
+[2025-10-30 07:52:01] [INFO] INTRADAY MONITOR - 2025-10-30 07:52:01
+[2025-10-30 07:52:01] [INFO] ============================================================
+[2025-10-30 07:52:01] [INFO] State snapshot saved: intraday_0752
+[2025-10-30 07:52:01] [INFO] 1. Checking position stops...
+[2025-10-30 07:52:01] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 07:52:01] [INFO] 2. Checking exit signals...
+[2025-10-30 07:52:02] [INFO] 3. Checking pyramid opportunities...

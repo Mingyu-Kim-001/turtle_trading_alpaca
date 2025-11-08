@@ -1,0 +1,697 @@
+[2025-10-30 08:03:59] [INFO] Turtle Trading System initialized
+[2025-10-30 08:08:59] [INFO] ============================================================
+[2025-10-30 08:08:59] [INFO] INTRADAY MONITOR - 2025-10-30 08:08:59
+[2025-10-30 08:08:59] [INFO] ============================================================
+[2025-10-30 08:08:59] [INFO] State snapshot saved: intraday_0808
+[2025-10-30 08:08:59] [INFO] 1. Checking position stops...
+[2025-10-30 08:09:00] [INFO] Stop loss triggered for META: $699.00 <= $725.73
+[2025-10-30 08:09:00] [INFO] Placing exit order for META: units=6.0, stop=$705.99, limit=$702.46
+[2025-10-30 08:09:01] [INFO] Exit order placed: 97460c98-f1ff-4934-9580-7e9b5c77ab8d for META
+[2025-10-30 08:09:01] [ERROR] Error exiting position for META: Object of type UUID is not JSON serializable
+[2025-10-30 08:09:01] [INFO] 2. Checking exit signals...
+[2025-10-30 08:09:02] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:09:02] [INFO] Pyramid opportunity for GOOGL: $292.62 > $266.84
+[2025-10-30 08:09:02] [INFO] Placing pyramid order for GOOGL: units=1, stop=$266.84, limit=$268.17
+[2025-10-30 08:09:03] [INFO] Order placed: a2032415-9836-440f-9b11-80fce8d8d992 for GOOGL
+[2025-10-30 08:09:03] [ERROR] Error entering position for GOOGL: Object of type UUID is not JSON serializable
+[2025-10-30 08:09:03] [ERROR] Error tracking pending pyramid order for GOOGL: Object of type UUID is not JSON serializable
+[2025-10-30 08:09:04] [INFO] Pyramid opportunity for AAPL: $272.01 > $267.62
+[2025-10-30 08:09:04] [INFO] Placing pyramid order for AAPL: units=2, stop=$267.62, limit=$268.96
+[2025-10-30 08:09:04] [INFO] Order placed: 135f36aa-769a-4d7d-99b5-68400abbd5c2 for AAPL
+[2025-10-30 08:09:04] [ERROR] Error entering position for AAPL: Object of type UUID is not JSON serializable
+[2025-10-30 08:09:05] [ERROR] Error tracking pending pyramid order for AAPL: Object of type UUID is not JSON serializable
+[2025-10-30 08:09:05] [INFO] 4. Processing entry queue...
+[2025-10-30 08:09:06] [INFO] Status: 4 positions, 7 pending entries
+[2025-10-30 08:09:06] [INFO] Risk Pot: $1,287.88
+[2025-10-30 08:14:06] [INFO] ============================================================
+[2025-10-30 08:14:06] [INFO] INTRADAY MONITOR - 2025-10-30 08:14:06
+[2025-10-30 08:14:06] [INFO] ============================================================
+[2025-10-30 08:14:06] [INFO] State snapshot saved: intraday_0814
+[2025-10-30 08:14:06] [INFO] 1. Checking position stops...
+[2025-10-30 08:14:06] [INFO] Stop loss triggered for META: $698.20 <= $725.73
+[2025-10-30 08:14:06] [INFO] Placing exit order for META: units=6.0, stop=$705.18, limit=$701.65
+[2025-10-30 08:14:07] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:14:07] [INFO] 2. Checking exit signals...
+[2025-10-30 08:14:08] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:14:08] [INFO] Pyramid order already pending for GOOGL (order a2032415-9836-440f-9b11-80fce8d8d992)
+[2025-10-30 08:14:08] [INFO] Pyramid order already pending for AAPL (order 135f36aa-769a-4d7d-99b5-68400abbd5c2)
+[2025-10-30 08:14:09] [INFO] 4. Processing entry queue...
+[2025-10-30 08:14:09] [INFO] Status: 4 positions, 7 pending entries
+[2025-10-30 08:14:09] [INFO] Risk Pot: $1,287.88
+[2025-10-30 08:17:07] [INFO] Turtle Trading System initialized
+[2025-10-30 08:17:09] [INFO] ============================================================
+[2025-10-30 08:17:09] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-30 08:17:09] [INFO] ============================================================
+[2025-10-30 08:17:09] [INFO] 
+Broker position: AAPL
+[2025-10-30 08:17:09] [INFO]   Quantity: 223.0
+[2025-10-30 08:17:09] [INFO]   Avg Entry: $266.76
+[2025-10-30 08:17:09] [INFO]   Cost Basis: $59487.99
+[2025-10-30 08:17:09] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-30 08:17:09] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-30 08:17:09] [INFO]   Stop Price: $257.48
+[2025-10-30 08:17:09] [INFO] 
+Broker position: AMZN
+[2025-10-30 08:17:09] [INFO]   Quantity: 401.0
+[2025-10-30 08:17:09] [INFO]   Avg Entry: $227.72
+[2025-10-30 08:17:09] [INFO]   Cost Basis: $91317.20
+[2025-10-30 08:17:10] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-30 08:17:10] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-30 08:17:10] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-30 08:17:10] [INFO]   Stop Price: $218.38
+[2025-10-30 08:17:10] [INFO] 
+Broker position: GOOGL
+[2025-10-30 08:17:10] [INFO]   Quantity: 156.0
+[2025-10-30 08:17:10] [INFO]   Avg Entry: $266.00
+[2025-10-30 08:17:10] [INFO]   Cost Basis: $41495.98
+[2025-10-30 08:17:10] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-30 08:17:10] [INFO]   Stop Price: $251.84
+[2025-10-30 08:17:10] [INFO] 
+Broker position: META
+[2025-10-30 08:17:10] [INFO]   Quantity: 6.0
+[2025-10-30 08:17:10] [INFO]   Avg Entry: $750.92
+[2025-10-30 08:17:10] [INFO]   Cost Basis: $4505.52
+[2025-10-30 08:17:10] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-30 08:17:10] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-30 08:17:10] [INFO]   Stop Price: $709.43
+[2025-10-30 08:17:10] [INFO] 
+============================================================
+[2025-10-30 08:17:10] [INFO] COMPARISON
+[2025-10-30 08:17:10] [INFO] ============================================================
+[2025-10-30 08:17:10] [WARNING] ❌ Missing in state: META
+[2025-10-30 08:17:10] [WARNING] ❌ Unit mismatch for AMZN: state=1, broker=2
+[2025-10-30 08:17:10] [WARNING] ❌ Unit mismatch for AAPL: state=1, broker=2
+[2025-10-30 08:17:10] [INFO] 
+Current Risk Pot: $5000.00
+[2025-10-30 08:17:10] [INFO] Calculated Risk Pot: $901.28
+[2025-10-30 08:17:10] [WARNING] ❌ Risk pot mismatch: $5000.00 vs $901.28
+[2025-10-30 08:17:10] [INFO] 
+============================================================
+[2025-10-30 08:17:10] [INFO] SUMMARY
+[2025-10-30 08:17:10] [INFO] ============================================================
+[2025-10-30 08:17:10] [INFO] Found 4 changes needed:
+[2025-10-30 08:17:10] [INFO]   + ADD META: 6.0 units, 1 pyramid levels
+[2025-10-30 08:17:10] [INFO]   ↻ UPDATE AMZN: 401.0 units, 2 pyramid levels
+[2025-10-30 08:17:10] [INFO]   ↻ UPDATE AAPL: 223.0 units, 2 pyramid levels
+[2025-10-30 08:17:10] [INFO]   ↻ UPDATE Risk Pot: $901.28
+[2025-10-30 08:17:10] [WARNING] 
+Applying changes...
+[2025-10-30 08:17:10] [INFO] Backup saved to: trading_state_backup_20251030_081710.json
+[2025-10-30 08:17:10] [INFO]   ✅ Added META
+[2025-10-30 08:17:10] [INFO]   ✅ Updated AMZN
+[2025-10-30 08:17:10] [INFO]   ✅ Updated AAPL
+[2025-10-30 08:17:10] [INFO]   ✅ Updated risk pot to $901.28
+[2025-10-30 08:17:10] [INFO] State snapshot saved: after_alignment
+[2025-10-30 08:17:10] [INFO] 
+✅ State alignment complete!
+[2025-10-30 08:17:15] [INFO] Turtle Trading System initialized
+[2025-10-30 08:22:16] [INFO] ============================================================
+[2025-10-30 08:22:16] [INFO] INTRADAY MONITOR - 2025-10-30 08:22:16
+[2025-10-30 08:22:16] [INFO] ============================================================
+[2025-10-30 08:22:16] [INFO] State snapshot saved: intraday_0822
+[2025-10-30 08:22:16] [INFO] 1. Checking position stops...
+[2025-10-30 08:22:16] [INFO] Stop loss triggered for META: $699.50 <= $716.53
+[2025-10-30 08:22:16] [INFO] Placing exit order for META: units=6.0, stop=$706.50, limit=$702.97
+[2025-10-30 08:22:17] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:22:17] [INFO] 2. Checking exit signals...
+[2025-10-30 08:22:18] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:22:18] [INFO] Pyramid opportunity for GOOGL: $294.51 > $266.84
+[2025-10-30 08:22:19] [INFO] Placing pyramid order for GOOGL: units=1, stop=$266.84, limit=$268.17
+[2025-10-30 08:22:19] [INFO] Order placed: 6bfa968b-989a-4391-bd9a-77c323935b0a for GOOGL
+[2025-10-30 08:22:22] [WARNING] Order pending for GOOGL, status: OrderStatus.NEW
+[2025-10-30 08:22:22] [INFO] Tracking pending pyramid order 6bfa968b-989a-4391-bd9a-77c323935b0a for GOOGL
+[2025-10-30 08:22:23] [INFO] Pyramid opportunity for AAPL: $271.70 > $267.62
+[2025-10-30 08:22:23] [INFO] Placing pyramid order for AAPL: units=1, stop=$267.62, limit=$268.96
+[2025-10-30 08:22:23] [INFO] Order placed: 17f771b3-953b-45b2-8d91-bb3b2acfda8e for AAPL
+[2025-10-30 08:22:26] [WARNING] Order pending for AAPL, status: OrderStatus.NEW
+[2025-10-30 08:22:26] [INFO] Tracking pending pyramid order 17f771b3-953b-45b2-8d91-bb3b2acfda8e for AAPL
+[2025-10-30 08:22:27] [INFO] 4. Processing entry queue...
+[2025-10-30 08:22:27] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:22:27] [INFO] Order placed: f085e138-e542-46be-ac39-682e53f7ab9e for NVDA
+[2025-10-30 08:22:30] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:22:31] [INFO] Status: 4 positions, 10 pending entries
+[2025-10-30 08:22:31] [INFO] Risk Pot: $901.28
+[2025-10-30 08:27:31] [INFO] ============================================================
+[2025-10-30 08:27:31] [INFO] INTRADAY MONITOR - 2025-10-30 08:27:31
+[2025-10-30 08:27:31] [INFO] ============================================================
+[2025-10-30 08:27:31] [INFO] State snapshot saved: intraday_0827
+[2025-10-30 08:27:31] [INFO] 1. Checking position stops...
+[2025-10-30 08:27:32] [INFO] Stop loss triggered for META: $698.55 <= $716.53
+[2025-10-30 08:27:32] [INFO] Placing exit order for META: units=6.0, stop=$705.54, limit=$702.01
+[2025-10-30 08:27:32] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:27:33] [INFO] 2. Checking exit signals...
+[2025-10-30 08:27:34] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:27:34] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:27:34] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:27:34] [INFO] 4. Processing entry queue...
+[2025-10-30 08:27:34] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:27:35] [INFO] Order placed: 4dd9a220-8620-4226-aa37-8f8f7054643e for NVDA
+[2025-10-30 08:27:38] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:27:39] [INFO] Status: 4 positions, 10 pending entries
+[2025-10-30 08:27:39] [INFO] Risk Pot: $901.28
+[2025-10-30 08:32:39] [INFO] ============================================================
+[2025-10-30 08:32:39] [INFO] INTRADAY MONITOR - 2025-10-30 08:32:39
+[2025-10-30 08:32:39] [INFO] ============================================================
+[2025-10-30 08:32:39] [INFO] State snapshot saved: intraday_0832
+[2025-10-30 08:32:39] [INFO] 1. Checking position stops...
+[2025-10-30 08:32:40] [INFO] Stop loss triggered for META: $696.69 <= $716.53
+[2025-10-30 08:32:40] [INFO] Placing exit order for META: units=6.0, stop=$703.66, limit=$700.14
+[2025-10-30 08:32:40] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:32:40] [INFO] 2. Checking exit signals...
+[2025-10-30 08:32:41] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:32:41] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:32:41] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:32:42] [INFO] 4. Processing entry queue...
+[2025-10-30 08:32:42] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:32:42] [INFO] Order placed: 8758c295-5441-4c51-a6c1-12d17d5bbfeb for NVDA
+[2025-10-30 08:32:45] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:32:45] [INFO] Placing entry order for XOM: units=4, stop=$115.68, limit=$116.26
+[2025-10-30 08:32:46] [INFO] Order placed: 3f69811c-fea1-4bed-8fed-5dcac74017d5 for XOM
+[2025-10-30 08:32:49] [INFO] Order filled: XOM at $115.98, risk pot decreased by $15.28
+[2025-10-30 08:32:50] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 08:32:50] [INFO] Risk Pot: $886.00
+[2025-10-30 08:37:50] [INFO] ============================================================
+[2025-10-30 08:37:50] [INFO] INTRADAY MONITOR - 2025-10-30 08:37:50
+[2025-10-30 08:37:50] [INFO] ============================================================
+[2025-10-30 08:37:50] [INFO] State snapshot saved: intraday_0837
+[2025-10-30 08:37:50] [INFO] 1. Checking position stops...
+[2025-10-30 08:37:51] [INFO] Stop loss triggered for META: $695.49 <= $716.53
+[2025-10-30 08:37:51] [INFO] Placing exit order for META: units=6.0, stop=$702.44, limit=$698.93
+[2025-10-30 08:37:51] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:37:52] [INFO] 2. Checking exit signals...
+[2025-10-30 08:37:53] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:37:53] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:37:53] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:37:54] [INFO] Pyramid opportunity for XOM: $116.29 > $115.76
+[2025-10-30 08:37:54] [INFO] Placing pyramid order for XOM: units=4, stop=$115.76, limit=$116.34
+[2025-10-30 08:37:54] [INFO] Order placed: c3f2330e-1dee-4e2a-a6f5-00433eb425f3 for XOM
+[2025-10-30 08:37:57] [INFO] Order filled: XOM at $115.89, risk pot decreased by $15.16
+[2025-10-30 08:37:57] [INFO] 4. Processing entry queue...
+[2025-10-30 08:37:58] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:37:58] [INFO] Order placed: 1fb6ff66-3cbd-4658-a10d-ea93c3cbd697 for NVDA
+[2025-10-30 08:38:01] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:38:02] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 08:38:02] [INFO] Risk Pot: $870.84
+[2025-10-30 08:43:02] [INFO] ============================================================
+[2025-10-30 08:43:02] [INFO] INTRADAY MONITOR - 2025-10-30 08:43:02
+[2025-10-30 08:43:02] [INFO] ============================================================
+[2025-10-30 08:43:02] [INFO] State snapshot saved: intraday_0843
+[2025-10-30 08:43:02] [INFO] 1. Checking position stops...
+[2025-10-30 08:43:03] [INFO] Stop loss triggered for META: $697.00 <= $716.53
+[2025-10-30 08:43:03] [INFO] Placing exit order for META: units=6.0, stop=$703.97, limit=$700.45
+[2025-10-30 08:43:03] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:43:04] [INFO] 2. Checking exit signals...
+[2025-10-30 08:43:05] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:43:05] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:43:05] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:43:06] [INFO] Pyramid opportunity for XOM: $116.24 > $115.67
+[2025-10-30 08:43:06] [INFO] Placing pyramid order for XOM: units=4, stop=$115.67, limit=$116.25
+[2025-10-30 08:43:06] [INFO] Order placed: f86403f3-20d6-4532-b867-186a3433e511 for XOM
+[2025-10-30 08:43:09] [INFO] Order filled: XOM at $116.01, risk pot decreased by $15.16
+[2025-10-30 08:43:09] [INFO] 4. Processing entry queue...
+[2025-10-30 08:43:10] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:43:10] [INFO] Order placed: 6b6e050c-cdbf-40c5-8ae1-445d53f3cb63 for NVDA
+[2025-10-30 08:43:13] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:43:14] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 08:43:14] [INFO] Risk Pot: $855.67
+[2025-10-30 08:48:14] [INFO] ============================================================
+[2025-10-30 08:48:14] [INFO] INTRADAY MONITOR - 2025-10-30 08:48:14
+[2025-10-30 08:48:14] [INFO] ============================================================
+[2025-10-30 08:48:14] [INFO] State snapshot saved: intraday_0848
+[2025-10-30 08:48:14] [INFO] 1. Checking position stops...
+[2025-10-30 08:48:15] [INFO] Stop loss triggered for META: $696.50 <= $716.53
+[2025-10-30 08:48:15] [INFO] Placing exit order for META: units=6.0, stop=$703.47, limit=$699.95
+[2025-10-30 08:48:15] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:48:16] [INFO] 2. Checking exit signals...
+[2025-10-30 08:48:17] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:48:17] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:48:17] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:48:18] [INFO] Pyramid opportunity for XOM: $116.11 > $115.79
+[2025-10-30 08:48:18] [INFO] Placing pyramid order for XOM: units=4, stop=$115.79, limit=$116.37
+[2025-10-30 08:48:18] [INFO] Order placed: 28d5caf5-f7bc-478c-9776-60d84da657fb for XOM
+[2025-10-30 08:48:21] [INFO] Order filled: XOM at $115.93, risk pot decreased by $15.16
+[2025-10-30 08:48:22] [INFO] 4. Processing entry queue...
+[2025-10-30 08:48:22] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:48:22] [INFO] Order placed: 1733e6dc-b275-4bbe-b718-c59592b2fcfd for NVDA
+[2025-10-30 08:48:25] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:48:26] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 08:48:26] [INFO] Risk Pot: $840.51
+[2025-10-30 08:53:26] [INFO] ============================================================
+[2025-10-30 08:53:26] [INFO] INTRADAY MONITOR - 2025-10-30 08:53:26
+[2025-10-30 08:53:26] [INFO] ============================================================
+[2025-10-30 08:53:26] [INFO] State snapshot saved: intraday_0853
+[2025-10-30 08:53:26] [INFO] 1. Checking position stops...
+[2025-10-30 08:53:27] [INFO] Stop loss triggered for META: $695.00 <= $716.53
+[2025-10-30 08:53:27] [INFO] Placing exit order for META: units=6.0, stop=$701.95, limit=$698.44
+[2025-10-30 08:53:27] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:53:28] [INFO] 2. Checking exit signals...
+[2025-10-30 08:53:29] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:53:29] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:53:29] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:53:29] [INFO] 4. Processing entry queue...
+[2025-10-30 08:53:30] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:53:30] [INFO] Order placed: 49c35f7b-7a84-4284-8ebe-8fa2df6e05ff for NVDA
+[2025-10-30 08:53:33] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:53:34] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 08:53:34] [INFO] Risk Pot: $840.51
+[2025-10-30 08:58:34] [INFO] ============================================================
+[2025-10-30 08:58:34] [INFO] INTRADAY MONITOR - 2025-10-30 08:58:34
+[2025-10-30 08:58:34] [INFO] ============================================================
+[2025-10-30 08:58:34] [INFO] State snapshot saved: intraday_0858
+[2025-10-30 08:58:34] [INFO] 1. Checking position stops...
+[2025-10-30 08:58:35] [INFO] Stop loss triggered for META: $695.25 <= $716.53
+[2025-10-30 08:58:35] [INFO] Placing exit order for META: units=6.0, stop=$702.20, limit=$698.69
+[2025-10-30 08:58:35] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 08:58:35] [INFO] 2. Checking exit signals...
+[2025-10-30 08:58:36] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 08:58:37] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 08:58:37] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 08:58:37] [INFO] 4. Processing entry queue...
+[2025-10-30 08:58:37] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 08:58:38] [INFO] Order placed: 6f80df40-8cc8-4904-ac86-480b0d4ad3e3 for NVDA
+[2025-10-30 08:58:41] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 08:58:42] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 08:58:42] [INFO] Risk Pot: $840.51
+[2025-10-30 09:03:42] [INFO] ============================================================
+[2025-10-30 09:03:42] [INFO] INTRADAY MONITOR - 2025-10-30 09:03:42
+[2025-10-30 09:03:42] [INFO] ============================================================
+[2025-10-30 09:03:42] [INFO] State snapshot saved: intraday_0903
+[2025-10-30 09:03:42] [INFO] 1. Checking position stops...
+[2025-10-30 09:03:43] [INFO] Stop loss triggered for META: $697.00 <= $716.53
+[2025-10-30 09:03:43] [INFO] Placing exit order for META: units=6.0, stop=$703.97, limit=$700.45
+[2025-10-30 09:03:43] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 09:03:44] [INFO] 2. Checking exit signals...
+[2025-10-30 09:03:45] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 09:03:45] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 09:03:45] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 09:03:45] [INFO] 4. Processing entry queue...
+[2025-10-30 09:03:46] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 09:03:46] [INFO] Order placed: 2c595b79-8b54-4f35-9910-1d1707c2ea36 for NVDA
+[2025-10-30 09:03:49] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 09:03:50] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 09:03:50] [INFO] Risk Pot: $840.51
+[2025-10-30 09:08:50] [INFO] ============================================================
+[2025-10-30 09:08:50] [INFO] INTRADAY MONITOR - 2025-10-30 09:08:50
+[2025-10-30 09:08:50] [INFO] ============================================================
+[2025-10-30 09:08:50] [INFO] State snapshot saved: intraday_0908
+[2025-10-30 09:08:50] [INFO] 1. Checking position stops...
+[2025-10-30 09:08:51] [INFO] Stop loss triggered for META: $696.91 <= $716.53
+[2025-10-30 09:08:51] [INFO] Placing exit order for META: units=6.0, stop=$703.88, limit=$700.36
+[2025-10-30 09:08:51] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 09:08:52] [INFO] 2. Checking exit signals...
+[2025-10-30 09:08:53] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 09:08:53] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 09:08:53] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 09:08:53] [INFO] 4. Processing entry queue...
+[2025-10-30 09:08:53] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 09:08:54] [INFO] Order placed: 72a01496-2c27-49d2-a41a-7e64c496e073 for NVDA
+[2025-10-30 09:08:57] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 09:08:58] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 09:08:58] [INFO] Risk Pot: $840.51
+[2025-10-30 09:13:58] [INFO] ============================================================
+[2025-10-30 09:13:58] [INFO] INTRADAY MONITOR - 2025-10-30 09:13:58
+[2025-10-30 09:13:58] [INFO] ============================================================
+[2025-10-30 09:13:58] [INFO] State snapshot saved: intraday_0913
+[2025-10-30 09:13:58] [INFO] 1. Checking position stops...
+[2025-10-30 09:13:59] [INFO] Stop loss triggered for META: $695.39 <= $716.53
+[2025-10-30 09:13:59] [INFO] Placing exit order for META: units=6.0, stop=$702.34, limit=$698.83
+[2025-10-30 09:13:59] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 09:13:59] [INFO] 2. Checking exit signals...
+[2025-10-30 09:14:01] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 09:14:01] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 09:14:01] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 09:14:01] [INFO] 4. Processing entry queue...
+[2025-10-30 09:14:02] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 09:14:02] [INFO] Order placed: 9ef4770a-09f2-459d-bb02-307e71c7002d for NVDA
+[2025-10-30 09:14:05] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 09:14:06] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 09:14:06] [INFO] Risk Pot: $840.51
+[2025-10-30 09:26:30] [INFO] ============================================================
+[2025-10-30 09:26:30] [INFO] INTRADAY MONITOR - 2025-10-30 09:26:30
+[2025-10-30 09:26:30] [INFO] ============================================================
+[2025-10-30 09:26:30] [INFO] State snapshot saved: intraday_0926
+[2025-10-30 09:26:30] [INFO] 1. Checking position stops...
+[2025-10-30 09:26:30] [INFO] Stop loss triggered for META: $693.69 <= $716.53
+[2025-10-30 09:26:30] [INFO] Placing exit order for META: units=6.0, stop=$700.63, limit=$697.13
+[2025-10-30 09:26:31] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 09:26:31] [INFO] 2. Checking exit signals...
+[2025-10-30 09:26:32] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 09:26:32] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 09:26:32] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 09:26:33] [INFO] 4. Processing entry queue...
+[2025-10-30 09:26:33] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 09:26:33] [INFO] Order placed: a53a8890-4966-4796-b15a-1508277f15c3 for NVDA
+[2025-10-30 09:26:36] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 09:26:37] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 09:26:37] [INFO] Risk Pot: $840.51
+[2025-10-30 09:43:42] [INFO] ============================================================
+[2025-10-30 09:43:42] [INFO] INTRADAY MONITOR - 2025-10-30 09:43:42
+[2025-10-30 09:43:42] [INFO] ============================================================
+[2025-10-30 09:43:42] [INFO] State snapshot saved: intraday_0943
+[2025-10-30 09:43:42] [INFO] 1. Checking position stops...
+[2025-10-30 09:58:40] [ERROR] Error getting current price for GOOGL: HTTPSConnectionPool(host='data.alpaca.markets', port=443): Max retries exceeded with url: /v2/stocks/bars?start=2025-10-30T09%3A28%3A42.040307%2B00%3A00&end=2025-10-30T09%3A43%3A42.040307%2B00%3A00&timeframe=1Min&symbols=GOOGL&limit=10000 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x107663890>: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))
+[2025-10-30 09:58:41] [INFO] Stop loss triggered for META: $691.27 <= $716.53
+[2025-10-30 09:58:41] [INFO] Placing exit order for META: units=6.0, stop=$698.18, limit=$694.69
+[2025-10-30 09:58:41] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 09:58:42] [INFO] 2. Checking exit signals...
+[2025-10-30 09:58:43] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 09:58:43] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 09:58:43] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 09:58:43] [INFO] 4. Processing entry queue...
+[2025-10-30 09:58:43] [INFO] Placing entry order for NVDA: units=1, stop=$201.12, limit=$202.13
+[2025-10-30 09:58:44] [INFO] Order placed: 85cc1b22-0af8-4794-842b-5a9b2a9ccb29 for NVDA
+[2025-10-30 09:58:47] [WARNING] Order pending for NVDA, status: OrderStatus.NEW
+[2025-10-30 09:58:48] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 09:58:48] [INFO] Risk Pot: $840.51
+[2025-10-30 10:14:45] [INFO] ============================================================
+[2025-10-30 10:14:45] [INFO] INTRADAY MONITOR - 2025-10-30 10:14:45
+[2025-10-30 10:14:45] [INFO] ============================================================
+[2025-10-30 10:14:45] [INFO] State snapshot saved: intraday_1014
+[2025-10-30 10:14:45] [INFO] 1. Checking position stops...
+[2025-10-30 10:14:45] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 10:14:45] [INFO] Stop loss triggered for META: $687.99 <= $716.53
+[2025-10-30 10:14:45] [INFO] Placing exit order for META: units=6.0, stop=$694.87, limit=$691.40
+[2025-10-30 10:14:45] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 10:14:46] [INFO] 2. Checking exit signals...
+[2025-10-30 10:14:47] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 10:14:47] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 10:14:47] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 10:14:48] [INFO] 4. Processing entry queue...
+[2025-10-30 10:14:48] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 10:14:48] [INFO] Risk Pot: $840.51
+[2025-10-30 10:23:26] [INFO] ============================================================
+[2025-10-30 10:23:26] [INFO] INTRADAY MONITOR - 2025-10-30 10:23:26
+[2025-10-30 10:23:26] [INFO] ============================================================
+[2025-10-30 10:23:26] [INFO] State snapshot saved: intraday_1023
+[2025-10-30 10:23:26] [INFO] 1. Checking position stops...
+[2025-10-30 10:23:26] [INFO] Stop loss triggered for META: $687.48 <= $716.53
+[2025-10-30 10:23:26] [INFO] Placing exit order for META: units=6.0, stop=$694.35, limit=$690.88
+[2025-10-30 10:23:27] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 10:23:27] [INFO] 2. Checking exit signals...
+[2025-10-30 10:23:28] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 10:23:28] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 10:23:28] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 10:23:29] [INFO] 4. Processing entry queue...
+[2025-10-30 10:23:29] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 10:23:29] [INFO] Risk Pot: $840.51
+[2025-10-30 10:43:11] [INFO] ============================================================
+[2025-10-30 10:43:11] [INFO] INTRADAY MONITOR - 2025-10-30 10:43:11
+[2025-10-30 10:43:11] [INFO] ============================================================
+[2025-10-30 10:43:11] [INFO] State snapshot saved: intraday_1043
+[2025-10-30 10:43:11] [INFO] 1. Checking position stops...
+[2025-10-30 10:43:12] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 10:43:12] [INFO] Stop loss triggered for META: $688.76 <= $716.53
+[2025-10-30 10:43:12] [INFO] Placing exit order for META: units=6.0, stop=$695.65, limit=$692.17
+[2025-10-30 10:43:12] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 10:43:12] [INFO] 2. Checking exit signals...
+[2025-10-30 10:43:14] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 10:43:14] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 10:43:14] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 10:43:14] [INFO] 4. Processing entry queue...
+[2025-10-30 10:43:14] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 10:43:14] [INFO] Risk Pot: $840.51
+[2025-10-30 10:59:12] [INFO] ============================================================
+[2025-10-30 10:59:12] [INFO] INTRADAY MONITOR - 2025-10-30 10:59:12
+[2025-10-30 10:59:12] [INFO] ============================================================
+[2025-10-30 10:59:12] [INFO] State snapshot saved: intraday_1059
+[2025-10-30 10:59:12] [INFO] 1. Checking position stops...
+[2025-10-30 10:59:12] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 10:59:13] [INFO] Stop loss triggered for META: $687.36 <= $716.53
+[2025-10-30 10:59:13] [INFO] Placing exit order for META: units=6.0, stop=$694.23, limit=$690.76
+[2025-10-30 10:59:13] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 10:59:13] [INFO] 2. Checking exit signals...
+[2025-10-30 10:59:14] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 10:59:15] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 10:59:15] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 10:59:15] [INFO] 4. Processing entry queue...
+[2025-10-30 10:59:15] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 10:59:15] [INFO] Risk Pot: $840.51
+[2025-10-30 11:15:13] [INFO] ============================================================
+[2025-10-30 11:15:13] [INFO] INTRADAY MONITOR - 2025-10-30 11:15:13
+[2025-10-30 11:15:13] [INFO] ============================================================
+[2025-10-30 11:15:13] [INFO] State snapshot saved: intraday_1115
+[2025-10-30 11:15:13] [INFO] 1. Checking position stops...
+[2025-10-30 11:15:13] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 11:15:14] [INFO] Stop loss triggered for META: $686.46 <= $716.53
+[2025-10-30 11:15:14] [INFO] Placing exit order for META: units=6.0, stop=$693.32, limit=$689.85
+[2025-10-30 11:15:14] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 11:15:14] [INFO] 2. Checking exit signals...
+[2025-10-30 11:15:16] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 11:15:16] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 11:15:16] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 11:15:16] [INFO] 4. Processing entry queue...
+[2025-10-30 11:15:17] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 11:15:17] [INFO] Risk Pot: $840.51
+[2025-10-30 11:25:09] [INFO] ============================================================
+[2025-10-30 11:25:09] [INFO] INTRADAY MONITOR - 2025-10-30 11:25:09
+[2025-10-30 11:25:09] [INFO] ============================================================
+[2025-10-30 11:25:09] [INFO] State snapshot saved: intraday_1125
+[2025-10-30 11:25:09] [INFO] 1. Checking position stops...
+[2025-10-30 11:25:09] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 11:25:09] [INFO] Stop loss triggered for META: $686.40 <= $716.53
+[2025-10-30 11:25:09] [INFO] Placing exit order for META: units=6.0, stop=$693.26, limit=$689.79
+[2025-10-30 11:25:09] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 11:25:10] [INFO] 2. Checking exit signals...
+[2025-10-30 11:25:11] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 11:25:11] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 11:25:11] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 11:25:12] [INFO] 4. Processing entry queue...
+[2025-10-30 11:25:12] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 11:25:12] [INFO] Risk Pot: $840.51
+[2025-10-30 11:47:19] [INFO] ============================================================
+[2025-10-30 11:47:19] [INFO] INTRADAY MONITOR - 2025-10-30 11:47:19
+[2025-10-30 11:47:19] [INFO] ============================================================
+[2025-10-30 11:47:19] [INFO] State snapshot saved: intraday_1147
+[2025-10-30 11:47:19] [INFO] 1. Checking position stops...
+[2025-10-30 11:47:19] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 11:47:19] [INFO] Stop loss triggered for META: $685.01 <= $716.53
+[2025-10-30 11:47:19] [INFO] Placing exit order for META: units=6.0, stop=$691.86, limit=$688.40
+[2025-10-30 11:47:19] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 11:47:20] [INFO] 2. Checking exit signals...
+[2025-10-30 11:47:21] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 11:47:21] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 11:47:21] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 11:47:22] [INFO] 4. Processing entry queue...
+[2025-10-30 11:47:22] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 11:47:22] [INFO] Risk Pot: $840.51
+[2025-10-30 12:05:20] [INFO] ============================================================
+[2025-10-30 12:05:20] [INFO] INTRADAY MONITOR - 2025-10-30 12:05:20
+[2025-10-30 12:05:20] [INFO] ============================================================
+[2025-10-30 12:05:20] [INFO] State snapshot saved: intraday_1205
+[2025-10-30 12:05:20] [INFO] 1. Checking position stops...
+[2025-10-30 12:05:20] [INFO] Stop loss triggered for META: $681.70 <= $716.53
+[2025-10-30 12:05:21] [INFO] Placing exit order for META: units=6.0, stop=$688.52, limit=$685.08
+[2025-10-30 12:05:21] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 12:05:21] [INFO] 2. Checking exit signals...
+[2025-10-30 12:05:22] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 12:05:22] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 12:05:23] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 12:05:23] [INFO] 4. Processing entry queue...
+[2025-10-30 12:05:23] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 12:05:23] [INFO] Risk Pot: $840.51
+[2025-10-30 12:21:21] [INFO] ============================================================
+[2025-10-30 12:21:21] [INFO] INTRADAY MONITOR - 2025-10-30 12:21:21
+[2025-10-30 12:21:21] [INFO] ============================================================
+[2025-10-30 12:21:21] [INFO] State snapshot saved: intraday_1221
+[2025-10-30 12:21:21] [INFO] 1. Checking position stops...
+[2025-10-30 12:21:21] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 12:21:21] [INFO] Stop loss triggered for META: $682.91 <= $716.53
+[2025-10-30 12:21:22] [INFO] Placing exit order for META: units=6.0, stop=$689.74, limit=$686.29
+[2025-10-30 12:21:22] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 12:21:22] [INFO] 2. Checking exit signals...
+[2025-10-30 12:21:24] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 12:21:25] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 12:21:25] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 12:21:25] [INFO] 4. Processing entry queue...
+[2025-10-30 12:21:26] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 12:21:26] [INFO] Risk Pot: $840.51
+[2025-10-30 12:41:39] [INFO] ============================================================
+[2025-10-30 12:41:39] [INFO] INTRADAY MONITOR - 2025-10-30 12:41:39
+[2025-10-30 12:41:39] [INFO] ============================================================
+[2025-10-30 12:41:39] [INFO] State snapshot saved: intraday_1241
+[2025-10-30 12:41:39] [INFO] 1. Checking position stops...
+[2025-10-30 12:41:40] [INFO] Stop loss triggered for META: $678.77 <= $716.53
+[2025-10-30 12:41:40] [INFO] Placing exit order for META: units=6.0, stop=$685.56, limit=$682.13
+[2025-10-30 12:41:40] [ERROR] Error exiting position for META: {"available":"0","code":40310000,"existing_qty":"6","held_for_orders":"6","message":"insufficient qty available for order (requested: 6, available: 0)","related_orders":["97460c98-f1ff-4934-9580-7e9b5c77ab8d"],"symbol":"META"}
+[2025-10-30 12:41:41] [INFO] 2. Checking exit signals...
+[2025-10-30 12:41:42] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 12:41:42] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 12:41:42] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 12:41:43] [INFO] 4. Processing entry queue...
+[2025-10-30 12:41:43] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 12:41:43] [INFO] Risk Pot: $840.51
+[2025-10-30 12:57:40] [INFO] ============================================================
+[2025-10-30 12:57:40] [INFO] INTRADAY MONITOR - 2025-10-30 12:57:40
+[2025-10-30 12:57:40] [INFO] ============================================================
+[2025-10-30 12:57:40] [INFO] State snapshot saved: intraday_1257
+[2025-10-30 12:57:40] [INFO] 1. Checking position stops...
+[2025-10-30 12:57:41] [ERROR] Error getting current price for GOOGL: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 12:57:41] [INFO] Stop loss triggered for META: $674.63 <= $716.53
+[2025-10-30 12:57:41] [INFO] Placing exit order for META: units=6.0, stop=$681.38, limit=$677.97
+[2025-10-30 12:57:41] [ERROR] Error exiting position for META: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+[2025-10-30 12:57:42] [INFO] 2. Checking exit signals...
+[2025-10-30 12:57:43] [INFO] 3. Checking pyramid opportunities...
+[2025-10-30 12:57:43] [INFO] Pyramid order already pending for GOOGL (order 6bfa968b-989a-4391-bd9a-77c323935b0a)
+[2025-10-30 12:57:43] [INFO] Pyramid order already pending for AAPL (order 17f771b3-953b-45b2-8d91-bb3b2acfda8e)
+[2025-10-30 12:57:43] [INFO] 4. Processing entry queue...
+[2025-10-30 12:57:44] [INFO] Status: 5 positions, 9 pending entries
+[2025-10-30 12:57:44] [INFO] Risk Pot: $840.51
+[2025-10-30 13:15:47] [INFO] ============================================================
+[2025-10-30 13:15:47] [INFO] POST-MARKET ROUTINE
+[2025-10-30 13:15:47] [INFO] ============================================================
+[2025-10-30 13:15:47] [INFO] State snapshot saved: market_close
+[2025-10-30 13:15:47] [INFO] Starting order reconciliation...
+[2025-10-30 13:15:47] [INFO] No discrepancies found
+[2025-10-30 13:15:47] [INFO] Daily summary sent - P&L: $0.00
+[2025-10-30 23:25:59] [INFO] Turtle Trading System initialized
+[2025-10-30 23:25:59] [INFO] ============================================================
+[2025-10-30 23:25:59] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-30 23:25:59] [INFO] ============================================================
+[2025-10-30 23:25:59] [WARNING] DRY RUN MODE - No changes will be applied
+[2025-10-30 23:25:59] [INFO] 
+Broker position: AAPL
+[2025-10-30 23:25:59] [INFO]   Quantity: 223.0
+[2025-10-30 23:25:59] [INFO]   Avg Entry: $266.76
+[2025-10-30 23:25:59] [INFO]   Cost Basis: $59487.99
+[2025-10-30 23:26:00] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-30 23:26:00] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-30 23:26:00] [INFO]   Stop Price: $257.48
+[2025-10-30 23:26:00] [INFO] 
+Broker position: AMZN
+[2025-10-30 23:26:00] [INFO]   Quantity: 401.0
+[2025-10-30 23:26:00] [INFO]   Avg Entry: $227.72
+[2025-10-30 23:26:00] [INFO]   Cost Basis: $91317.20
+[2025-10-30 23:26:00] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-30 23:26:00] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-30 23:26:00] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-30 23:26:00] [INFO]   Stop Price: $218.26
+[2025-10-30 23:26:00] [INFO] 
+Broker position: GOOGL
+[2025-10-30 23:26:00] [INFO]   Quantity: 156.0
+[2025-10-30 23:26:00] [INFO]   Avg Entry: $266.00
+[2025-10-30 23:26:00] [INFO]   Cost Basis: $41495.98
+[2025-10-30 23:26:00] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-30 23:26:00] [INFO]   Stop Price: $251.84
+[2025-10-30 23:26:00] [INFO] 
+Broker position: META
+[2025-10-30 23:26:00] [INFO]   Quantity: 6.0
+[2025-10-30 23:26:00] [INFO]   Avg Entry: $750.92
+[2025-10-30 23:26:00] [INFO]   Cost Basis: $4505.52
+[2025-10-30 23:26:00] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-30 23:26:00] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-30 23:26:00] [INFO]   Stop Price: $709.43
+[2025-10-30 23:26:00] [INFO] 
+Broker position: NVDA
+[2025-10-30 23:26:00] [INFO]   Quantity: 13.0
+[2025-10-30 23:26:00] [INFO]   Avg Entry: $202.13
+[2025-10-30 23:26:00] [INFO]   Cost Basis: $2627.65
+[2025-10-30 23:26:00] [INFO]   Grouped 13 orders from 2025-10-30 into single pyramid unit (avg price: $202.13)
+[2025-10-30 23:26:00] [INFO]   Reconstructed 1 pyramid units from 13 orders
+[2025-10-30 23:26:00] [INFO]   Stop Price: $189.57
+[2025-10-30 23:26:00] [INFO] 
+Broker position: XOM
+[2025-10-30 23:26:00] [INFO]   Quantity: 16.0
+[2025-10-30 23:26:00] [INFO]   Avg Entry: $115.95
+[2025-10-30 23:26:00] [INFO]   Cost Basis: $1855.24
+[2025-10-30 23:26:00] [INFO]   Grouped 4 orders from 2025-10-30 into single pyramid unit (avg price: $115.95)
+[2025-10-30 23:26:00] [INFO]   Reconstructed 1 pyramid units from 4 orders
+[2025-10-30 23:26:00] [INFO]   Stop Price: $112.09
+[2025-10-30 23:26:00] [INFO] 
+============================================================
+[2025-10-30 23:26:00] [INFO] COMPARISON
+[2025-10-30 23:26:00] [INFO] ============================================================
+[2025-10-30 23:26:00] [WARNING] ❌ Missing in state: NVDA
+[2025-10-30 23:26:00] [WARNING] ❌ Unit mismatch for XOM: state=4, broker=1
+[2025-10-30 23:26:00] [INFO] 
+Current Risk Pot: $840.51
+[2025-10-30 23:26:00] [INFO] Calculated Risk Pot: $628.96
+[2025-10-30 23:26:00] [WARNING] ❌ Risk pot mismatch: $840.51 vs $628.96
+[2025-10-30 23:26:00] [INFO] 
+============================================================
+[2025-10-30 23:26:00] [INFO] SUMMARY
+[2025-10-30 23:26:00] [INFO] ============================================================
+[2025-10-30 23:26:00] [INFO] Found 3 changes needed:
+[2025-10-30 23:26:00] [INFO]   + ADD NVDA: 13.0 units, 1 pyramid levels
+[2025-10-30 23:26:00] [INFO]   ↻ UPDATE XOM: 16.0 units, 1 pyramid levels
+[2025-10-30 23:26:00] [INFO]   ↻ UPDATE Risk Pot: $628.96
+[2025-10-30 23:26:00] [WARNING] 
+DRY RUN - No changes applied. Run with dry_run=False to apply changes.
+[2025-10-30 23:26:11] [INFO] Turtle Trading System initialized
+[2025-10-30 23:26:13] [INFO] ============================================================
+[2025-10-30 23:26:13] [INFO] STARTING STATE ALIGNMENT WITH BROKER
+[2025-10-30 23:26:13] [INFO] ============================================================
+[2025-10-30 23:26:14] [INFO] 
+Broker position: AAPL
+[2025-10-30 23:26:14] [INFO]   Quantity: 223.0
+[2025-10-30 23:26:14] [INFO]   Avg Entry: $266.76
+[2025-10-30 23:26:14] [INFO]   Cost Basis: $59487.99
+[2025-10-30 23:26:14] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $267.75)
+[2025-10-30 23:26:14] [INFO]   Reconstructed 2 pyramid units from 4 orders
+[2025-10-30 23:26:14] [INFO]   Stop Price: $257.48
+[2025-10-30 23:26:14] [INFO] 
+Broker position: AMZN
+[2025-10-30 23:26:14] [INFO]   Quantity: 401.0
+[2025-10-30 23:26:14] [INFO]   Avg Entry: $227.72
+[2025-10-30 23:26:14] [INFO]   Cost Basis: $91317.20
+[2025-10-30 23:26:14] [INFO]   Grouped 2 orders from 2025-10-27 into single pyramid unit (avg price: $227.62)
+[2025-10-30 23:26:14] [INFO]   Grouped 3 orders from 2025-10-29 into single pyramid unit (avg price: $229.23)
+[2025-10-30 23:26:14] [INFO]   Reconstructed 2 pyramid units from 5 orders
+[2025-10-30 23:26:14] [INFO]   Stop Price: $218.26
+[2025-10-30 23:26:14] [INFO] 
+Broker position: GOOGL
+[2025-10-30 23:26:14] [INFO]   Quantity: 156.0
+[2025-10-30 23:26:14] [INFO]   Avg Entry: $266.00
+[2025-10-30 23:26:14] [INFO]   Cost Basis: $41495.98
+[2025-10-30 23:26:14] [INFO]   Reconstructed 1 pyramid units from 1 orders
+[2025-10-30 23:26:14] [INFO]   Stop Price: $251.84
+[2025-10-30 23:26:14] [INFO] 
+Broker position: META
+[2025-10-30 23:26:14] [INFO]   Quantity: 6.0
+[2025-10-30 23:26:14] [INFO]   Avg Entry: $750.92
+[2025-10-30 23:26:14] [INFO]   Cost Basis: $4505.52
+[2025-10-30 23:26:14] [INFO]   Grouped 2 orders from 2025-10-29 into single pyramid unit (avg price: $750.92)
+[2025-10-30 23:26:14] [INFO]   Reconstructed 1 pyramid units from 2 orders
+[2025-10-30 23:26:14] [INFO]   Stop Price: $709.43
+[2025-10-30 23:26:14] [INFO] 
+Broker position: NVDA
+[2025-10-30 23:26:14] [INFO]   Quantity: 13.0
+[2025-10-30 23:26:14] [INFO]   Avg Entry: $202.13
+[2025-10-30 23:26:14] [INFO]   Cost Basis: $2627.65
+[2025-10-30 23:26:15] [INFO]   Grouped 13 orders from 2025-10-30 into single pyramid unit (avg price: $202.13)
+[2025-10-30 23:26:15] [INFO]   Reconstructed 1 pyramid units from 13 orders
+[2025-10-30 23:26:15] [INFO]   Stop Price: $189.57
+[2025-10-30 23:26:15] [INFO] 
+Broker position: XOM
+[2025-10-30 23:26:15] [INFO]   Quantity: 16.0
+[2025-10-30 23:26:15] [INFO]   Avg Entry: $115.95
+[2025-10-30 23:26:15] [INFO]   Cost Basis: $1855.24
+[2025-10-30 23:26:15] [INFO]   Grouped 4 orders from 2025-10-30 into single pyramid unit (avg price: $115.95)
+[2025-10-30 23:26:15] [INFO]   Reconstructed 1 pyramid units from 4 orders
+[2025-10-30 23:26:15] [INFO]   Stop Price: $112.09
+[2025-10-30 23:26:15] [INFO] 
+============================================================
+[2025-10-30 23:26:15] [INFO] COMPARISON
+[2025-10-30 23:26:15] [INFO] ============================================================
+[2025-10-30 23:26:15] [WARNING] ❌ Missing in state: NVDA
+[2025-10-30 23:26:15] [WARNING] ❌ Unit mismatch for XOM: state=4, broker=1
+[2025-10-30 23:26:15] [INFO] 
+Current Risk Pot: $840.51
+[2025-10-30 23:26:15] [INFO] Calculated Risk Pot: $628.96
+[2025-10-30 23:26:15] [WARNING] ❌ Risk pot mismatch: $840.51 vs $628.96
+[2025-10-30 23:26:15] [INFO] 
+============================================================
+[2025-10-30 23:26:15] [INFO] SUMMARY
+[2025-10-30 23:26:15] [INFO] ============================================================
+[2025-10-30 23:26:15] [INFO] Found 3 changes needed:
+[2025-10-30 23:26:15] [INFO]   + ADD NVDA: 13.0 units, 1 pyramid levels
+[2025-10-30 23:26:15] [INFO]   ↻ UPDATE XOM: 16.0 units, 1 pyramid levels
+[2025-10-30 23:26:15] [INFO]   ↻ UPDATE Risk Pot: $628.96
+[2025-10-30 23:26:15] [WARNING] 
+Applying changes...
+[2025-10-30 23:26:15] [INFO] Backup saved to: trading_state_backup_20251030_232615.json
+[2025-10-30 23:26:15] [INFO]   ✅ Added NVDA
+[2025-10-30 23:26:15] [INFO]   ✅ Updated XOM
+[2025-10-30 23:26:15] [INFO]   ✅ Updated risk pot to $628.96
+[2025-10-30 23:26:15] [INFO] State snapshot saved: after_alignment
+[2025-10-30 23:26:15] [INFO] 
+✅ State alignment complete!
