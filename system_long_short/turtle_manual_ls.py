@@ -11,6 +11,26 @@ Run specific workflows manually for testing:
   python -m system_long_short.turtle_manual_ls align --apply    # Rebuild state from broker (apply changes)
   python -m system_long_short.turtle_manual_ls exit-all  # EXIT ALL POSITIONS AT MARKET PRICE (DANGEROUS!)
 
+Configuration flags:
+  --enable-system2          Enable dual system (System 1 + System 2)
+  --no-system1              Disable System 1 (only use with --enable-system2)
+  --no-longs                Disable long positions
+  --no-shorts               Disable short positions
+  --check-shortability      Check Alpaca shortable list
+
+Examples:
+  # Default: System 1 only, long+short
+  python -m system_long_short.turtle_manual_ls status
+
+  # Dual system (System 1 + System 2)
+  python -m system_long_short.turtle_manual_ls monitor --enable-system2
+
+  # System 2 only
+  python -m system_long_short.turtle_manual_ls eod --no-system1 --enable-system2
+
+  # Long-only with dual system
+  python -m system_long_short.turtle_manual_ls status --no-shorts --enable-system2
+
 The 'align' command rebuilds trading_state_ls.json from:
   - Current broker positions (both long and short)
   - Historical order fills from Alpaca
@@ -19,6 +39,7 @@ The 'align' command rebuilds trading_state_ls.json from:
 
 import sys
 import os
+import argparse
 from .turtle_trading_ls import TurtleTradingLS
 
 
@@ -131,17 +152,99 @@ def show_status(system):
 
 
 def main():
-  if len(sys.argv) < 2:
-    print(__doc__)
-    sys.exit(1)
+  # Parse command-line arguments
+  parser = argparse.ArgumentParser(
+    description='Turtle Trading Manual Control (Long/Short)',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog="""
+Commands:
+  eod        Run end-of-day analysis
+  open       Run market open setup
+  monitor    Run single intraday monitor cycle
+  close      Run post-market routine
+  status     Show current system status
+  align      Rebuild state from broker (add --apply to save)
+  exit-all   Exit all positions at market price (add --force to skip confirmation)
 
-  command = sys.argv[1].lower()
+Examples:
+  # Default: System 1 only, long+short
+  python -m system_long_short.turtle_manual_ls status
+
+  # Dual system (System 1 + System 2)
+  python -m system_long_short.turtle_manual_ls monitor --enable-system2
+
+  # System 2 only
+  python -m system_long_short.turtle_manual_ls eod --no-system1 --enable-system2
+
+  # Long-only with dual system
+  python -m system_long_short.turtle_manual_ls status --no-shorts --enable-system2
+    """
+  )
+  
+  parser.add_argument('command', 
+                      choices=['eod', 'open', 'monitor', 'close', 'status', 'align', 'exit-all'],
+                      help='Command to execute')
+  
+  # Configuration flags
+  parser.add_argument('--no-longs', action='store_true',
+                      help='Disable long positions (default: enabled)')
+  parser.add_argument('--no-shorts', action='store_true',
+                      help='Disable short positions (default: enabled)')
+  parser.add_argument('--enable-system2', action='store_true',
+                      help='Enable System 2 (55-20) for dual system (default: System 1 only)')
+  parser.add_argument('--no-system1', action='store_true',
+                      help='Disable System 1 (20-10) - only use with --enable-system2')
+  parser.add_argument('--check-shortability', action='store_true',
+                      help='Check Alpaca shortable list (default: False)')
+  
+  # Special flags for specific commands
+  parser.add_argument('--apply', action='store_true',
+                      help='Apply changes (for align command)')
+  parser.add_argument('--force', action='store_true',
+                      help='Skip confirmation (for exit-all command)')
+  
+  args = parser.parse_args()
+  
+  # Configuration from arguments
+  ENABLE_LONGS = not args.no_longs
+  ENABLE_SHORTS = not args.no_shorts
+  ENABLE_SYSTEM1 = not args.no_system1
+  ENABLE_SYSTEM2 = args.enable_system2
+  CHECK_SHORTABILITY = args.check_shortability
+  
+  # Validate configuration
+  if not ENABLE_LONGS and not ENABLE_SHORTS:
+    parser.error("At least one of long or short positions must be enabled")
+  if not ENABLE_SYSTEM1 and not ENABLE_SYSTEM2:
+    parser.error("At least one system must be enabled (use --enable-system2 if disabling System 1)")
 
   # Load configuration
   alpaca_key = os.environ.get('ALPACA_PAPER_LS_KEY')
   alpaca_secret = os.environ.get('ALPACA_PAPER_LS_SECRET')
-  slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
-  slack_channel = 'C09Q7RR1PQD'
+  slack_token = os.environ.get('SLACK_BOT_TOKEN')
+  slack_channel = os.environ.get('PERSONAL_SLACK_CHANNEL_ID')
+  
+  if not slack_channel:
+    print("Warning: PERSONAL_SLACK_CHANNEL_ID not set, notifications will be disabled")
+    slack_channel = None
+
+  # Build configuration description
+  config_desc = []
+  if ENABLE_LONGS and ENABLE_SHORTS:
+    config_desc.append("Long+Short")
+  elif ENABLE_LONGS:
+    config_desc.append("Long Only")
+  else:
+    config_desc.append("Short Only")
+  
+  if ENABLE_SYSTEM1 and ENABLE_SYSTEM2:
+    config_desc.append("Dual System (S1+S2)")
+  elif ENABLE_SYSTEM1:
+    config_desc.append("System 1 Only")
+  else:
+    config_desc.append("System 2 Only")
+
+  print(f"\nConfiguration: {' / '.join(config_desc)}\n")
 
   # Initialize system
   system = TurtleTradingLS(
@@ -150,9 +253,14 @@ def main():
     slack_token=slack_token,
     slack_channel=slack_channel,
     paper=True,
-    enable_shorts=True,
-    check_shortability=False
+    enable_longs=ENABLE_LONGS,
+    enable_shorts=ENABLE_SHORTS,
+    enable_system1=ENABLE_SYSTEM1,
+    enable_system2=ENABLE_SYSTEM2,
+    check_shortability=CHECK_SHORTABILITY
   )
+  
+  command = args.command
 
   if command == 'eod':
     print("Running EOD Analysis...")
@@ -174,8 +282,7 @@ def main():
     show_status(system)
 
   elif command == 'align':
-    # Check for --apply flag
-    apply_changes = '--apply' in sys.argv
+    apply_changes = args.apply
 
     print("\n" + "="*60)
     print("STATE REBUILD FROM BROKER (LONG/SHORT)")
@@ -236,7 +343,7 @@ def main():
       print("\n" + "="*60)
 
       # Check for --force flag
-      if '--force' not in sys.argv:
+      if not args.force:
         response = input("\nType 'EXIT ALL NOW' to confirm (anything else to cancel): ")
         if response != 'EXIT ALL NOW':
           print("\nExit cancelled.")

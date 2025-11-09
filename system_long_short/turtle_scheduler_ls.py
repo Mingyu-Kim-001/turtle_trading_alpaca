@@ -274,12 +274,16 @@ Examples:
   # Get API credentials from environment
   alpaca_key = os.environ.get('ALPACA_PAPER_LS_KEY')
   alpaca_secret = os.environ.get('ALPACA_PAPER_LS_SECRET')
-  slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
-  slack_channel = 'C09Q7RR1PQD'
+  slack_token = os.environ.get('SLACK_BOT_TOKEN')
+  slack_channel = os.environ.get('PERSONAL_SLACK_CHANNEL_ID')
 
   if not alpaca_key or not alpaca_secret:
     print("Error: ALPACA_PAPER_LS_KEY and ALPACA_PAPER_LS_SECRET environment variables must be set")
     return
+  
+  if not slack_channel:
+    print("Warning: PERSONAL_SLACK_CHANNEL_ID not set, notifications will be disabled")
+    slack_channel = None
 
   # Initialize trading system with configuration
   system = TurtleTradingLS(
