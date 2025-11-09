@@ -9,8 +9,8 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
   - [Features](#features)
   - [Project Structure](#project-structure)
   - [Architecture](#architecture)
-    - [Core Modules (`system_long/core/`)](#core-modules-system_longcore)
-    - [Utility Modules (`system_long/utils/`)](#utility-modules-system_longutils)
+    - [Core Modules](#core-modules)
+    - [Utility Modules](#utility-modules)
     - [Main Orchestrator](#main-orchestrator)
   - [Setup](#setup)
   - [Usage](#usage)
@@ -20,10 +20,11 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
     - [Running Tests](#running-tests)
   - [Workflows](#workflows)
   - [System Logic](#system-logic)
-    - [Entry](#entry)
+    - [Dual System Strategy](#dual-system-strategy)
     - [Pyramiding](#pyramiding)
     - [Exit](#exit)
   - [Risk Management](#risk-management)
+  - [Git Integration](#git-integration)
   - [Slack Notifications](#slack-notifications)
   - [Disclaimer](#disclaimer)
 
@@ -32,15 +33,16 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 - **Dual Trading Systems**: Implements both System 1 (20-10) and System 2 (55-20) for optimal performance
   - System 1: 20-day entry, 10-day exit (faster trades, higher turnover)
   - System 2: 55-day entry, 20-day exit (trend following, larger profits)
-- **Long and Short Positions**: Full support for both long and short selling
+- **Long and Short Positions**: Full support for both long and short selling (in `system_long_short`)
 - **Risk-Based Position Sizing**: Calculates trade sizes based on a percentage of a dynamic risk pot (1% per unit)
 - **Pyramiding**: Adds to winning positions up to 4 times, spaced by 0.5N
 - **Dynamic Stop-Loss**: Adjusts stop-loss orders based on the highest entry price of a pyramided position (2N stops)
 - **System-Specific Exits**: Each position uses the exit rules of its entry system
 - **Automated Scheduling**: Uses a scheduler to run trading workflows at appropriate market times
-- **Backtesting Engine**: Vectorized backtesters for both single and dual system strategies
+- **Backtesting Engine**: Multiple vectorized backtesters for single and dual system strategies
 - **Slack Integration**: Sends real-time alerts for trades, daily summaries, and system status
-- **State Persistence**: Maintains the trading state (positions, risk pot) in a JSON file
+- **State Persistence**: Maintains the trading state (positions, risk pot) in JSON files
+- **Git Integration**: Automatic git fetch at market open and git push of logs at end of day (long-short system)
 - **Modular Architecture**: Refactored into focused, testable components for better maintainability
 - **Comprehensive Testing**: 34+ unit tests covering core trading logic
 
@@ -48,54 +50,65 @@ This project is a full implementation of the Turtle Trading strategy, adapted fo
 
 ```
 /
-├── .config/                  # Configuration files for API keys and tokens
-├── backtesting/
-│   └── backtesting.py        # Script for running backtests on historical data
+├── backtesting/                    # Backtesting scripts and results
+│   ├── turtle_backtester.py                    # Long-only backtester
+│   ├── turtle_long_short_backtester.py         # Long-short single system
+│   ├── turtle_long_short_dual_system_backtester.py  # Dual system (recommended)
+│   ├── analyze_strategy_differences.py         # Strategy comparison tool
+│   └── turtle_*_results/                       # Backtest results and plots
 ├── data/
-│   ├── alpaca_daily/         # Daily historical stock data from Alpaca
-│   └── state/                # JSON files for persisting trading state
-├── data_gathering/           # Scripts to download historical data
-├── logs/                     # Daily logs for trading activities, orders, and state
-│   ├── system_long/          # Logs for long-only system
-│   └── system_long_short/    # Logs for long-short system
-├── system_long/              # Long-only modular trading system
-│   ├── core/                 # Core trading logic modules
+│   ├── alpaca_daily/              # Daily historical stock data from Alpaca
+│   └── all_tickers.txt            # Master ticker list
+├── data_gathering/                # Scripts to download historical data
+│   └── get_historical_stock_price_data_from_alpaca_API.py
+├── logs/                          # Daily logs for trading activities, orders, and state
+│   ├── system_long/               # Logs for long-only system
+│   └── system_long_short/         # Logs for long-short system
+├── system_long/                   # Long-only modular trading system
+│   ├── core/                      # Core trading logic modules
 │   │   ├── data_provider.py      # Market data fetching from Alpaca
-│   │   ├── indicators.py         # Technical indicator calculations
-│   │   ├── signal_generator.py   # Entry/exit signal generation
-│   │   ├── position_manager.py   # Position and pyramid management
-│   │   └── order_manager.py      # Order execution and tracking
-│   ├── utils/                # Utility modules
-│   │   ├── decorators.py         # Retry and error handling decorators
-│   │   ├── logger.py             # Daily logging functionality
-│   │   ├── notifier.py           # Slack notification system
-│   │   └── state_manager.py      # State persistence management
-│   ├── turtle_trading.py     # Main orchestrator (refactored)
-│   ├── turtle_manual.py      # Script for manually triggering workflows
-│   ├── turtle_scheduler.py   # Scheduler for automated trading
-│   ├── ticker_universe.txt   # Ticker list for long-only system
-│   └── trading_state.json    # State file for long-only system
-├── system_long_short/        # Long and short modular trading system
-│   ├── core/                 # Core modules (long/short variants)
-│   ├── utils/                # Utility modules
-│   ├── turtle_trading_ls.py  # Main orchestrator
-│   ├── turtle_manual_ls.py   # Manual control script
-│   ├── turtle_scheduler_ls.py # Scheduler
-│   ├── ticker_universe.txt   # Ticker list for long-short system
-│   ├── trading_state_ls.json # State file for long-short system
-│   ├── htb_exclusions.txt    # Hard-to-borrow exclusion list
-│   └── README.md             # Detailed documentation
-├── tests/                    # Comprehensive unit tests
-│   ├── test_system_long/    # Tests for system_long
-│   │   ├── test_core/       # Tests for core trading modules
-│   │   └── test_utils/      # Tests for utility modules
-│   ├── test_system_long_short/ # Tests for system_long_short
-│   └── run_tests.py         # Test runner
-├── graveyard/                # Old or unused scripts
-│   └── turtle_live_trading_original.py  # Original monolithic implementation (preserved)
-├── REFACTORING.md           # Detailed refactoring documentation
-├── REFACTORING_SUMMARY.md   # Refactoring summary
-└── README.md                 # This file
+│   │   ├── indicators.py          # Technical indicator calculations
+│   │   ├── signal_generator.py    # Entry/exit signal generation
+│   │   ├── position_manager.py    # Position and pyramid management
+│   │   └── order_manager.py       # Order execution and tracking
+│   ├── utils/                     # Utility modules
+│   │   ├── decorators.py          # Retry and error handling decorators
+│   │   ├── logger.py              # Daily logging functionality
+│   │   ├── notifier.py            # Slack notification system
+│   │   └── state_manager.py       # State persistence management
+│   ├── turtle_trading.py          # Main orchestrator
+│   ├── turtle_manual.py           # Script for manually triggering workflows
+│   ├── turtle_scheduler.py        # Scheduler for automated trading
+│   ├── ticker_universe.txt        # Ticker list for long-only system
+│   └── trading_state.json         # State file for long-only system
+├── system_long_short/             # Long and short modular trading system
+│   ├── core/                      # Core modules (long/short variants)
+│   │   ├── data_provider.py       # Market data fetching
+│   │   ├── indicators.py          # ATR and Donchian channels
+│   │   ├── signal_generator.py    # Long/short entry/exit signals
+│   │   ├── position_manager.py    # Position and pyramid management
+│   │   └── order_manager.py       # Order execution (long/short)
+│   ├── utils/                     # Utility modules
+│   │   ├── decorators.py          # Retry logic
+│   │   ├── logger.py              # Daily logging
+│   │   ├── notifier.py            # Slack notifications
+│   │   └── state_manager.py       # State persistence
+│   ├── turtle_trading_ls.py       # Main orchestrator
+│   ├── turtle_manual_ls.py        # Manual control script
+│   ├── turtle_scheduler_ls.py     # Scheduler with git integration
+│   ├── ticker_universe.txt        # Ticker list for long-short system
+│   ├── trading_state_ls.json      # State file for long-short system
+│   ├── htb_exclusions.txt         # Hard-to-borrow exclusion list
+│   └── README.md                  # Detailed documentation
+├── tests/                          # Comprehensive unit tests
+│   ├── test_system_long/          # Tests for system_long
+│   │   ├── test_core/             # Tests for core trading modules
+│   │   └── test_utils/            # Tests for utility modules
+│   ├── test_system_long_short/    # Tests for system_long_short
+│   └── run_tests.py               # Test runner
+├── graveyard/                     # Old or unused scripts
+├── requirements.txt               # Python dependencies
+└── README.md                      # This file
 ```
 
 **Important**: Each system (`system_long` and `system_long_short`) has its own:
@@ -119,92 +132,119 @@ The system has been refactored into a modular architecture with clear separation
 - **PositionManager**: Manages positions, pyramids, and risk calculations for both long/short
 - **OrderManager**: Executes and tracks orders with error handling for both sides
 
-### Utility Modules (`system_long/utils/`)
+### Utility Modules (`system_long/utils/` and `system_long_short/utils/`)
 - **DailyLogger**: Logs trading activities, orders, and state snapshots
 - **SlackNotifier**: Sends real-time notifications to Slack
 - **StateManager**: Persists and loads trading state
 - **Decorators**: Retry logic for API calls
 
 ### Main Orchestrator
-- **TurtleTrading**: Coordinates all components to execute the strategy
+- **TurtleTrading** (`system_long`): Coordinates all components for long-only trading
+- **TurtleTradingLS** (`system_long_short`): Coordinates all components for long-short trading
 
 This architecture makes the system easier to test, maintain, and extend.
 
 ## Setup
 
-1.  **Install Dependencies**:
-    ```bash
-    pip install pandas numpy alpaca-py requests schedule matplotlib
-    ```
+1. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   
+   Or install manually:
+   ```bash
+   pip install alpaca-py pandas numpy requests schedule matplotlib slack-sdk tqdm
+   ```
 
-2.  **Configure API Keys**:
+2. **Configure API Keys**:
 
-    ```bash
-    export ALPACA_PAPER_KEY="your_key"
-    export ALPACA_PAPER_SECRET="your_secret"
-    export PERSONAL_SLACK_TOKEN="xoxb-token"
-    ```
+   For **long-only system**:
+   ```bash
+   export ALPACA_PAPER_KEY="your_key"
+   export ALPACA_PAPER_SECRET="your_secret"
+   export PERSONAL_SLACK_TOKEN="xoxb-token"
+   ```
 
-3.  **Define Ticker Universe**:
-    Create a `ticker_universe.txt` file in the root directory with one ticker symbol per line. If this file is not found, a default list of tickers will be used.
+   For **long-short system**:
+   ```bash
+   export ALPACA_PAPER_LS_KEY="your_key"
+   export ALPACA_PAPER_LS_SECRET="your_secret"
+   export PERSONAL_SLACK_TOKEN="xoxb-token"
+   ```
 
-4.  **Download Historical Data**:
-    Run the data gathering script to download the necessary historical data for your tickers.
-    ```bash
-    python data_gathering/get_historical_stock_price_data_from_alpaca_API.py
-    ```
+3. **Define Ticker Universe**:
+   Create a `ticker_universe.txt` file in the respective system directory (`system_long/` or `system_long_short/`) with one ticker symbol per line. If this file is not found, a default list of tickers will be used.
+
+4. **Download Historical Data** (for backtesting):
+   Run the data gathering script to download the necessary historical data for your tickers.
+   ```bash
+   python data_gathering/get_historical_stock_price_data_from_alpaca_API.py
+   ```
 
 ## Usage
 
 ### Automated Trading (Recommended)
 
-The `turtle_scheduler.py` script automates all the trading workflows. It runs on a schedule during market days.
+The scheduler scripts automate all the trading workflows. They run on a schedule during market days.
 
 ```bash
 # Long-only system
-python system_long/turtle_scheduler.py
+python -m system_long.turtle_scheduler
 
-# Long-short system
-python system_long_short/turtle_scheduler_ls.py
+# Long-short system (includes git integration)
+python -m system_long_short.turtle_scheduler_ls
 ```
 
 The scheduler will perform the following actions at the specified times (in PT):
-- **5:00 AM**: End-of-day analysis to prepare for the next trading day.
-- **6:25 AM**: Market open setup.
-- **6:30 AM - 1:00 PM**: Intraday monitoring (every 5 minutes).
-- **1:15 PM**: Post-market routine.
+- **5:00 AM**: End-of-day analysis to prepare for the next trading day
+- **6:25 AM**: Market open setup (includes git fetch for long-short system)
+- **6:30 AM - 1:00 PM**: Intraday monitoring (every 5 minutes)
+- **1:15 PM**: Post-market routine (includes git push for long-short system)
 
 ### Manual Trading
 
-You can manually trigger the trading workflows using the `turtle_manual.py` script. This is useful for testing and debugging.
+You can manually trigger the trading workflows using the manual scripts. This is useful for testing and debugging.
 
+**Long-only system**:
 ```bash
-# Long-only system
 # Run end-of-day analysis
-python system_long/turtle_manual.py eod
+python -m system_long.turtle_manual eod
 
 # Run market open setup
-python system_long/turtle_manual.py open
+python -m system_long.turtle_manual open
 
 # Run a single intraday monitor cycle
-python system_long/turtle_manual.py monitor
+python -m system_long.turtle_manual monitor
 
 # Run the post-market routine
-python system_long/turtle_manual.py close
+python -m system_long.turtle_manual close
 
 # Check the current system status
-python system_long/turtle_manual.py status
+python -m system_long.turtle_manual status
 
 # Align the local state with the broker's state (dry run)
-python system_long/turtle_manual.py align
+python -m system_long.turtle_manual align
 
 # Align the local state with the broker's state (apply changes)
-python system_long/turtle_manual.py align --apply
-
-# Long-short system
-# See system_long_short/README.md for usage
-python system_long_short/turtle_manual_ls.py
+python -m system_long.turtle_manual align --apply
 ```
+
+**Long-short system**:
+```bash
+# Interactive menu with all options
+python -m system_long_short.turtle_manual_ls
+```
+
+Available commands:
+1. Daily EOD Analysis
+2. Market Open Setup
+3. Intraday Monitor (single run)
+4. Post-Market Routine
+5. Check Long Position Stops
+6. Check Short Position Stops
+7. Check Exit Signals
+8. Process Entry Queue
+9. Emergency Exit All Positions
 
 ### Backtesting
 
@@ -219,10 +259,16 @@ python backtesting/turtle_long_short_dual_system_backtester.py
 **Single System Backtesters**:
 ```bash
 # Long-short with System 2 only (55-20)
-python backtesting/turtle_long_short_55_20_backtester.py
+python backtesting/turtle_long_short_backtester.py
 
 # Long-only original
-python backtesting/backtesting.py
+python backtesting/turtle_backtester.py
+```
+
+**Strategy Comparison**:
+```bash
+# Compare different strategy approaches
+python backtesting/analyze_strategy_differences.py
 ```
 
 **Prerequisites**:
@@ -230,11 +276,11 @@ python backtesting/backtesting.py
 2. Ensure data is in `data/alpaca_daily/` directory
 
 **Output**:
-- Performance metrics (total return, win rate, avg win/loss, etc.)
+- Performance metrics (total return, win rate, avg win/loss, Sharpe ratio, etc.)
 - Equity curves showing portfolio value over time
 - Position tracking (long units, short units, net exposure)
 - Trade-by-trade breakdown by system
-- Plots saved to `backtesting/turtle_*_plots/` directories
+- Plots saved to `backtesting/turtle_*_results/` or `turtle_*_plots/` directories
 
 **Backtesting shows the dual system significantly outperforms single-system approaches** due to complementary entry/exit timing.
 
@@ -263,10 +309,10 @@ python -m unittest tests.test_system_long.test_core.test_position_manager.TestPo
 
 ## Workflows
 
--   **End-of-Day Analysis**: Scans the ticker universe for potential entry signals for the next trading day and generates a prioritized entry queue.
--   **Market Open Setup**: Reports the account status, open positions, and pending entry signals at the start of the trading day.
--   **Intraday Monitor**: This is the main trading loop that runs every 5 minutes during market hours. It checks for stop-loss triggers, exit signals, pyramiding opportunities, and processes the entry queue.
--   **Post-Market Routine**: Calculates the daily P&L, reports the final positions, and saves the trading state for the next day.
+- **End-of-Day Analysis**: Scans the ticker universe for potential entry signals for the next trading day and generates a prioritized entry queue.
+- **Market Open Setup**: Reports the account status, open positions, and pending entry signals at the start of the trading day. For the long-short system, this also includes fetching latest changes from the git repository.
+- **Intraday Monitor**: This is the main trading loop that runs every 5 minutes during market hours. It checks for stop-loss triggers, exit signals, pyramiding opportunities, and processes the entry queue.
+- **Post-Market Routine**: Calculates the daily P&L, reports the final positions, and saves the trading state for the next day. For the long-short system, this also includes committing and pushing log files to the git repository.
 
 ## System Logic
 
@@ -285,40 +331,66 @@ The `system_long_short` implementation uses **both System 1 and System 2** simul
 - No win filter: Always takes entries
 
 **Entry Priority**:
-- System 1 signals are checked first for each ticker
+- System 1 signals are checked first for each ticker (more frequent signals)
 - System 2 signals are checked only if System 1 has no signal
 - Only one position per ticker (first system to trigger gets it)
 
+**Why Dual System is Superior**:
+1. **System 2 holds trends longer** - System 1 exits on 10-day reversal (quick exit), while System 2 exits on 20-day reversal (lets winners run)
+2. **More entry opportunities** - System 2 has no win filter, capturing breakouts that System 1 might miss
+3. **Diversified trade duration** - System 1 provides quick trades with higher turnover, System 2 captures larger trends
+
 ### Pyramiding
 
--   Up to 4 pyramid levels are allowed per position
--   Long positions: Add units when price moves up by 0.5N from the last entry
--   Short positions: Add units when price moves down by 0.5N from the last entry
--   All pyramids use the initial N value for consistency
+- Up to 4 pyramid levels are allowed per position
+- Long positions: Add units when price moves up by 0.5N from the last entry
+- Short positions: Add units when price moves down by 0.5N from the last entry
+- All pyramids use the initial N value for consistency
 
 ### Exit
 
--   **Stop-Loss**: 2N from the last pyramid entry price
+- **Stop-Loss**: 2N from the last pyramid entry price
   - Long: Last entry - 2N
   - Short: Last entry + 2N
--   **Signal Exit**: Based on the position's entry system
+- **Signal Exit**: Based on the position's entry system
   - System 1 positions: Exit on 10-day reversal
   - System 2 positions: Exit on 20-day reversal
--   Each position remembers which system opened it and uses the appropriate exit rules
+- Each position remembers which system opened it and uses the appropriate exit rules
 
 ## Risk Management
 
--   **Risk Pot**: A dynamic risk pot is used to manage the total risk capacity. Each trade allocates a portion of the risk pot.
--   **Position Sizing**: The size of each position is calculated to risk 2% of the current risk pot.
--   **Stop-Loss**: A 2N stop-loss is always maintained for each position, protecting against significant losses.
+- **Risk Pot**: A dynamic risk pot is used to manage the total risk capacity. Each trade allocates a portion of the risk pot.
+- **Position Sizing**: The size of each position is calculated to risk 1% of the current risk pot per unit.
+- **Stop-Loss**: A 2N stop-loss is always maintained for each position, protecting against significant losses.
+- **Max Positions**: Limited to 10 total positions (long + short combined for long-short system)
+
+## Git Integration
+
+The `system_long_short` scheduler includes automatic git integration for version control of logs and trading state:
+
+- **Git Fetch at Market Open** (6:25 AM PT): Automatically fetches the latest changes from the remote repository before market open setup
+- **Git Push at End of Day** (1:15 PM PT): Automatically commits and pushes log files and trading state to the repository after post-market routine
+
+**What gets committed**:
+- All files in the `logs/` directory (daily trading logs, order logs, state snapshots)
+- Trading state files: `system_long/trading_state.json` and `system_long_short/trading_state_ls.json`
+
+**Features**:
+- Non-blocking: Git operations won't crash the scheduler if they fail
+- Selective commits: Only log files and trading state are committed, not all changes
+- Informative output: Status messages for each git operation
+- Automatic commit messages with timestamps
+
+**Note**: Ensure git credentials are configured (SSH keys or credential helper) so push operations can run without prompts.
 
 ## Slack Notifications
 
 The system sends real-time notifications to a Slack channel for various events:
 
--   **Entry/Exit Orders**: Alerts for placed, filled, or failed orders.
--   **Daily Summaries**: A summary of the daily P&L, open positions, and account status.
--   **System Status**: Notifications for system startup, shutdown, and errors.
+- **Entry/Exit Orders**: Alerts for placed, filled, or failed orders
+- **Daily Summaries**: A summary of the daily P&L, open positions, and account status
+- **System Status**: Notifications for system startup, shutdown, and errors
+- **Position Updates**: Alerts for pyramiding, stop-loss triggers, and exit signals
 
 ## Disclaimer
 
