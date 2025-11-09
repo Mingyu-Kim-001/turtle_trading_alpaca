@@ -30,7 +30,7 @@ from system_long.core.indicators import IndicatorCalculator
 
 
 class TurtleDualSystemBacktester:
-  def __init__(self, initial_equity=10_000, risk_per_unit_pct=0.01, max_positions=10,
+  def __init__(self, initial_equity=10_000, risk_per_unit_pct=0.005, max_positions=100,
                enable_shorts=True, check_shortability=False, shortable_tickers=None,
                enable_logging=True):
     """
@@ -73,8 +73,77 @@ class TurtleDualSystemBacktester:
     self.short_unit_history = []
     self.net_unit_history = []
 
-  def _log_daily_report(self, date, equity, pnl, trades_this_day):
+  def _log_daily_report(self, date, equity, pnl, trades_this_day, processed_data, yesterday_date):
       """Logs a daily summary of state, P&L, and trades to a JSONL file."""
+      # Build open positions with daily PnL and close price for each ticker
+      long_positions_dict = {}
+      for ticker, pos in self.long_positions.items():
+          position_info = {
+              "entry_date": pos['entry_date'].strftime('%Y-%m-%d'),
+              "entry_price": round(pos['entry_price'], 2),
+              "entry_n": round(pos['n_value'], 2),
+              "pyramiding": pos['pyramid_count'],
+              "system": pos['system'],
+              "units": round(pos['units'], 4)
+          }
+          # Get close price and calculate daily PnL
+          if ticker in processed_data and date in processed_data[ticker].index:
+              current_close = processed_data[ticker].loc[date]['close']
+              position_info["close_price"] = round(current_close, 2)
+              
+              # Calculate daily PnL
+              # If position was opened today, calculate from entry price to current close
+              if pos['entry_date'] == date:
+                  daily_pnl = (current_close - pos['entry_price']) * pos['units']
+                  position_info["daily_pnl"] = round(daily_pnl, 2)
+              elif yesterday_date in processed_data[ticker].index:
+                  # Position opened before today, calculate from previous close to current close
+                  previous_close = processed_data[ticker].loc[yesterday_date]['close']
+                  daily_pnl = (current_close - previous_close) * pos['units']
+                  position_info["daily_pnl"] = round(daily_pnl, 2)
+              else:
+                  # No previous data available
+                  position_info["daily_pnl"] = 0.0
+          else:
+              position_info["close_price"] = None
+              position_info["daily_pnl"] = 0.0
+          
+          long_positions_dict[ticker] = position_info
+      
+      short_positions_dict = {}
+      for ticker, pos in self.short_positions.items():
+          position_info = {
+              "entry_date": pos['entry_date'].strftime('%Y-%m-%d'),
+              "entry_price": round(pos['entry_price'], 2),
+              "entry_n": round(pos['n_value'], 2),
+              "pyramiding": pos['pyramid_count'],
+              "system": pos['system'],
+              "units": round(pos['units'], 4)
+          }
+          # Get close price and calculate daily PnL
+          if ticker in processed_data and date in processed_data[ticker].index:
+              current_close = processed_data[ticker].loc[date]['close']
+              position_info["close_price"] = round(current_close, 2)
+              
+              # Calculate daily PnL for shorts
+              # If position was opened today, calculate from entry price to current close
+              if pos['entry_date'] == date:
+                  daily_pnl = (pos['entry_price'] - current_close) * pos['units']
+                  position_info["daily_pnl"] = round(daily_pnl, 2)
+              elif yesterday_date in processed_data[ticker].index:
+                  # Position opened before today, calculate from previous close to current close
+                  previous_close = processed_data[ticker].loc[yesterday_date]['close']
+                  daily_pnl = (previous_close - current_close) * pos['units']
+                  position_info["daily_pnl"] = round(daily_pnl, 2)
+              else:
+                  # No previous data available
+                  position_info["daily_pnl"] = 0.0
+          else:
+              position_info["close_price"] = None
+              position_info["daily_pnl"] = 0.0
+          
+          short_positions_dict[ticker] = position_info
+      
       log_entry = {
           "date": date.strftime('%Y-%m-%d'),
           "equity": round(equity, 2),
@@ -82,20 +151,8 @@ class TurtleDualSystemBacktester:
           "daily_pnl": round(pnl, 2),
           "trades_today": trades_this_day,
           "open_positions": {
-              "long": {ticker: {
-                  "entry_price": round(pos['entry_price'], 2),
-                  "entry_n": round(pos['n_value'], 2),
-                  "pyramiding": pos['pyramid_count'],
-                  "system": pos['system'],
-                  "units": round(pos['units'], 4)
-              } for ticker, pos in self.long_positions.items()},
-              "short": {ticker: {
-                  "entry_price": round(pos['entry_price'], 2),
-                  "entry_n": round(pos['n_value'], 2),
-                  "pyramiding": pos['pyramid_count'],
-                  "system": pos['system'],
-                  "units": round(pos['units'], 4)
-              } for ticker, pos in self.short_positions.items()}
+              "long": long_positions_dict,
+              "short": short_positions_dict
           }
       }
 
@@ -223,7 +280,7 @@ class TurtleDualSystemBacktester:
       self.short_unit_history.append((today_date, short_units))
       self.net_unit_history.append((today_date, long_units - short_units))
 
-      self._log_daily_report(today_date, current_total_equity, daily_pnl, trades_today)
+      self._log_daily_report(today_date, current_total_equity, daily_pnl, trades_today, processed_data, yesterday_date)
 
     final_equity = self._calculate_total_equity(processed_data, all_dates[-1])
     return (final_equity, self.trades, self.cash,
@@ -839,7 +896,7 @@ if __name__ == "__main__":
   backtester = TurtleDualSystemBacktester(
     initial_equity=10_000,
     risk_per_unit_pct=0.005,
-    max_positions=10,
+    max_positions=100,
     enable_shorts=ENABLE_SHORTS,
     check_shortability=CHECK_SHORTABILITY,
     shortable_tickers=shortable_tickers,
