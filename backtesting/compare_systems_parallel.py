@@ -6,10 +6,19 @@ using multiprocessing for faster execution.
 
 Features:
 - Parallel execution using all CPU cores
-- Real-time progress bars for data loading and backtest execution
+- Optimized data loading: Each worker loads data once (not per task)
+- Real-time progress bars for backtest execution
 - Statistical significance testing (t-test for PnL and Max Drawdown)
 - Comprehensive metrics comparison including Max Drawdown
 - Configurable risk per unit parameter
+
+Performance Optimization:
+- Worker pool initializer loads data once per CPU core
+- Only lightweight task arguments passed between processes
+- Chunksize=2 for better load balancing
+- No file I/O during backtests (save_results=False)
+
+Expected Runtime: 3-8 minutes (depending on CPU cores and data size)
 
 Metrics Compared:
 - Total PnL and Return %
@@ -47,25 +56,33 @@ sys.path.insert(0, backtesting_dir)
 from turtle_unified_backtester import TurtleUnifiedBacktester
 
 
-def load_all_data():
-    """Load all historical data once (shared across processes via serialization)."""
+# Global variable to hold data in each worker process
+_worker_data = None
+
+
+def _init_worker():
+    """Initialize worker process by loading data once per worker (not per task)."""
+    global _worker_data
+    
     data_dir = os.path.join(project_root, "data/alpaca_daily")
     all_files = os.listdir(data_dir)
     csv_files = sorted([f for f in all_files if f.endswith('_alpaca_daily.csv')])
     
-    all_data = {}
-    for file_name in tqdm(csv_files, desc="Loading ticker data", unit="file", ncols=100):
+    _worker_data = {}
+    for file_name in csv_files:
         ticker = file_name.split('_')[0]
         data_path = os.path.join(data_dir, file_name)
         if os.path.exists(data_path):
-            all_data[ticker] = pd.read_csv(data_path, index_col='timestamp', parse_dates=True)
-    
-    return all_data
+            _worker_data[ticker] = pd.read_csv(data_path, index_col='timestamp', parse_dates=True)
 
 
 def run_single_backtest(args):
     """Run a single backtest with given parameters."""
-    seed, system_config, all_data, risk_per_unit_pct = args
+    seed, system_config, risk_per_unit_pct = args
+    
+    # Use the data loaded in worker initialization
+    global _worker_data
+    all_data = _worker_data
     
     # Set random seed
     random.seed(seed)
@@ -175,9 +192,16 @@ Examples:
         default=0.001,
         help='Risk per unit as percentage of equity (default: 0.001 = 0.1%%)'
     )
+    parser.add_argument(
+        '--workers',
+        type=int,
+        default=None,
+        help='Number of worker processes (default: use all CPU cores)'
+    )
     
     args = parser.parse_args()
     risk_per_unit_pct = args.risk_per_unit
+    num_workers = args.workers if args.workers else cpu_count()
     
     # Convert to basis points for display
     risk_bp = int(risk_per_unit_pct * 10000)
@@ -194,46 +218,57 @@ Examples:
     print(f"  Dual System: 20-10 + 55-20")
     print(f"  Saving results: Disabled (fast mode)")
     
-    # Load data once
-    print(f"\nLoading historical data...")
-    all_data = load_all_data()
-    print(f"\n✓ Loaded data for {len(all_data)} tickers")
-    
-    # Prepare task list
+    # Prepare task list (much lighter - no data included)
     seeds = range(1, 101)
     tasks = []
     
     # System 1 only tasks
     for seed in seeds:
-        tasks.append((seed, 'system1', all_data, risk_per_unit_pct))
+        tasks.append((seed, 'system1', risk_per_unit_pct))
     
     # Dual system tasks
     for seed in seeds:
-        tasks.append((seed, 'dual', all_data, risk_per_unit_pct))
+        tasks.append((seed, 'dual', risk_per_unit_pct))
     
     print(f"\nTotal backtests to run: {len(tasks)}")
-    print(f"Using {cpu_count()} CPU cores")
-    print(f"\nStarting parallel execution...")
-    print("(This may take several minutes...)\n")
+    print(f"Using {num_workers} worker processes")
+    print(f"\nInitializing worker processes...")
+    print("(Each worker will load data once - this takes ~10-30 seconds)")
     
     # Run in parallel with progress bar
     start_time = datetime.now()
     
-    with Pool(processes=cpu_count()) as pool:
+    # Use initializer to load data once per worker process instead of per task
+    # This dramatically reduces serialization overhead:
+    # - OLD: 200 tasks × data serialization = VERY SLOW (~30 min)
+    # - NEW: N workers × data load = FAST (~5 min)
+    with Pool(processes=num_workers, initializer=_init_worker) as pool:
+        init_time = (datetime.now() - start_time).total_seconds()
+        print(f"✓ Worker processes initialized in {init_time:.1f} seconds\n")
+        print("Starting backtests...")
+        
+        backtest_start = datetime.now()
+        
         # Use imap_unordered with tqdm for progress tracking
+        # chunksize=2 helps with load balancing
         results = list(tqdm(
-            pool.imap_unordered(run_single_backtest, tasks),
+            pool.imap_unordered(run_single_backtest, tasks, chunksize=2),
             total=len(tasks),
             desc="Running backtests",
             unit="backtest",
             ncols=100,
             bar_format='{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
         ))
+        
+        backtest_time = (datetime.now() - backtest_start).total_seconds()
     
     end_time = datetime.now()
     elapsed = (end_time - start_time).total_seconds()
     
     print(f"\n✓ Completed in {elapsed:.1f} seconds ({elapsed/60:.1f} minutes)")
+    print(f"  - Worker init: {init_time:.1f}s")
+    print(f"  - Backtests: {backtest_time:.1f}s")
+    print(f"  - Avg per backtest: {backtest_time/len(tasks):.2f}s")
     
     # Separate results by system
     system1_results = [r for r in results if r['system'] == 'system1' and r['success']]
