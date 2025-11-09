@@ -647,7 +647,21 @@ class TurtleTrading:
 
     self.logger.log_state_snapshot(self.state, 'market_close')
 
-    account = self.trading_client.get_account()
+    # Get account info with retry logic
+    account = None
+    max_retries = 3
+    for attempt in range(max_retries):
+      try:
+        account = self.trading_client.get_account()
+        break
+      except (ConnectionResetError, ConnectionError, Exception) as e:
+        self.logger.log(f"Connection error getting account info (attempt {attempt + 1}/{max_retries}): {e}", 'WARNING')
+        if attempt < max_retries - 1:
+          time.sleep(2 * (attempt + 1))  # Exponential backoff
+        else:
+          self.logger.log(f"Failed to get account info after {max_retries} attempts", 'ERROR')
+          # Use cached equity value as fallback
+          account = None
 
     daily_orders = self.logger.get_daily_orders()
     orders_placed = len([o for o in daily_orders if o['status'] == 'PLACED'])
@@ -655,8 +669,8 @@ class TurtleTrading:
 
     summary = {
       "Daily P&L": f"${self.daily_pnl:,.2f}",
-      "Equity": f"${float(account.equity):,.2f}",
-      "Cash": f"${float(account.cash):,.2f}",
+      "Equity": f"${float(account.equity):,.2f}" if account else "N/A",
+      "Cash": f"${float(account.cash):,.2f}" if account else "N/A",
       "Open Positions": len(self.state.positions),
       "Orders Placed": orders_placed,
       "Orders Filled": orders_filled

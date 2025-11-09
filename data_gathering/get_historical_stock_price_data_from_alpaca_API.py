@@ -1,5 +1,6 @@
 # %%
 # get historical stock price data from Alpaca API
+import os
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
@@ -36,19 +37,15 @@ def get_historical_daily_stock_price_data_from_Alpaca_API(ticker, start_date, en
 
 
     
-    # Read API keys from JSON file
-    with open('.config/alpaca_api_keys.json', 'r') as file:
-        api_keys = json.load(file)
-    
-    if 'ALPACA_PAPER_KEY' in api_keys:
-        api_key = api_keys['ALPACA_PAPER_KEY']
-    else:
-        raise ValueError("ALPACA_PAPER_KEY is missing or empty")
+    # Read API keys from environment variables
+    api_key = os.environ.get('ALPACA_PAPER_KEY')
+    api_secret = os.environ.get('ALPACA_PAPER_SECRET')
 
-    if 'ALPACA_PAPER_SECRET' in api_keys:
-        api_secret = api_keys['ALPACA_PAPER_SECRET']
-    else:
-        raise ValueError("ALPACA_PAPER_SECRET is missing or empty")
+    if not api_key:
+        raise ValueError("ALPACA_PAPER_KEY environment variable is missing or empty")
+
+    if not api_secret:
+        raise ValueError("ALPACA_PAPER_SECRET environment variable is missing or empty")
 
     headers = {
         'APCA-API-KEY-ID': api_key,
@@ -123,12 +120,12 @@ def get_sp500_tickers() -> List[str]:
 # %%
 snp500_tickers = get_sp500_tickers()
 for ticker in tqdm(snp500_tickers):
-    df = get_historical_daily_stock_price_data_from_Alpaca_API(ticker, '2016-01-01', '2025-09-28')
+    df = get_historical_daily_stock_price_data_from_Alpaca_API(ticker, '2016-01-01', '2025-11-06')
     df.to_csv(f'data/alpaca_daily/{ticker}_alpaca_daily.csv')
 # %%
 etfs = ['IAU', 'SLV', 'USO', 'XLE', 'VDE', 'SCO', 'CPER', 'PDBC', 'BND', 'AGG', 'HYG', 'TIP', 'FXE', 'FXY', 'UUP', 'VNQ', 'DBMF']
 for etf in tqdm(etfs):
-    df = get_historical_daily_stock_price_data_from_Alpaca_API(etf, '2016-01-01', '2025-09-28')
+    df = get_historical_daily_stock_price_data_from_Alpaca_API(etf, '2016-01-01', '2025-11-06')
     df.to_csv(f'data/alpaca_daily/{etf}_alpaca_daily.csv')
 # %%
 # one-time

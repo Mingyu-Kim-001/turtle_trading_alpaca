@@ -7,12 +7,19 @@ This backtester implements BOTH Turtle Trading systems simultaneously:
 - Pyramiding up to 4 units for both longs and shorts
 - Position sizing based on risk per unit (1% of equity per unit by default)
 - Each position tracks which system it belongs to for proper exit signals
+
+Entry Priority:
+1. Pyramiding existing positions (highest priority)
+2. System 2 (55-20) new entries
+3. System 1 (20-10) new entries with random selection for variety across runs
 """
 
 import pandas as pd
 import numpy as np
 import sys
 import os
+import json
+import random
 from typing import Dict, List, Tuple, Optional
 
 # Add the project root to the Python path
@@ -47,6 +54,13 @@ class TurtleDualSystemBacktester:
     self.shortable_tickers = shortable_tickers or set()
     self.enable_logging = enable_logging
 
+    # Create result directory and set up log file
+    self.result_dir = os.path.join(os.path.dirname(__file__), 'turtle_dual_system_results')
+    os.makedirs(self.result_dir, exist_ok=True)
+    self.daily_log_file = os.path.join(self.result_dir, 'daily_backtest_log_dual_system.jsonl')
+    if os.path.exists(self.daily_log_file):
+        os.remove(self.daily_log_file)
+
     self.long_positions = {}
     self.short_positions = {}
     self.trades = []
@@ -58,6 +72,43 @@ class TurtleDualSystemBacktester:
     self.long_unit_history = []
     self.short_unit_history = []
     self.net_unit_history = []
+
+  def _log_daily_report(self, date, equity, pnl, trades_this_day):
+      """Logs a daily summary of state, P&L, and trades to a JSONL file."""
+      log_entry = {
+          "date": date.strftime('%Y-%m-%d'),
+          "equity": round(equity, 2),
+          "cash": round(self.cash, 2),
+          "daily_pnl": round(pnl, 2),
+          "trades_today": trades_this_day,
+          "open_positions": {
+              "long": {ticker: {
+                  "entry_price": round(pos['entry_price'], 2),
+                  "entry_n": round(pos['n_value'], 2),
+                  "pyramiding": pos['pyramid_count'],
+                  "system": pos['system'],
+                  "units": round(pos['units'], 4)
+              } for ticker, pos in self.long_positions.items()},
+              "short": {ticker: {
+                  "entry_price": round(pos['entry_price'], 2),
+                  "entry_n": round(pos['n_value'], 2),
+                  "pyramiding": pos['pyramid_count'],
+                  "system": pos['system'],
+                  "units": round(pos['units'], 4)
+              } for ticker, pos in self.short_positions.items()}
+          }
+      }
+
+      class CustomEncoder(json.JSONEncoder):
+          def default(self, obj):
+              if isinstance(obj, (np.integer, np.floating, np.bool_)):
+                  return obj.item()
+              if isinstance(obj, pd.Timestamp):
+                  return obj.strftime('%Y-%m-%d')
+              return super().default(obj)
+
+      with open(self.daily_log_file, 'a') as f:
+          f.write(json.dumps(log_entry, cls=CustomEncoder) + '\n')
 
   def _calculate_indicators(self, df):
     """Calculate all necessary indicators."""
@@ -89,7 +140,11 @@ class TurtleDualSystemBacktester:
     Calculate total equity (cash + value of all positions).
 
     Long positions: market_value = units * current_price
-    Short positions: P&L is already reflected in cash, so just count unrealized P&L
+    Short positions: margin_held + unrealized P&L
+
+    Note: For shorts, margin was deducted from cash when opening the position.
+    We need to add it back when calculating equity since it's still our money,
+    just held as collateral.
     """
     market_value = 0
 
@@ -99,13 +154,15 @@ class TurtleDualSystemBacktester:
         current_price = processed_data[ticker].loc[date]['close']
         market_value += position['units'] * current_price
 
-    # Unrealized P&L from short positions
+    # Short positions: margin held + unrealized P&L
     for ticker, position in self.short_positions.items():
       if date in processed_data[ticker].index:
         current_price = processed_data[ticker].loc[date]['close']
         # Short unrealized P&L = units * (entry_price - current_price)
         unrealized_pnl = position['units'] * (position['entry_price'] - current_price)
-        market_value += unrealized_pnl
+        # Margin held as collateral (50% of position value at entry)
+        margin_held = (position['units'] * position['entry_price']) * 0.5
+        market_value += unrealized_pnl + margin_held
 
     return self.cash + market_value
 
@@ -134,19 +191,24 @@ class TurtleDualSystemBacktester:
       today_date = all_dates[i]
       yesterday_date = all_dates[i-1]
 
-      total_equity = self._calculate_total_equity(processed_data, yesterday_date)
+      total_equity_yesterday = self._calculate_total_equity(processed_data, yesterday_date)
+      trades_today = []
 
       # 1. Process exits first to free up cash
-      self._process_exits(processed_data, today_date, yesterday_date)
+      exit_trades = self._process_exits(processed_data, today_date, yesterday_date)
+      trades_today.extend(exit_trades)
 
       # 2. Process pyramiding opportunities
-      self._process_pyramiding(processed_data, today_date, yesterday_date, total_equity)
+      pyramid_trades = self._process_pyramiding(processed_data, today_date, yesterday_date, total_equity_yesterday)
+      trades_today.extend(pyramid_trades)
 
       # 3. Process new entries (both long and short, both systems)
-      self._process_entries(processed_data, today_date, yesterday_date, total_equity)
+      entry_trades = self._process_entries(processed_data, today_date, yesterday_date, total_equity_yesterday)
+      trades_today.extend(entry_trades)
 
       # Track history
       current_total_equity = self._calculate_total_equity(processed_data, today_date)
+      daily_pnl = current_total_equity - total_equity_yesterday
 
       # Ensure cash never goes negative
       if self.cash < 0:
@@ -161,6 +223,8 @@ class TurtleDualSystemBacktester:
       self.short_unit_history.append((today_date, short_units))
       self.net_unit_history.append((today_date, long_units - short_units))
 
+      self._log_daily_report(today_date, current_total_equity, daily_pnl, trades_today)
+
     final_equity = self._calculate_total_equity(processed_data, all_dates[-1])
     return (final_equity, self.trades, self.cash,
             self.cash_history, self.equity_history,
@@ -168,6 +232,7 @@ class TurtleDualSystemBacktester:
 
   def _process_exits(self, processed_data, today_date, yesterday_date):
     """Process exits for both long and short positions, respecting their system."""
+    exit_trades = []
 
     # Exit long positions
     for ticker in list(self.long_positions.keys()):
@@ -204,7 +269,9 @@ class TurtleDualSystemBacktester:
             exit_reason = '20-day low (S2)'
 
       if exit_signal:
-        self._close_long_position(ticker, exit_price, today_date, exit_reason)
+        trade = self._close_long_position(ticker, exit_price, today_date, exit_reason)
+        if trade:
+            exit_trades.append(trade)
 
     # Exit short positions
     for ticker in list(self.short_positions.keys()):
@@ -241,10 +308,15 @@ class TurtleDualSystemBacktester:
             exit_reason = '20-day high (S2)'
 
       if exit_signal:
-        self._close_short_position(ticker, exit_price, today_date, exit_reason)
+        trade = self._close_short_position(ticker, exit_price, today_date, exit_reason)
+        if trade:
+            exit_trades.append(trade)
+    
+    return exit_trades
 
   def _process_pyramiding(self, processed_data, today_date, yesterday_date, total_equity):
     """Process pyramiding opportunities for both longs and shorts."""
+    pyramid_trades = []
 
     # Pyramid long positions (on upward moves)
     for ticker in list(self.long_positions.keys()):
@@ -252,7 +324,9 @@ class TurtleDualSystemBacktester:
       if today_date not in df.index:
         continue
       today = df.loc[today_date]
-      self._check_long_pyramiding(ticker, today, total_equity)
+      trade = self._check_long_pyramiding(ticker, today, total_equity)
+      if trade:
+          pyramid_trades.append(trade)
 
     # Pyramid short positions (on downward moves)
     for ticker in list(self.short_positions.keys()):
@@ -260,10 +334,23 @@ class TurtleDualSystemBacktester:
       if today_date not in df.index:
         continue
       today = df.loc[today_date]
-      self._check_short_pyramiding(ticker, today, total_equity)
+      trade = self._check_short_pyramiding(ticker, today, total_equity)
+      if trade:
+          pyramid_trades.append(trade)
+    
+    return pyramid_trades
 
   def _process_entries(self, processed_data, today_date, yesterday_date, total_equity):
-    """Process new entry signals for both systems (20-10 and 55-20)."""
+    """
+    Process new entry signals with priority:
+    1. System 2 (55-20) entries first
+    2. System 1 (20-10) entries with random selection
+    """
+    entry_trades = []
+
+    # Collect all System 2 and System 1 candidates
+    system2_candidates = []
+    system1_candidates = []
 
     for ticker, df in processed_data.items():
       if today_date not in df.index or yesterday_date not in df.index:
@@ -273,59 +360,137 @@ class TurtleDualSystemBacktester:
       if ticker in self.long_positions or ticker in self.short_positions:
         continue
 
-      # Skip if at max positions
-      if self._total_position_count() >= self.max_positions:
-        continue
-
       today = df.loc[today_date]
       yesterday = df.loc[yesterday_date]
 
-      # Check System 1 (20-day) entry signals first (more frequent)
-      # Long entry on 20-day high breakout
+      # Check BOTH systems independently, prioritize during execution
+
+      # Check System 2 (55-day) entry signals
+      if today['high'] > yesterday['high_55']:
+        # System 2 long entry
+        system2_candidates.append({
+          'ticker': ticker,
+          'side': 'long',
+          'entry_price': yesterday['high_55'],
+          'n_value': today['N'],
+          'system': 2
+        })
+      elif self._is_shortable(ticker) and today['low'] < yesterday['low_55']:
+        # System 2 short entry
+        system2_candidates.append({
+          'ticker': ticker,
+          'side': 'short',
+          'entry_price': yesterday['low_55'],
+          'n_value': today['N'],
+          'system': 2
+        })
+
+      # Check System 1 (20-day) entry signals independently
       if today['high'] > yesterday['high_20']:
         if not self.last_trade_was_win.get((ticker, 'long', 1), False):
-          entry_price = yesterday['high_20']
-          self._open_long_position(ticker, entry_price, today['N'], total_equity, today_date, system=1)
+          # System 1 long entry candidate
+          system1_candidates.append({
+            'ticker': ticker,
+            'side': 'long',
+            'entry_price': yesterday['high_20'],
+            'n_value': today['N'],
+            'system': 1
+          })
         else:
           # Reset win flag if price breaks below 20-day low
           if today['low'] < yesterday['low_20']:
             self.last_trade_was_win[(ticker, 'long', 1)] = False
 
-      # Short entry on 20-day low breakdown
       elif self._is_shortable(ticker) and today['low'] < yesterday['low_20']:
         if not self.last_trade_was_win.get((ticker, 'short', 1), False):
-          entry_price = yesterday['low_20']
-          self._open_short_position(ticker, entry_price, today['N'], total_equity, today_date, system=1)
+          # System 1 short entry candidate
+          system1_candidates.append({
+            'ticker': ticker,
+            'side': 'short',
+            'entry_price': yesterday['low_20'],
+            'n_value': today['N'],
+            'system': 1
+          })
         else:
           # Reset win flag if price breaks above 20-day high
           if today['high'] > yesterday['high_20']:
             self.last_trade_was_win[(ticker, 'short', 1)] = False
 
-      # Check System 2 (55-day) entry signals
-      # Long entry on 55-day high breakout (only if System 1 didn't trigger)
-      if ticker not in self.long_positions and ticker not in self.short_positions:
-        if today['high'] > yesterday['high_55']:
-          # System 2 always takes entries (no win filter in original Turtle rules)
-          entry_price = yesterday['high_55']
-          self._open_long_position(ticker, entry_price, today['N'], total_equity, today_date, system=2)
+    # Process System 2 entries first
+    for candidate in system2_candidates:
+      if self._total_position_count() >= self.max_positions:
+        break
 
-        # Short entry on 55-day low breakdown
-        elif self._is_shortable(ticker) and today['low'] < yesterday['low_55']:
-          entry_price = yesterday['low_55']
-          self._open_short_position(ticker, entry_price, today['N'], total_equity, today_date, system=2)
+      if candidate['side'] == 'long':
+        trade = self._open_long_position(
+          candidate['ticker'],
+          candidate['entry_price'],
+          candidate['n_value'],
+          total_equity,
+          today_date,
+          system=2
+        )
+      else:  # short
+        trade = self._open_short_position(
+          candidate['ticker'],
+          candidate['entry_price'],
+          candidate['n_value'],
+          total_equity,
+          today_date,
+          system=2
+        )
+
+      if trade:
+        entry_trades.append(trade)
+
+    # Randomize System 1 candidates for variety across runs
+    random.shuffle(system1_candidates)
+
+    # Process System 1 entries after System 2
+    for candidate in system1_candidates:
+      if self._total_position_count() >= self.max_positions:
+        break
+
+      if candidate['side'] == 'long':
+        trade = self._open_long_position(
+          candidate['ticker'],
+          candidate['entry_price'],
+          candidate['n_value'],
+          total_equity,
+          today_date,
+          system=1
+        )
+      else:  # short
+        trade = self._open_short_position(
+          candidate['ticker'],
+          candidate['entry_price'],
+          candidate['n_value'],
+          total_equity,
+          today_date,
+          system=1
+        )
+
+      if trade:
+        entry_trades.append(trade)
+
+    return entry_trades
 
   def _open_long_position(self, ticker, entry_price, n_value, total_equity, today_date, system):
     """Open a new long position."""
+    # Check if ticker already has a position (could happen if both systems signal same day)
+    if ticker in self.long_positions or ticker in self.short_positions:
+      return None
+
     if self.cash <= 0:
-      return
+      return None
 
     unit_size = self._get_unit_size(total_equity, n_value)
     if unit_size == 0:
-      return
+      return None
 
     cost = unit_size * entry_price
     if self.cash < cost:
-      return
+      return None
 
     stop_price = entry_price - 2 * n_value
 
@@ -344,6 +509,16 @@ class TurtleDualSystemBacktester:
     # Safety check
     if self.cash < 0:
       raise ValueError(f"Cash went negative after opening long {ticker}: ${self.cash:.2f}")
+
+    return {
+        'ticker': ticker,
+        'side': 'long',
+        'action': 'entry',
+        'system': system,
+        'price': entry_price,
+        'units': unit_size,
+        'stop_price': stop_price
+    }
 
   def _close_long_position(self, ticker, exit_price, today_date, exit_reason):
     """Close a long position."""
@@ -372,9 +547,10 @@ class TurtleDualSystemBacktester:
       print(f"  P&L:              ${pnl:,.2f} ({pnl_pct:+.2f}%)")
       print(f"{'='*80}")
 
-    self.trades.append({
+    trade = {
       'ticker': ticker,
       'side': 'long',
+      'action': 'exit',
       'system': position['system'],
       'entry_date': position['entry_date'],
       'exit_date': today_date,
@@ -383,20 +559,23 @@ class TurtleDualSystemBacktester:
       'pnl': pnl,
       'pyramid_count': position['pyramid_count'],
       'exit_reason': exit_reason
-    })
+    }
+    self.trades.append(trade)
 
     # Update win tracking for System 1 only
     if position['system'] == 1:
       self.last_trade_was_win[(ticker, 'long', 1)] = pnl > 0
+    
+    return trade
 
   def _check_long_pyramiding(self, ticker, today, total_equity):
     """Check for long pyramiding opportunity (add on upward move)."""
     if self.cash <= 0:
-      return
+      return None
 
     position = self.long_positions[ticker]
     if position['pyramid_count'] >= 4:
-      return
+      return None
 
     # Pyramid trigger: last_entry + 0.5N
     pyramid_price = position['entry_price'] + 0.5 * position['n_value']
@@ -406,7 +585,7 @@ class TurtleDualSystemBacktester:
       if unit_size > 0:
         cost = unit_size * pyramid_price
         if self.cash < cost:
-          return
+          return None
 
         self.cash -= cost
 
@@ -421,20 +600,35 @@ class TurtleDualSystemBacktester:
         position['entry_price'] = (position['entry_price'] * old_units + pyramid_price * unit_size) / new_units
         position['pyramid_count'] += 1
         position['stop_price'] = pyramid_price - 2 * position['n_value']
+        
+        return {
+            'ticker': ticker,
+            'side': 'long',
+            'action': 'pyramid',
+            'price': pyramid_price,
+            'units_added': unit_size,
+            'new_total_units': position['units'],
+            'new_pyramid_count': position['pyramid_count']
+        }
+    return None
 
   def _open_short_position(self, ticker, entry_price, n_value, total_equity, today_date, system):
     """Open a new short position."""
+    # Check if ticker already has a position (could happen if both systems signal same day)
+    if ticker in self.long_positions or ticker in self.short_positions:
+      return None
+
     if self.cash <= 0:
-      return
+      return None
 
     unit_size = self._get_unit_size(total_equity, n_value)
     if unit_size == 0:
-      return
+      return None
 
     # For shorts, we need margin (use 50% of position value as simplified margin requirement)
     margin_required = (unit_size * entry_price) * 0.5
     if self.cash < margin_required:
-      return
+      return None
 
     # Short stop is ABOVE entry (price rises)
     stop_price = entry_price + 2 * n_value
@@ -456,6 +650,16 @@ class TurtleDualSystemBacktester:
     # Safety check
     if self.cash < 0:
       raise ValueError(f"Cash went negative after opening short {ticker}: ${self.cash:.2f}")
+
+    return {
+        'ticker': ticker,
+        'side': 'short',
+        'action': 'entry',
+        'system': system,
+        'price': entry_price,
+        'units': unit_size,
+        'stop_price': stop_price
+    }
 
   def _close_short_position(self, ticker, exit_price, today_date, exit_reason):
     """Close a short position."""
@@ -495,9 +699,10 @@ class TurtleDualSystemBacktester:
       print(f"  P&L:              ${pnl:,.2f} ({pnl_pct:+.2f}%)")
       print(f"{'='*80}")
 
-    self.trades.append({
+    trade = {
       'ticker': ticker,
       'side': 'short',
+      'action': 'exit',
       'system': position['system'],
       'entry_date': position['entry_date'],
       'exit_date': today_date,
@@ -506,20 +711,23 @@ class TurtleDualSystemBacktester:
       'pnl': pnl,
       'pyramid_count': position['pyramid_count'],
       'exit_reason': exit_reason
-    })
+    }
+    self.trades.append(trade)
 
     # Update win tracking for System 1 only
     if position['system'] == 1:
       self.last_trade_was_win[(ticker, 'short', 1)] = pnl > 0
+    
+    return trade
 
   def _check_short_pyramiding(self, ticker, today, total_equity):
     """Check for short pyramiding opportunity (add on downward move)."""
     if self.cash <= 0:
-      return
+      return None
 
     position = self.short_positions[ticker]
     if position['pyramid_count'] >= 4:
-      return
+      return None
 
     # Pyramid trigger for shorts: last_entry - 0.5N (price moves DOWN)
     pyramid_price = position['entry_price'] - 0.5 * position['n_value']
@@ -529,7 +737,7 @@ class TurtleDualSystemBacktester:
       if unit_size > 0:
         margin_required = (unit_size * pyramid_price) * 0.5
         if self.cash < margin_required:
-          return
+          return None
 
         self.cash -= margin_required
 
@@ -545,6 +753,17 @@ class TurtleDualSystemBacktester:
         position['pyramid_count'] += 1
         # Short stop moves UP with entry
         position['stop_price'] = pyramid_price + 2 * position['n_value']
+
+        return {
+            'ticker': ticker,
+            'side': 'short',
+            'action': 'pyramid',
+            'price': pyramid_price,
+            'units_added': unit_size,
+            'new_total_units': position['units'],
+            'new_pyramid_count': position['pyramid_count']
+        }
+    return None
 
 
 def get_shortable_tickers_from_alpaca(api_key, api_secret):
@@ -579,6 +798,13 @@ def get_shortable_tickers_from_alpaca(api_key, api_secret):
 
 if __name__ == "__main__":
   import matplotlib.pyplot as plt
+  import time
+
+  # Set random seed for reproducibility (use timestamp for different results each run)
+  random_seed = int(time.time())
+  random.seed(random_seed)
+  print(f"Random seed for this run: {random_seed}")
+  print(f"(Use this seed to reproduce exact results if needed)\n")
 
   # Configuration
   ENABLE_SHORTS = True
@@ -612,7 +838,7 @@ if __name__ == "__main__":
   # Run backtest
   backtester = TurtleDualSystemBacktester(
     initial_equity=10_000,
-    risk_per_unit_pct=0.01,
+    risk_per_unit_pct=0.005,
     max_positions=10,
     enable_shorts=ENABLE_SHORTS,
     check_shortability=CHECK_SHORTABILITY,
@@ -637,6 +863,8 @@ if __name__ == "__main__":
   print(f"Strategy: Dual System (20-10 + 55-20) Long + Short")
   print(f"System 1: 20-day entry, 10-day exit")
   print(f"System 2: 55-day entry, 20-day exit")
+  print(f"Entry Priority: Pyramiding > System 2 > System 1 (randomized)")
+  print(f"Random Seed: {random_seed}")
   print(f"Initial Equity: ${total_initial_equity:,.2f}")
   print(f"Final Equity:   ${final_equity:,.2f}")
   print(f"Final Cash:     ${final_cash:,.2f}")
@@ -708,11 +936,96 @@ if __name__ == "__main__":
       print(f"  Win Rate: {short_win_rate:.2f}%")
       print(f"  Total P&L: ${short_pnl:,.2f}")
 
+    # Detailed breakdown by system and direction
+    print("\n" + "="*60)
+    print("DETAILED BREAKDOWN BY SYSTEM AND DIRECTION")
+    print("="*60)
+
+    # System 1 Long
+    s1_long = [t for t in all_trades if t['system'] == 1 and t['side'] == 'long']
+    if s1_long:
+      s1_long_wins = [t for t in s1_long if t['pnl'] > 0]
+      s1_long_pnl = sum(t['pnl'] for t in s1_long)
+      s1_long_win_rate = (len(s1_long_wins) / len(s1_long)) * 100
+      s1_long_avg_win = sum(t['pnl'] for t in s1_long_wins) / len(s1_long_wins) if s1_long_wins else 0
+      s1_long_losses = [t for t in s1_long if t['pnl'] <= 0]
+      s1_long_avg_loss = sum(t['pnl'] for t in s1_long_losses) / len(s1_long_losses) if s1_long_losses else 0
+
+      print(f"\nSystem 1 Long (20-10):")
+      print(f"  Total Trades: {len(s1_long)}")
+      print(f"  Wins/Losses: {len(s1_long_wins)}/{len(s1_long_losses)}")
+      print(f"  Win Rate: {s1_long_win_rate:.2f}%")
+      print(f"  Total P&L: ${s1_long_pnl:,.2f}")
+      print(f"  Avg Win: ${s1_long_avg_win:,.2f}")
+      print(f"  Avg Loss: ${s1_long_avg_loss:,.2f}")
+      if s1_long_avg_loss != 0:
+        print(f"  Win/Loss Ratio: {abs(s1_long_avg_win/s1_long_avg_loss):.2f}")
+
+    # System 2 Long
+    s2_long = [t for t in all_trades if t['system'] == 2 and t['side'] == 'long']
+    if s2_long:
+      s2_long_wins = [t for t in s2_long if t['pnl'] > 0]
+      s2_long_pnl = sum(t['pnl'] for t in s2_long)
+      s2_long_win_rate = (len(s2_long_wins) / len(s2_long)) * 100
+      s2_long_avg_win = sum(t['pnl'] for t in s2_long_wins) / len(s2_long_wins) if s2_long_wins else 0
+      s2_long_losses = [t for t in s2_long if t['pnl'] <= 0]
+      s2_long_avg_loss = sum(t['pnl'] for t in s2_long_losses) / len(s2_long_losses) if s2_long_losses else 0
+
+      print(f"\nSystem 2 Long (55-20):")
+      print(f"  Total Trades: {len(s2_long)}")
+      print(f"  Wins/Losses: {len(s2_long_wins)}/{len(s2_long_losses)}")
+      print(f"  Win Rate: {s2_long_win_rate:.2f}%")
+      print(f"  Total P&L: ${s2_long_pnl:,.2f}")
+      print(f"  Avg Win: ${s2_long_avg_win:,.2f}")
+      print(f"  Avg Loss: ${s2_long_avg_loss:,.2f}")
+      if s2_long_avg_loss != 0:
+        print(f"  Win/Loss Ratio: {abs(s2_long_avg_win/s2_long_avg_loss):.2f}")
+
+    # System 1 Short
+    s1_short = [t for t in all_trades if t['system'] == 1 and t['side'] == 'short']
+    if s1_short:
+      s1_short_wins = [t for t in s1_short if t['pnl'] > 0]
+      s1_short_pnl = sum(t['pnl'] for t in s1_short)
+      s1_short_win_rate = (len(s1_short_wins) / len(s1_short)) * 100
+      s1_short_avg_win = sum(t['pnl'] for t in s1_short_wins) / len(s1_short_wins) if s1_short_wins else 0
+      s1_short_losses = [t for t in s1_short if t['pnl'] <= 0]
+      s1_short_avg_loss = sum(t['pnl'] for t in s1_short_losses) / len(s1_short_losses) if s1_short_losses else 0
+
+      print(f"\nSystem 1 Short (20-10):")
+      print(f"  Total Trades: {len(s1_short)}")
+      print(f"  Wins/Losses: {len(s1_short_wins)}/{len(s1_short_losses)}")
+      print(f"  Win Rate: {s1_short_win_rate:.2f}%")
+      print(f"  Total P&L: ${s1_short_pnl:,.2f}")
+      print(f"  Avg Win: ${s1_short_avg_win:,.2f}")
+      print(f"  Avg Loss: ${s1_short_avg_loss:,.2f}")
+      if s1_short_avg_loss != 0:
+        print(f"  Win/Loss Ratio: {abs(s1_short_avg_win/s1_short_avg_loss):.2f}")
+
+    # System 2 Short
+    s2_short = [t for t in all_trades if t['system'] == 2 and t['side'] == 'short']
+    if s2_short:
+      s2_short_wins = [t for t in s2_short if t['pnl'] > 0]
+      s2_short_pnl = sum(t['pnl'] for t in s2_short)
+      s2_short_win_rate = (len(s2_short_wins) / len(s2_short)) * 100
+      s2_short_avg_win = sum(t['pnl'] for t in s2_short_wins) / len(s2_short_wins) if s2_short_wins else 0
+      s2_short_losses = [t for t in s2_short if t['pnl'] <= 0]
+      s2_short_avg_loss = sum(t['pnl'] for t in s2_short_losses) / len(s2_short_losses) if s2_short_losses else 0
+
+      print(f"\nSystem 2 Short (55-20):")
+      print(f"  Total Trades: {len(s2_short)}")
+      print(f"  Wins/Losses: {len(s2_short_wins)}/{len(s2_short_losses)}")
+      print(f"  Win Rate: {s2_short_win_rate:.2f}%")
+      print(f"  Total P&L: ${s2_short_pnl:,.2f}")
+      print(f"  Avg Win: ${s2_short_avg_win:,.2f}")
+      print(f"  Avg Loss: ${s2_short_avg_loss:,.2f}")
+      if s2_short_avg_loss != 0:
+        print(f"  Win/Loss Ratio: {abs(s2_short_avg_win/s2_short_avg_loss):.2f}")
+
     print("-" * 60)
 
   # Generate and save plots
-  plot_dir = os.path.join(project_root, 'backtesting', 'turtle_dual_system_plots')
-  os.makedirs(plot_dir, exist_ok=True)
+  result_dir = os.path.join(project_root, 'backtesting', 'turtle_dual_system_results')
+  os.makedirs(result_dir, exist_ok=True)
 
   if cash_history:
     dates, cash_values = zip(*cash_history)
@@ -739,7 +1052,7 @@ if __name__ == "__main__":
 
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plot_path = os.path.join(plot_dir, 'cash_over_time.png')
+    plot_path = os.path.join(result_dir, 'cash_over_time.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     plt.close()
     print(f"\nCash over time saved to: {plot_path}")
@@ -755,7 +1068,7 @@ if __name__ == "__main__":
     plt.ylabel('Total Equity ($)')
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plot_path = os.path.join(plot_dir, 'equity_over_time.png')
+    plot_path = os.path.join(result_dir, 'equity_over_time.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     print(f"\nEquity curve saved to: {plot_path}")
 
@@ -774,8 +1087,102 @@ if __name__ == "__main__":
     plt.ylabel('Units')
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plot_path = os.path.join(plot_dir, 'units_over_time.png')
+    plot_path = os.path.join(result_dir, 'units_over_time.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     print(f"Units chart saved to: {plot_path}")
+
+  # Generate yearly plots
+  print("\n" + "="*60)
+  print("GENERATING YEARLY PLOTS")
+  print("="*60)
+
+  if cash_history and equity_history:
+    # Group data by year
+    from collections import defaultdict
+    yearly_cash = defaultdict(list)
+    yearly_equity = defaultdict(list)
+    yearly_long_units = defaultdict(list)
+    yearly_short_units = defaultdict(list)
+    yearly_net_units = defaultdict(list)
+
+    for date, cash in cash_history:
+      year = date.year
+      yearly_cash[year].append((date, cash))
+
+    for date, equity in equity_history:
+      year = date.year
+      yearly_equity[year].append((date, equity))
+
+    for date, units in long_unit_history:
+      year = date.year
+      yearly_long_units[year].append((date, units))
+
+    for date, units in short_unit_history:
+      year = date.year
+      yearly_short_units[year].append((date, units))
+
+    for date, units in net_unit_history:
+      year = date.year
+      yearly_net_units[year].append((date, units))
+
+    # Generate plots for each year
+    all_years = sorted(set(yearly_cash.keys()))
+    for year in all_years:
+      year_dir = os.path.join(result_dir, f'year_{year}')
+      os.makedirs(year_dir, exist_ok=True)
+
+      # Cash plot for year
+      if year in yearly_cash:
+        dates, cash_values = zip(*yearly_cash[year])
+        plt.figure(figsize=(14, 7))
+        plt.plot(dates, cash_values, linewidth=2, color='green')
+        plt.axhline(y=total_initial_equity, color='r', linestyle='--', label='Initial Equity', alpha=0.5)
+        plt.axhline(y=0, color='black', linestyle='-', linewidth=1.0, alpha=0.7)
+        plt.title(f'Cash Over Time - {year} (Dual System)', fontsize=14)
+        plt.xlabel('Date')
+        plt.ylabel('Cash ($)')
+        plt.ylim(bottom=0)
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plot_path = os.path.join(year_dir, f'cash_{year}.png')
+        plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+        plt.close()
+
+      # Equity plot for year
+      if year in yearly_equity:
+        dates, equity_values = zip(*yearly_equity[year])
+        plt.figure(figsize=(14, 7))
+        plt.plot(dates, equity_values, linewidth=2)
+        plt.axhline(y=total_initial_equity, color='r', linestyle='--', label='Initial Equity', alpha=0.5)
+        plt.title(f'Total Equity Over Time - {year} (Dual System)', fontsize=14)
+        plt.xlabel('Date')
+        plt.ylabel('Total Equity ($)')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plot_path = os.path.join(year_dir, f'equity_{year}.png')
+        plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+        plt.close()
+
+      # Units plot for year
+      if year in yearly_net_units:
+        dates, net_units = zip(*yearly_net_units[year])
+        _, long_units = zip(*yearly_long_units[year])
+        _, short_units = zip(*yearly_short_units[year])
+
+        plt.figure(figsize=(14, 7))
+        plt.plot(dates, long_units, label='Long Units', color='green', alpha=0.7)
+        plt.plot(dates, short_units, label='Short Units', color='red', alpha=0.7)
+        plt.plot(dates, net_units, label='Net Units (Long - Short)', color='blue', linewidth=2)
+        plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+        plt.title(f'Position Units Over Time - {year} (Dual System)', fontsize=14)
+        plt.xlabel('Date')
+        plt.ylabel('Units')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plot_path = os.path.join(year_dir, f'units_{year}.png')
+        plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+        plt.close()
+
+      print(f"Year {year} plots saved to: {year_dir}")
 
   print("\nBacktest complete!")

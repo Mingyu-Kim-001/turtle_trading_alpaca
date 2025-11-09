@@ -408,6 +408,11 @@ class TurtleTradingLS:
       # Track daily PnL
       self.daily_pnl += pnl
 
+      # Update win tracking for System 1 only
+      if position.get('system') == 1:
+        self.state.last_trade_was_win[(ticker, 'long')] = pnl > 0
+        self.logger.log(f"System 1 long trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
+
       # Remove position
       del self.state.long_positions[ticker]
       self.state.save_state()
@@ -455,6 +460,11 @@ class TurtleTradingLS:
 
       # Track daily PnL
       self.daily_pnl += pnl
+
+      # Update win tracking for System 1 only
+      if position.get('system') == 1:
+        self.state.last_trade_was_win[(ticker, 'short')] = pnl > 0
+        self.logger.log(f"System 1 short trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
 
       # Remove position
       del self.state.short_positions[ticker]
@@ -906,7 +916,8 @@ class TurtleTradingLS:
       self.state.long_positions,
       self.state.short_positions,
       self.enable_shorts,
-      shortable_for_signals
+      shortable_for_signals,
+      last_trade_was_win=self.state.last_trade_was_win
     )
 
     self.state.entry_queue = signals
@@ -1133,7 +1144,8 @@ class TurtleTradingLS:
       self.state.long_positions,
       self.state.short_positions,
       self.enable_shorts,
-      shortable_for_signals
+      shortable_for_signals,
+      last_trade_was_win=self.state.last_trade_was_win
     )
 
     self.state.entry_queue = signals
@@ -1245,7 +1257,21 @@ class TurtleTradingLS:
 
     self.logger.log_state_snapshot(self.state, 'market_close')
 
-    account = self.trading_client.get_account()
+    # Get account info with retry logic
+    account = None
+    max_retries = 3
+    for attempt in range(max_retries):
+      try:
+        account = self.trading_client.get_account()
+        break
+      except (ConnectionResetError, ConnectionError, Exception) as e:
+        self.logger.log(f"Connection error getting account info (attempt {attempt + 1}/{max_retries}): {e}", 'WARNING')
+        if attempt < max_retries - 1:
+          time.sleep(2 * (attempt + 1))  # Exponential backoff
+        else:
+          self.logger.log(f"Failed to get account info after {max_retries} attempts", 'ERROR')
+          # Use cached equity value as fallback
+          account = None
 
     daily_orders = self.logger.get_daily_orders()
     orders_placed = len([o for o in daily_orders if o['status'] == 'PLACED'])
@@ -1253,8 +1279,8 @@ class TurtleTradingLS:
 
     summary = {
       "Daily P&L": f"${self.daily_pnl:,.2f}",
-      "Equity": f"${float(account.equity):,.2f}",
-      "Buying Power": f"${float(account.buying_power):,.2f}",
+      "Equity": f"${float(account.equity):,.2f}" if account else "N/A",
+      "Buying Power": f"${float(account.buying_power):,.2f}" if account else "N/A",
       "Long Positions": len(self.state.long_positions),
       "Short Positions": len(self.state.short_positions),
       "Orders Placed": orders_placed,

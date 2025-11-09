@@ -2100,3 +2100,27 @@
 [2025-11-07 13:19:46] [INFO] POST-MARKET ROUTINE
 [2025-11-07 13:19:46] [INFO] ============================================================
 [2025-11-07 13:19:46] [INFO] State snapshot saved: market_close (pending_pyramids=0, pending_entries=8)
+[2025-11-07 22:25:54] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-07 22:25:54] [INFO] Short selling: enabled
+[2025-11-07 22:25:54] [INFO] Checking for zombie orders...
+[2025-11-07 22:25:55] [INFO] No zombie orders found.
+[2025-11-07 22:25:55] [INFO] ============================================================
+[2025-11-07 22:25:55] [INFO] POST-MARKET ROUTINE
+[2025-11-07 22:25:55] [INFO] ============================================================
+[2025-11-07 22:25:55] [INFO] State snapshot saved: market_close (pending_pyramids=0, pending_entries=8)
+[2025-11-07 22:27:31] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-07 22:27:31] [INFO] Short selling: enabled
+[2025-11-07 22:27:31] [INFO] Checking for zombie orders...
+[2025-11-07 22:27:31] [INFO] No zombie orders found.
+[2025-11-07 22:27:31] [INFO] ============================================================
+[2025-11-07 22:27:31] [INFO] POST-MARKET ROUTINE
+[2025-11-07 22:27:31] [INFO] ============================================================
+[2025-11-07 22:27:31] [INFO] State snapshot saved: market_close (pending_pyramids=0, pending_entries=8)
+[2025-11-07 22:29:40] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-07 22:29:40] [INFO] Short selling: enabled
+[2025-11-07 22:29:40] [INFO] Checking for zombie orders...
+[2025-11-07 22:29:40] [INFO] No zombie orders found.
+[2025-11-07 22:29:40] [INFO] ============================================================
+[2025-11-07 22:29:40] [INFO] POST-MARKET ROUTINE
+[2025-11-07 22:29:40] [INFO] ============================================================
+[2025-11-07 22:29:40] [INFO] State snapshot saved: market_close (pending_pyramids=0, pending_entries=8)

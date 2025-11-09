@@ -73,8 +73,8 @@ class TestIndicatorCalculatorLongShort(unittest.TestCase):
     price_range = self.df['high'].max() - self.df['low'].min()
     self.assertTrue(all(valid_atr < price_range))
 
-  def test_donchian_high_is_maximum(self):
-    """Test that Donchian high is actually the maximum"""
+  def test_donchian_high_excludes_current_day(self):
+    """Test that Donchian high excludes current day (correct Turtle Trading behavior)"""
     # Use deterministic data for this test
     test_df = pd.DataFrame({
       'high': list(range(100, 130)),  # Monotonically increasing
@@ -84,16 +84,18 @@ class TestIndicatorCalculatorLongShort(unittest.TestCase):
 
     df_with_channels = IndicatorCalculator.calculate_donchian_channels(test_df, entry_period=20)
 
-    # The rolling max includes the current row, so at index i,
-    # high_20 should be the max of high[i-19:i+1] (last 20 values including current)
+    # IMPORTANT: high_20 should be the max of PREVIOUS 20 days (excluding current day)
+    # This is achieved with shift(1).rolling(20).max()
     for i in range(20, min(25, len(df_with_channels))):
-      # Since our data is monotonically increasing, high_20 should equal current high
       calculated_high = df_with_channels['high_20'].iloc[i]
-      expected_high = test_df['high'].iloc[i]  # Current high (highest in window)
-      self.assertAlmostEqual(calculated_high, expected_high, places=5)
+      # Expected: max of previous 20 days, which is the value at i-1 for monotonically increasing data
+      expected_high = test_df['high'].iloc[i-1]
+      self.assertAlmostEqual(calculated_high, expected_high, places=5,
+                             msg=f"At index {i}, high_20 should be {expected_high} (previous day's high), "
+                                 f"not {calculated_high}")
 
-  def test_donchian_low_is_minimum(self):
-    """Test that Donchian low is actually the minimum"""
+  def test_donchian_low_excludes_current_day(self):
+    """Test that Donchian low excludes current day (correct Turtle Trading behavior)"""
     # Use deterministic data for this test
     test_df = pd.DataFrame({
       'high': list(range(100, 130)),
@@ -103,13 +105,67 @@ class TestIndicatorCalculatorLongShort(unittest.TestCase):
 
     df_with_channels = IndicatorCalculator.calculate_donchian_channels(test_df, entry_period=20)
 
-    # For monotonically increasing data, low_20 should be the 20th value back
+    # IMPORTANT: low_20 should be the min of PREVIOUS 20 days (excluding current day)
     for i in range(20, min(25, len(df_with_channels))):
       calculated_low = df_with_channels['low_20'].iloc[i]
-      # The minimum in the last 20 values (including current)
-      # For monotonically increasing, that's the value 19 positions back
-      expected_low = test_df['low'].iloc[i-19]
-      self.assertAlmostEqual(calculated_low, expected_low, places=5)
+      # Expected: min of previous 20 days, which for monotonically increasing data
+      # is the value 20 positions back (i-20)
+      expected_low = test_df['low'].iloc[i-20]
+      self.assertAlmostEqual(calculated_low, expected_low, places=5,
+                             msg=f"At index {i}, low_20 should be {expected_low} "
+                                 f"(min of previous 20 days), not {calculated_low}")
+
+  def test_breakout_scenario(self):
+    """Test realistic breakout scenario - today's high is highest but shouldn't trigger yet"""
+    # Create data where today makes a new 20-day high
+    highs = [100] * 20 + [105]  # Days 0-19: 100, Day 20: 105 (new high)
+    test_df = pd.DataFrame({
+      'high': highs,
+      'low': [95] * 21,
+      'close': [98] * 21
+    })
+
+    df_with_channels = IndicatorCalculator.calculate_donchian_channels(test_df, entry_period=20)
+
+    # On day 20 (index 20), we have a new high of 105
+    # But high_20 should still be 100 (the max of PREVIOUS 20 days)
+    # This is correct: you enter when price breaks ABOVE the previous 20-day high
+    day_20_high_20 = df_with_channels['high_20'].iloc[20]
+    self.assertAlmostEqual(day_20_high_20, 100.0, places=5,
+                           msg="high_20 should be 100 (previous 20-day max), not 105 (today's high)")
+
+    # The current price of 105 is above high_20 of 100, so this would trigger an entry
+    current_price = test_df['high'].iloc[20]
+    self.assertGreater(current_price, day_20_high_20,
+                       msg="Current price should be above high_20 to trigger entry")
+
+  def test_all_channels_exclude_current_day(self):
+    """Test that all 6 Donchian channels exclude current day"""
+    test_df = pd.DataFrame({
+      'high': list(range(100, 160)),  # 60 days
+      'low': list(range(95, 155)),
+      'close': list(range(98, 158))
+    })
+
+    df_with_channels = IndicatorCalculator.calculate_donchian_channels(test_df)
+
+    # Check high_20 at index 30
+    self.assertAlmostEqual(df_with_channels['high_20'].iloc[30], test_df['high'].iloc[29], places=5)
+
+    # Check low_20 at index 30
+    self.assertAlmostEqual(df_with_channels['low_20'].iloc[30], test_df['low'].iloc[10], places=5)
+
+    # Check high_10 at index 30
+    self.assertAlmostEqual(df_with_channels['high_10'].iloc[30], test_df['high'].iloc[29], places=5)
+
+    # Check low_10 at index 30
+    self.assertAlmostEqual(df_with_channels['low_10'].iloc[30], test_df['low'].iloc[20], places=5)
+
+    # Check high_55 at index 55
+    self.assertAlmostEqual(df_with_channels['high_55'].iloc[55], test_df['high'].iloc[54], places=5)
+
+    # Check low_55 at index 55
+    self.assertAlmostEqual(df_with_channels['low_55'].iloc[55], test_df['low'].iloc[0], places=5)
 
 
 if __name__ == '__main__':

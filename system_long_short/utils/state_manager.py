@@ -34,6 +34,11 @@ class StateManager:
             self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
             self.pending_entry_orders = data.get('pending_entry_orders', {})
             self.placing_marker_timestamps = data.get('placing_marker_timestamps', {})
+            # Deserialize last_trade_was_win from string keys back to tuple keys
+            last_trade_was_win_data = data.get('last_trade_was_win', {})
+            self.last_trade_was_win = {
+              tuple(k.split('_')): v for k, v in last_trade_was_win_data.items()
+            } if last_trade_was_win_data else {}
             self.last_updated = data.get('last_updated', None)
             print(f"State loaded: long_positions={len(self.long_positions)}, "
                   f"short_positions={len(self.short_positions)}, "
@@ -52,11 +57,17 @@ class StateManager:
       self.pending_pyramid_orders = {}
       self.pending_entry_orders = {}
       self.placing_marker_timestamps = {}  # Track PLACING marker timestamps for timeout
+      self.last_trade_was_win = {}  # Track if last System 1 trade was a win: {(ticker, side): bool}
       self.last_updated = None
       self.save_state()
 
   def save_state(self):
     """Save state to file"""
+    # Convert tuple keys in last_trade_was_win to strings for JSON serialization
+    last_trade_was_win_serializable = {
+      f"{k[0]}_{k[1]}": v for k, v in getattr(self, 'last_trade_was_win', {}).items()
+    }
+
     data = {
       'long_positions': self.long_positions,
       'short_positions': self.short_positions,
@@ -64,6 +75,7 @@ class StateManager:
       'pending_pyramid_orders': self.pending_pyramid_orders,
       'pending_entry_orders': self.pending_entry_orders,
       'placing_marker_timestamps': getattr(self, 'placing_marker_timestamps', {}),
+      'last_trade_was_win': last_trade_was_win_serializable,
       'last_updated': datetime.now().isoformat()
     }
 

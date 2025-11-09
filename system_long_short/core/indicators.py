@@ -36,6 +36,10 @@ class IndicatorCalculator:
     """
     Calculate Donchian Channels for dual system (System 1: 20-10, System 2: 55-20)
 
+    IMPORTANT: Channels are calculated using PREVIOUS N days (excluding current day).
+    This is the correct Turtle Trading behavior - you enter when price breaks ABOVE
+    the high of the previous 20 days, not when today's high equals the 20-day high.
+
     Args:
       df: DataFrame with OHLC data
       entry_period: Period for System 1 entry (default 20)
@@ -49,17 +53,17 @@ class IndicatorCalculator:
         - high_55, low_55: System 2 entry
     """
     df = df.copy()
-    # System 1 entry (20-day)
-    df['high_20'] = df['high'].rolling(window=entry_period).max()
-    df['low_20'] = df['low'].rolling(window=entry_period).min()
+    # System 1 entry (20-day) - exclude current day with shift(1)
+    df['high_20'] = df['high'].shift(1).rolling(window=entry_period).max()
+    df['low_20'] = df['low'].shift(1).rolling(window=entry_period).min()
 
-    # System 1 exit (10-day)
-    df['high_10'] = df['high'].rolling(window=exit_period).max()
-    df['low_10'] = df['low'].rolling(window=exit_period).min()
+    # System 1 exit (10-day) - exclude current day with shift(1)
+    df['high_10'] = df['high'].shift(1).rolling(window=exit_period).max()
+    df['low_10'] = df['low'].shift(1).rolling(window=exit_period).min()
 
     # System 2 entry (55-day), exits use 20-day (already calculated above)
-    df['high_55'] = df['high'].rolling(window=long_entry_period).max()
-    df['low_55'] = df['low'].rolling(window=long_entry_period).min()
+    df['high_55'] = df['high'].shift(1).rolling(window=long_entry_period).max()
+    df['low_55'] = df['low'].shift(1).rolling(window=long_entry_period).min()
 
     return df
 
