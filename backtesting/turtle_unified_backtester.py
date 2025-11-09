@@ -29,7 +29,7 @@ from typing import Dict, List, Tuple, Optional
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from system_long.core.indicators import IndicatorCalculator
+from system_long_short.core.indicators import IndicatorCalculator
 
 
 class TurtleUnifiedBacktester:
@@ -37,7 +37,7 @@ class TurtleUnifiedBacktester:
                enable_longs=True, enable_shorts=True,
                enable_system1=True, enable_system2=False,
                check_shortability=False, shortable_tickers=None,
-               enable_logging=True):
+               enable_logging=True, seed=None, save_results=True):
     """
     Initialize the unified backtester
 
@@ -52,6 +52,8 @@ class TurtleUnifiedBacktester:
       check_shortability: If True, only short tickers in shortable_tickers set
       shortable_tickers: Set of tickers that are shortable (None = all shortable)
       enable_logging: Whether to print exit logs
+      seed: Random seed for reproducibility (None = not specified)
+      save_results: Whether to save results to disk (default: True)
     """
     if not enable_longs and not enable_shorts:
       raise ValueError("At least one of enable_longs or enable_shorts must be True")
@@ -69,17 +71,23 @@ class TurtleUnifiedBacktester:
     self.check_shortability = check_shortability
     self.shortable_tickers = shortable_tickers or set()
     self.enable_logging = enable_logging
+    self.seed = seed
+    self.save_results = save_results
     
     # Determine if we need to track systems (only when both systems are enabled)
     self.track_systems = enable_system1 and enable_system2
 
-    # Create result directory and set up log file
+    # Create result directory and set up log file only if saving results
     config_name = self._get_config_name()
-    self.result_dir = os.path.join(os.path.dirname(__file__), f'turtle_unified_{config_name}_results')
-    os.makedirs(self.result_dir, exist_ok=True)
-    self.daily_log_file = os.path.join(self.result_dir, f'daily_backtest_log_{config_name}.jsonl')
-    if os.path.exists(self.daily_log_file):
-        os.remove(self.daily_log_file)
+    if self.save_results:
+      self.result_dir = os.path.join(os.path.dirname(__file__), f'turtle_unified_{config_name}_results')
+      os.makedirs(self.result_dir, exist_ok=True)
+      self.daily_log_file = os.path.join(self.result_dir, f'daily_backtest_log_{config_name}.jsonl')
+      if os.path.exists(self.daily_log_file):
+          os.remove(self.daily_log_file)
+    else:
+      self.result_dir = None
+      self.daily_log_file = None
 
     self.long_positions = {}
     self.short_positions = {}
@@ -96,6 +104,8 @@ class TurtleUnifiedBacktester:
   def _get_config_name(self):
     """Generate a configuration name based on settings."""
     parts = []
+    
+    # Position type
     if self.enable_longs and self.enable_shorts:
       parts.append("long_short")
     elif self.enable_longs:
@@ -103,6 +113,7 @@ class TurtleUnifiedBacktester:
     else:
       parts.append("short_only")
     
+    # System configuration
     if self.enable_system1 and self.enable_system2:
       parts.append("dual_system")
     elif self.enable_system1:
@@ -110,10 +121,33 @@ class TurtleUnifiedBacktester:
     else:
       parts.append("system2")
     
+    # Add seed if specified
+    if self.seed is not None:
+      parts.append(f"seed{self.seed}")
+    
+    # Always include risk parameter (even if default)
+    # Convert to basis points for cleaner naming (0.005 = 50bp)
+    bp = int(self.risk_per_unit_pct * 10000)
+    parts.append(f"risk{bp}bp")
+    
+    # Add other non-default parameters
+    if self.initial_equity != 10_000:
+      parts.append(f"equity{int(self.initial_equity)}")
+    
+    if self.max_positions != 100:
+      parts.append(f"maxpos{self.max_positions}")
+    
+    if self.check_shortability:
+      parts.append("shortcheck")
+    
     return "_".join(parts)
 
   def _log_daily_report(self, date, equity, pnl, trades_this_day, processed_data, yesterday_date):
       """Logs a daily summary of state, P&L, and trades to a JSONL file."""
+      # Skip logging if not saving results
+      if not self.save_results:
+          return
+      
       # Build open positions with daily PnL and close price for each ticker
       long_positions_dict = {}
       for ticker, pos in self.long_positions.items():
@@ -281,8 +315,36 @@ class TurtleUnifiedBacktester:
     """Get total number of positions (long + short)."""
     return len(self.long_positions) + len(self.short_positions)
 
+  def _save_config(self):
+    """Save configuration parameters to a JSON file in the results directory."""
+    if not self.save_results:
+      return
+    
+    config = {
+      'initial_equity': self.initial_equity,
+      'risk_per_unit_pct': self.risk_per_unit_pct,
+      'max_positions': self.max_positions,
+      'enable_longs': self.enable_longs,
+      'enable_shorts': self.enable_shorts,
+      'enable_system1': self.enable_system1,
+      'enable_system2': self.enable_system2,
+      'check_shortability': self.check_shortability,
+      'seed': self.seed,
+      'config_name': self._get_config_name(),
+      'result_directory': self.result_dir
+    }
+    
+    config_file = os.path.join(self.result_dir, 'config.json')
+    with open(config_file, 'w') as f:
+      json.dump(config, f, indent=2)
+    
+    print(f"Configuration saved to: {config_file}")
+
   def run(self, all_data):
     """Run the backtest for all tickers simultaneously."""
+    
+    # Save configuration
+    self._save_config()
 
     # Calculate indicators for all dataframes
     processed_data = {ticker: self._calculate_indicators(df.copy()) for ticker, df in all_data.items()}
@@ -998,11 +1060,14 @@ Examples:
   # Run long-only, system 1 only
   python turtle_unified_backtester.py --no-shorts --no-system2
 
+  # Quick test without saving results (just see console output)
+  python turtle_unified_backtester.py --no-save
+
   # Run with custom parameters
   python turtle_unified_backtester.py --initial-equity 20000 --risk-per-unit 0.01 --max-positions 50
 
   # Run with fixed seed for reproducibility
-  python turtle_unified_backtester.py --seed 12345
+  python turtle_unified_backtester.py --seed 12345 --no-save
     """
   )
   
@@ -1028,6 +1093,8 @@ Examples:
                       help='Check Alpaca shortable list (default: False)')
   parser.add_argument('--enable-logging', action='store_true',
                       help='Enable detailed exit logging (default: False)')
+  parser.add_argument('--no-save', action='store_true',
+                      help='Skip saving results to disk (only show console output)')
   
   args = parser.parse_args()
   
@@ -1083,7 +1150,9 @@ Examples:
     enable_system2=ENABLE_SYSTEM2,
     check_shortability=CHECK_SHORTABILITY,
     shortable_tickers=shortable_tickers,
-    enable_logging=args.enable_logging
+    enable_logging=args.enable_logging,
+    seed=random_seed,
+    save_results=not args.no_save
   )
 
   config_desc = []
@@ -1102,6 +1171,10 @@ Examples:
     config_desc.append("System 2 (55-20)")
 
   print(f"\nRunning backtest: {' / '.join(config_desc)}...")
+  if backtester.save_results:
+    print(f"Results will be saved to: {backtester.result_dir}")
+  else:
+    print("Results will NOT be saved (--no-save mode)")
   results = backtester.run(all_data)
   (final_equity, all_trades, final_cash, cash_history, equity_history,
    long_unit_history, short_unit_history, net_unit_history) = results
@@ -1161,11 +1234,12 @@ Examples:
       print(f"Win/Loss Ratio: {abs(avg_win/avg_loss):.2f}")
     print("-" * 60)
 
-  # Generate and save plots
-  result_dir = backtester.result_dir
-  os.makedirs(result_dir, exist_ok=True)
+  # Generate and save plots (only if save_results is True)
+  if backtester.save_results:
+    result_dir = backtester.result_dir
+    os.makedirs(result_dir, exist_ok=True)
 
-  if cash_history:
+  if backtester.save_results and cash_history:
     dates, cash_values = zip(*cash_history)
     min_cash = min(cash_values)
     max_cash = max(cash_values)
@@ -1191,22 +1265,24 @@ Examples:
     print(f"\nCash over time saved to: {plot_path}")
     print(f"  Min cash: ${min_cash:,.2f}, Max cash: ${max_cash:,.2f}")
 
-  if equity_history:
+  if backtester.save_results and equity_history:
     dates, equity_values = zip(*equity_history)
     plt.figure(figsize=(14, 7))
     plt.plot(dates, equity_values, linewidth=2)
     plt.axhline(y=total_initial_equity, color='r', linestyle='--', label='Initial Equity')
-    plt.title(f'Total Equity Over Time ({"/ ".join(config_desc)})', fontsize=14)
+    plt.yscale('log')  # Use logarithmic scale for better visualization of percentage changes
+    plt.title(f'Total Equity Over Time - Log Scale ({"/ ".join(config_desc)})', fontsize=14)
     plt.xlabel('Date')
-    plt.ylabel('Total Equity ($)')
+    plt.ylabel('Total Equity ($) - Log Scale')
     plt.legend()
-    plt.grid(True, alpha=0.3)
+    plt.grid(True, alpha=0.3, which='both')  # Show grid for both major and minor ticks
+    plt.minorticks_on()  # Enable minor ticks for log scale
     plot_path = os.path.join(result_dir, 'equity_over_time.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"\nEquity curve saved to: {plot_path}")
+    print(f"\nEquity curve (log scale) saved to: {plot_path}")
 
-  if net_unit_history:
+  if backtester.save_results and net_unit_history:
     dates, net_units = zip(*net_unit_history)
     _, long_units = zip(*long_unit_history)
     _, short_units = zip(*short_unit_history)
