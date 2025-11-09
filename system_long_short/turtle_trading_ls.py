@@ -46,7 +46,9 @@ class TurtleTradingLS:
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
         universe_file='system_long_short/ticker_universe.txt', paper=True,
         entry_margin=0.99, exit_margin=1.01, max_slippage=0.005,
-        enable_shorts=True, check_shortability=False):
+        enable_longs=True, enable_shorts=True,
+        enable_system1=True, enable_system2=False,
+        check_shortability=False):
     """
     Initialize Turtle Trading System with Long/Short support
 
@@ -60,9 +62,18 @@ class TurtleTradingLS:
       entry_margin: Margin for entry orders
       exit_margin: Margin for exit orders
       max_slippage: Maximum slippage for limit prices (default 0.005 = 0.5%)
+      enable_longs: Whether to enable long positions
       enable_shorts: Whether to enable short selling
+      enable_system1: Whether to enable System 1 (20-10)
+      enable_system2: Whether to enable System 2 (55-20)
       check_shortability: Whether to check if tickers are shortable
     """
+    # Validate configuration
+    if not enable_longs and not enable_shorts:
+      raise ValueError("At least one of enable_longs or enable_shorts must be True")
+    if not enable_system1 and not enable_system2:
+      raise ValueError("At least one of enable_system1 or enable_system2 must be True")
+
     # Initialize Alpaca trading client
     self.trading_client = TradingClient(api_key, api_secret, paper=paper)
 
@@ -86,11 +97,17 @@ class TurtleTradingLS:
     # Load ticker universe
     self.load_universe(universe_file)
 
-    # Short selling configuration
+    # Trading configuration
+    self.enable_longs = enable_longs
     self.enable_shorts = enable_shorts
+    self.enable_system1 = enable_system1
+    self.enable_system2 = enable_system2
     self.check_shortability = check_shortability
     self.shortable_tickers = set()
     self.htb_exclusions = set()
+
+    # Determine if we need to track systems (only when both systems are enabled)
+    self.track_systems = enable_system1 and enable_system2
 
     if self.enable_shorts:
       self._load_htb_exclusions()
@@ -100,8 +117,24 @@ class TurtleTradingLS:
     # Track daily PnL
     self.daily_pnl = 0
 
+    # Log configuration
+    config_parts = []
+    if enable_longs and enable_shorts:
+      config_parts.append("Long+Short")
+    elif enable_longs:
+      config_parts.append("Long only")
+    else:
+      config_parts.append("Short only")
+
+    if enable_system1 and enable_system2:
+      config_parts.append("Dual System (S1+S2)")
+    elif enable_system1:
+      config_parts.append("System 1 only")
+    else:
+      config_parts.append("System 2 only")
+
     self.logger.log("Turtle Trading System (Long/Short) initialized")
-    self.logger.log(f"Short selling: {'enabled' if enable_shorts else 'disabled'}")
+    self.logger.log(f"Configuration: {' / '.join(config_parts)}")
 
     # Check for zombie orders on startup
     self.reconcile_zombie_orders()
@@ -937,8 +970,11 @@ class TurtleTradingLS:
       self.indicator_calculator,
       self.state.long_positions,
       self.state.short_positions,
-      self.enable_shorts,
-      shortable_for_signals,
+      enable_longs=self.enable_longs,
+      enable_shorts=self.enable_shorts,
+      enable_system1=self.enable_system1,
+      enable_system2=self.enable_system2,
+      shortable_tickers=shortable_for_signals,
       last_trade_was_win=self.state.last_trade_was_win
     )
 
@@ -1165,8 +1201,11 @@ class TurtleTradingLS:
       self.indicator_calculator,
       self.state.long_positions,
       self.state.short_positions,
-      self.enable_shorts,
-      shortable_for_signals,
+      enable_longs=self.enable_longs,
+      enable_shorts=self.enable_shorts,
+      enable_system1=self.enable_system1,
+      enable_system2=self.enable_system2,
+      shortable_tickers=shortable_for_signals,
       last_trade_was_win=self.state.last_trade_was_win
     )
 

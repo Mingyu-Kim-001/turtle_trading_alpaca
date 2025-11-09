@@ -181,17 +181,19 @@ class SignalGenerator:
 
   @staticmethod
   def generate_entry_signals(universe, data_provider, indicator_calculator,
-               long_positions, short_positions, enable_shorts=True,
+               long_positions, short_positions,
+               enable_longs=True, enable_shorts=True,
+               enable_system1=True, enable_system2=False,
                shortable_tickers=None, proximity_threshold=0.05,
                last_trade_was_win=None):
     """
-    Generate entry signals for entire universe using dual system (20-10 and 55-20)
+    Generate entry signals for entire universe
 
-    Implements proper Turtle Trading dual system logic with System 2 priority:
+    Implements proper Turtle Trading system logic with System 2 priority:
     - System 1: Skip entry if last System 1 trade for this ticker was a winner
     - System 2: Always take entries (no filter)
     - Priority: System 2 > System 1 (handled in processing, not here)
-    - Both systems checked independently
+    - Systems checked independently based on enable flags
 
     Args:
       universe: List of ticker symbols
@@ -199,7 +201,10 @@ class SignalGenerator:
       indicator_calculator: IndicatorCalculator instance
       long_positions: Dict of existing long positions
       short_positions: Dict of existing short positions
+      enable_longs: Whether to generate long signals
       enable_shorts: Whether to generate short signals
+      enable_system1: Whether to generate System 1 (20-10) signals
+      enable_system2: Whether to generate System 2 (55-20) signals
       shortable_tickers: Set of shortable tickers (None = all shortable)
       proximity_threshold: Proximity threshold for signals
       last_trade_was_win: Dict tracking if last System 1 trade was a win {(ticker, side): bool}
@@ -222,55 +227,59 @@ class SignalGenerator:
       df = indicator_calculator.calculate_indicators(df)
       latest = df.iloc[-1]
 
-      # Check BOTH systems independently for long signals
+      # Check long signals if enabled
+      if enable_longs:
+        # Check System 2 (55-day) long entry signal if enabled
+        if enable_system2:
+          s2_long_signal = SignalGenerator.check_long_entry_signal(
+            df, latest['close'], proximity_threshold, system=2
+          )
+          if s2_long_signal:
+            # System 2 always takes entries (no win filter)
+            signals.append({
+              'ticker': ticker,
+              **s2_long_signal
+            })
 
-      # Check System 2 (55-day) long entry signal
-      s2_long_signal = SignalGenerator.check_long_entry_signal(
-        df, latest['close'], proximity_threshold, system=2
-      )
-      if s2_long_signal:
-        # System 2 always takes entries (no win filter)
-        signals.append({
-          'ticker': ticker,
-          **s2_long_signal
-        })
-
-      # Check System 1 (20-day) long entry signal
-      s1_long_signal = SignalGenerator.check_long_entry_signal(
-        df, latest['close'], proximity_threshold, system=1
-      )
-      # Only add System 1 long signal if last trade wasn't a win
-      if s1_long_signal and not last_trade_was_win.get((ticker, 'long'), False):
-        signals.append({
-          'ticker': ticker,
-          **s1_long_signal
-        })
+        # Check System 1 (20-day) long entry signal if enabled
+        if enable_system1:
+          s1_long_signal = SignalGenerator.check_long_entry_signal(
+            df, latest['close'], proximity_threshold, system=1
+          )
+          # Only add System 1 long signal if last trade wasn't a win
+          if s1_long_signal and not last_trade_was_win.get((ticker, 'long'), False):
+            signals.append({
+              'ticker': ticker,
+              **s1_long_signal
+            })
 
       # Check for short entry signals (if enabled and ticker is shortable)
       if enable_shorts:
         is_shortable = (shortable_tickers is None or ticker in shortable_tickers)
         if is_shortable:
-          # Check System 2 (55-day) short entry signal
-          s2_short_signal = SignalGenerator.check_short_entry_signal(
-            df, latest['close'], proximity_threshold, system=2
-          )
-          if s2_short_signal:
-            # System 2 always takes entries (no win filter)
-            signals.append({
-              'ticker': ticker,
-              **s2_short_signal
-            })
+          # Check System 2 (55-day) short entry signal if enabled
+          if enable_system2:
+            s2_short_signal = SignalGenerator.check_short_entry_signal(
+              df, latest['close'], proximity_threshold, system=2
+            )
+            if s2_short_signal:
+              # System 2 always takes entries (no win filter)
+              signals.append({
+                'ticker': ticker,
+                **s2_short_signal
+              })
 
-          # Check System 1 (20-day) short entry signal
-          s1_short_signal = SignalGenerator.check_short_entry_signal(
-            df, latest['close'], proximity_threshold, system=1
-          )
-          # Only add System 1 short signal if last trade wasn't a win
-          if s1_short_signal and not last_trade_was_win.get((ticker, 'short'), False):
-            signals.append({
-              'ticker': ticker,
-              **s1_short_signal
-            })
+          # Check System 1 (20-day) short entry signal if enabled
+          if enable_system1:
+            s1_short_signal = SignalGenerator.check_short_entry_signal(
+              df, latest['close'], proximity_threshold, system=1
+            )
+            # Only add System 1 short signal if last trade wasn't a win
+            if s1_short_signal and not last_trade_was_win.get((ticker, 'short'), False):
+              signals.append({
+                'ticker': ticker,
+                **s1_short_signal
+              })
 
     # Sort by system (System 2 first, then System 1) then by proximity
     # System 2 has higher priority, so it gets processed first

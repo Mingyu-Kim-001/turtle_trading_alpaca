@@ -8,32 +8,33 @@ This script runs the appropriate workflows at the right times:
 - 1:15 PM PT: Post-Market Routine
 
 Usage:
+  python -m system_long_short.turtle_scheduler_ls [OPTIONS]
+
+Examples:
+  # Run with default settings (long+short, system1 only)
   python -m system_long_short.turtle_scheduler_ls
+
+  # Run long-only, system 1 only
+  python -m system_long_short.turtle_scheduler_ls --no-shorts
+
+  # Run with both systems
+  python -m system_long_short.turtle_scheduler_ls --enable-system2
+
+  # Run with custom configuration
+  python -m system_long_short.turtle_scheduler_ls --no-longs --enable-system2
 """
 
 import schedule
 import time
+import argparse
 from datetime import datetime
 from .turtle_trading_ls import TurtleTradingLS
 import os
 import subprocess
 
 
-# Initialize trading system globally
-alpaca_key = os.environ.get('ALPACA_PAPER_LS_KEY')
-alpaca_secret = os.environ.get('ALPACA_PAPER_LS_SECRET')
-slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
-slack_channel = 'C09Q7RR1PQD'
-
-system = TurtleTradingLS(
-  api_key=alpaca_key,
-  api_secret=alpaca_secret,
-  slack_token=slack_token,
-  slack_channel=slack_channel,
-  paper=True,
-  enable_shorts=True,
-  check_shortability=False  # Set to True to check Alpaca shortable list
-)
+# Global system instance (initialized in main)
+system = None
 
 
 def is_market_day():
@@ -221,12 +222,102 @@ def run_post_market():
 
 def main():
   """Main scheduler loop"""
+  global system
+
+  # Parse command-line arguments
+  parser = argparse.ArgumentParser(
+    description='Turtle Trading System Scheduler (Long/Short)',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog="""
+Examples:
+  # Run with default settings (long+short, system1 only)
+  python -m system_long_short.turtle_scheduler_ls
+
+  # Run long-only, system 1 only
+  python -m system_long_short.turtle_scheduler_ls --no-shorts
+
+  # Run with both systems
+  python -m system_long_short.turtle_scheduler_ls --enable-system2
+
+  # Run with custom configuration
+  python -m system_long_short.turtle_scheduler_ls --no-longs --enable-system2 --check-shortability
+    """
+  )
+
+  # Boolean flags
+  parser.add_argument('--no-longs', action='store_true',
+                      help='Disable long positions (default: enabled)')
+  parser.add_argument('--no-shorts', action='store_true',
+                      help='Disable short positions (default: enabled)')
+  parser.add_argument('--enable-system2', action='store_true',
+                      help='Enable System 2 (55-20) in addition to System 1 (default: System 1 only)')
+  parser.add_argument('--no-system1', action='store_true',
+                      help='Disable System 1 (20-10) - only use with --enable-system2')
+  parser.add_argument('--check-shortability', action='store_true',
+                      help='Check Alpaca shortable list (default: False)')
+
+  args = parser.parse_args()
+
+  # Configuration from arguments
+  ENABLE_LONGS = not args.no_longs
+  ENABLE_SHORTS = not args.no_shorts
+  ENABLE_SYSTEM1 = not args.no_system1
+  ENABLE_SYSTEM2 = args.enable_system2
+  CHECK_SHORTABILITY = args.check_shortability
+
+  # Validate configuration
+  if not ENABLE_LONGS and not ENABLE_SHORTS:
+    parser.error("At least one of --no-longs or --no-shorts must not be set (need to trade something)")
+  if not ENABLE_SYSTEM1 and not ENABLE_SYSTEM2:
+    parser.error("At least one system must be enabled (use --enable-system2 if disabling System 1)")
+
+  # Get API credentials from environment
+  alpaca_key = os.environ.get('ALPACA_PAPER_LS_KEY')
+  alpaca_secret = os.environ.get('ALPACA_PAPER_LS_SECRET')
+  slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
+  slack_channel = 'C09Q7RR1PQD'
+
+  if not alpaca_key or not alpaca_secret:
+    print("Error: ALPACA_PAPER_LS_KEY and ALPACA_PAPER_LS_SECRET environment variables must be set")
+    return
+
+  # Initialize trading system with configuration
+  system = TurtleTradingLS(
+    api_key=alpaca_key,
+    api_secret=alpaca_secret,
+    slack_token=slack_token,
+    slack_channel=slack_channel,
+    paper=True,
+    enable_longs=ENABLE_LONGS,
+    enable_shorts=ENABLE_SHORTS,
+    enable_system1=ENABLE_SYSTEM1,
+    enable_system2=ENABLE_SYSTEM2,
+    check_shortability=CHECK_SHORTABILITY
+  )
+
+  # Build configuration description
+  config_desc = []
+  if ENABLE_LONGS and ENABLE_SHORTS:
+    config_desc.append("Long + Short")
+  elif ENABLE_LONGS:
+    config_desc.append("Long Only")
+  else:
+    config_desc.append("Short Only")
+
+  if ENABLE_SYSTEM1 and ENABLE_SYSTEM2:
+    config_desc.append("Dual System (S1 + S2)")
+  elif ENABLE_SYSTEM1:
+    config_desc.append("System 1 (20-10)")
+  else:
+    config_desc.append("System 2 (55-20)")
 
   print("="*60)
   print("TURTLE TRADING SCHEDULER (LONG/SHORT) STARTED")
   print("="*60)
   print(f"Current time: {datetime.now()}")
-  print(f"Short selling: {'enabled' if system.enable_shorts else 'disabled'}")
+  print(f"Configuration: {' / '.join(config_desc)}")
+  if CHECK_SHORTABILITY:
+    print(f"Shortability check: enabled")
   print("\nScheduled tasks:")
   print("  - 05:00 AM PT: EOD Analysis")
   print("  - 06:25 AM PT: Market Open Setup")
@@ -236,7 +327,8 @@ def main():
 
   # Send startup notification
   system.slack.send_message(
-    f"🚀 Turtle Trading System (Long/Short) started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    f"🚀 Turtle Trading System started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    f"Configuration: {' / '.join(config_desc)}",
     title="System Startup"
   )
 
@@ -262,7 +354,7 @@ def main():
   except KeyboardInterrupt:
     print("\n\nShutting down scheduler...")
     system.slack.send_message(
-      f"🛑 Turtle Trading System (Long/Short) stopped at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+      f"🛑 Turtle Trading System stopped at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
       title="System Shutdown"
     )
 
