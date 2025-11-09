@@ -700,6 +700,7 @@ class TurtleUnifiedBacktester:
     position_data = {
       'units': unit_size,
       'entry_price': entry_price,
+      'initial_entry_price': entry_price,  # Track original entry for pyramiding
       'entry_date': today_date,
       'stop_price': stop_price,
       'n_value': n_value,
@@ -802,8 +803,9 @@ class TurtleUnifiedBacktester:
     if position['pyramid_count'] >= 4:
       return None
 
-    # Pyramid trigger: last_entry + 0.5N
-    pyramid_price = position['entry_price'] + 0.5 * position['n_value']
+    # Pyramid trigger: initial_entry + (pyramid_count * 0.5N)
+    # This ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
+    pyramid_price = position['initial_entry_price'] + (position['pyramid_count'] * 0.5 * position['n_value'])
 
     if today['high'] >= pyramid_price:
       unit_size = self._get_unit_size(total_equity, position['n_value'])
@@ -861,6 +863,7 @@ class TurtleUnifiedBacktester:
     position_data = {
       'units': unit_size,
       'entry_price': entry_price,
+      'initial_entry_price': entry_price,  # Track original entry for pyramiding
       'entry_date': today_date,
       'stop_price': stop_price,
       'n_value': n_value,
@@ -976,8 +979,9 @@ class TurtleUnifiedBacktester:
     if position['pyramid_count'] >= 4:
       return None
 
-    # Pyramid trigger for shorts: last_entry - 0.5N (price moves DOWN)
-    pyramid_price = position['entry_price'] - 0.5 * position['n_value']
+    # Pyramid trigger for shorts: initial_entry - (pyramid_count * 0.5N)
+    # This ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
+    pyramid_price = position['initial_entry_price'] - (position['pyramid_count'] * 0.5 * position['n_value'])
 
     if today['low'] <= pyramid_price:
       unit_size = self._get_unit_size(total_equity, position['n_value'])
