@@ -137,10 +137,10 @@ class SignalGenerator:
     Check if there's a long pyramid opportunity (price moves up)
 
     Args:
-      last_entry_price: Price of last pyramid entry
+      last_entry_price: Reference entry price (should be initial entry for correct pyramiding)
       current_price: Current market price
       initial_n: Initial ATR (N value)
-      threshold: Multiple of N for pyramid trigger (default 0.5)
+      threshold: Multiple of N for pyramid trigger (use pyramid_count * 0.5 for proper intervals)
 
     Returns:
       True if pyramid opportunity exists, False otherwise
@@ -161,10 +161,10 @@ class SignalGenerator:
     Check if there's a short pyramid opportunity (price moves down)
 
     Args:
-      last_entry_price: Price of last pyramid entry
+      last_entry_price: Reference entry price (should be initial entry for correct pyramiding)
       current_price: Current market price
       initial_n: Initial ATR (N value)
-      threshold: Multiple of N for pyramid trigger (default 0.5)
+      threshold: Multiple of N for pyramid trigger (use pyramid_count * 0.5 for proper intervals)
 
     Returns:
       True if pyramid opportunity exists, False otherwise

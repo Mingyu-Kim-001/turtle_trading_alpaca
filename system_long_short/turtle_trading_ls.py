@@ -660,18 +660,22 @@ class TurtleTradingLS:
         continue
 
       # Check pyramid opportunity
-      last_pyramid = position['pyramid_units'][-1]
-      last_entry_price = last_pyramid['entry_price']
+      # Use FIRST pyramid (initial entry) for calculating trigger, not last
+      initial_entry_price = position['pyramid_units'][0]['entry_price']
+      pyramid_count = len(position['pyramid_units'])
+
+      # Calculate pyramid trigger based on initial entry and pyramid count
+      # This ensures pyramids at 0.5N, 1.0N, 1.5N from initial entry
+      pyramid_entry_price = initial_entry_price + (pyramid_count * 0.5 * initial_n)
 
       if self.signal_generator.check_long_pyramid_opportunity(
-          last_entry_price, current_price, initial_n):
-        pyramid_entry_price = last_entry_price + 0.5 * initial_n
-        pyramid_level = len(position['pyramid_units']) + 1
+          initial_entry_price, current_price, initial_n, threshold=pyramid_count * 0.5):
+        pyramid_level = pyramid_count + 1
 
         # Log detailed pyramid trigger information
         self.logger.log_pyramid_trigger(
           ticker, 'LONG', pyramid_level, pyramid_entry_price,
-          current_price, last_entry_price, initial_n
+          current_price, initial_entry_price, initial_n
         )
 
         # Check if current price is within trigger threshold (like entry queue logic)
@@ -756,18 +760,22 @@ class TurtleTradingLS:
         continue
 
       # Check pyramid opportunity
-      last_pyramid = position['pyramid_units'][-1]
-      last_entry_price = last_pyramid['entry_price']
+      # Use FIRST pyramid (initial entry) for calculating trigger, not last
+      initial_entry_price = position['pyramid_units'][0]['entry_price']
+      pyramid_count = len(position['pyramid_units'])
+
+      # Calculate pyramid trigger based on initial entry and pyramid count
+      # This ensures pyramids at 0.5N, 1.0N, 1.5N from initial entry
+      pyramid_entry_price = initial_entry_price - (pyramid_count * 0.5 * initial_n)
 
       if self.signal_generator.check_short_pyramid_opportunity(
-          last_entry_price, current_price, initial_n):
-        pyramid_entry_price = last_entry_price - 0.5 * initial_n
-        pyramid_level = len(position['pyramid_units']) + 1
+          initial_entry_price, current_price, initial_n, threshold=pyramid_count * 0.5):
+        pyramid_level = pyramid_count + 1
 
         # Log detailed pyramid trigger information
         self.logger.log_pyramid_trigger(
           ticker, 'SHORT', pyramid_level, pyramid_entry_price,
-          current_price, last_entry_price, initial_n
+          current_price, initial_entry_price, initial_n
         )
 
         # Check if current price is within trigger threshold (like entry queue logic)
