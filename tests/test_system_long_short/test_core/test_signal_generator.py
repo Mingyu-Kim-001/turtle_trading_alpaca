@@ -376,6 +376,244 @@ class TestSignalGeneratorLongShort(unittest.TestCase):
     )
     self.assertTrue(is_pyramid, "Should trigger at threshold")
 
+  # DUAL SYSTEM TESTS WITH SYSTEM 2 PRIORITY
+
+  def test_dual_system_both_systems_checked_independently(self):
+    """Test that both System 1 and System 2 are checked independently for signals"""
+    # Create mock data provider and indicator calculator
+    class MockDataProvider:
+      def get_historical_data(self, ticker):
+        # Create data where both 20-day and 55-day breakouts trigger
+        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
+        df = pd.DataFrame({
+          'open': np.full(100, 100.0),
+          'high': np.full(100, 102.0),
+          'low': np.full(100, 98.0),
+          'close': np.full(100, 100.0),
+        }, index=dates)
+        return df
+
+    class MockIndicatorCalculator:
+      def calculate_indicators(self, df):
+        df['N'] = 2.0
+        df['high_20'] = 99.0  # Current price will be near this
+        df['high_55'] = 99.5  # And near this too
+        df['low_20'] = 95.0
+        df['low_55'] = 94.0
+        df['low_10'] = 96.0
+        df['high_10'] = 103.0
+        return df
+
+    data_provider = MockDataProvider()
+    indicator_calculator = MockIndicatorCalculator()
+    universe = ['TEST']
+    long_positions = {}
+    short_positions = {}
+
+    signals = SignalGenerator.generate_entry_signals(
+      universe, data_provider, indicator_calculator,
+      long_positions, short_positions,
+      enable_shorts=False, proximity_threshold=0.05
+    )
+
+    # Both System 1 and System 2 should generate signals
+    system1_signals = [s for s in signals if s['system'] == 1]
+    system2_signals = [s for s in signals if s['system'] == 2]
+
+    self.assertGreater(len(system1_signals), 0, "System 1 should generate signals")
+    self.assertGreater(len(system2_signals), 0, "System 2 should generate signals")
+
+  def test_dual_system_signals_sorted_system2_first(self):
+    """Test that signals are sorted with System 2 first, then by proximity"""
+    # Create mock data provider and indicator calculator
+    class MockDataProvider:
+      def get_historical_data(self, ticker):
+        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
+        df = pd.DataFrame({
+          'open': np.full(100, 100.0),
+          'high': np.full(100, 102.0),
+          'low': np.full(100, 98.0),
+          'close': np.full(100, 100.0),
+        }, index=dates)
+        return df
+
+    class MockIndicatorCalculator:
+      def calculate_indicators(self, df):
+        df['N'] = 2.0
+        df['high_20'] = 99.0
+        df['high_55'] = 99.5
+        df['low_20'] = 95.0
+        df['low_55'] = 94.0
+        df['low_10'] = 96.0
+        df['high_10'] = 103.0
+        return df
+
+    data_provider = MockDataProvider()
+    indicator_calculator = MockIndicatorCalculator()
+    universe = ['AAPL', 'GOOGL', 'MSFT']
+    long_positions = {}
+    short_positions = {}
+
+    signals = SignalGenerator.generate_entry_signals(
+      universe, data_provider, indicator_calculator,
+      long_positions, short_positions,
+      enable_shorts=False, proximity_threshold=0.05
+    )
+
+    # Check that all System 2 signals come before System 1 signals
+    found_system1 = False
+    for signal in signals:
+      if signal['system'] == 1:
+        found_system1 = True
+      elif signal['system'] == 2 and found_system1:
+        self.fail("Found System 2 signal after System 1 signal - incorrect ordering")
+
+  def test_dual_system_system1_win_filter_applied(self):
+    """Test that System 1 win filter is applied correctly"""
+    class MockDataProvider:
+      def get_historical_data(self, ticker):
+        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
+        df = pd.DataFrame({
+          'open': np.full(100, 100.0),
+          'high': np.full(100, 102.0),
+          'low': np.full(100, 98.0),
+          'close': np.full(100, 100.0),
+        }, index=dates)
+        return df
+
+    class MockIndicatorCalculator:
+      def calculate_indicators(self, df):
+        df['N'] = 2.0
+        df['high_20'] = 99.0
+        df['high_55'] = 105.0  # Far away, won't trigger
+        df['low_20'] = 95.0
+        df['low_55'] = 94.0
+        df['low_10'] = 96.0
+        df['high_10'] = 103.0
+        return df
+
+    data_provider = MockDataProvider()
+    indicator_calculator = MockIndicatorCalculator()
+    universe = ['TEST']
+    long_positions = {}
+    short_positions = {}
+
+    # Test with last trade was a win - System 1 should be filtered
+    last_trade_was_win = {('TEST', 'long'): True}
+
+    signals = SignalGenerator.generate_entry_signals(
+      universe, data_provider, indicator_calculator,
+      long_positions, short_positions,
+      enable_shorts=False, proximity_threshold=0.05,
+      last_trade_was_win=last_trade_was_win
+    )
+
+    system1_signals = [s for s in signals if s['system'] == 1 and s['ticker'] == 'TEST']
+    self.assertEqual(len(system1_signals), 0, "System 1 should be filtered when last trade was a win")
+
+    # Test without win filter - System 1 should generate signal
+    signals = SignalGenerator.generate_entry_signals(
+      universe, data_provider, indicator_calculator,
+      long_positions, short_positions,
+      enable_shorts=False, proximity_threshold=0.05,
+      last_trade_was_win={}
+    )
+
+    system1_signals = [s for s in signals if s['system'] == 1 and s['ticker'] == 'TEST']
+    self.assertGreater(len(system1_signals), 0, "System 1 should generate signals when no win filter")
+
+  def test_dual_system_system2_no_win_filter(self):
+    """Test that System 2 always generates signals regardless of win filter"""
+    class MockDataProvider:
+      def get_historical_data(self, ticker):
+        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
+        df = pd.DataFrame({
+          'open': np.full(100, 100.0),
+          'high': np.full(100, 102.0),
+          'low': np.full(100, 98.0),
+          'close': np.full(100, 100.0),
+        }, index=dates)
+        return df
+
+    class MockIndicatorCalculator:
+      def calculate_indicators(self, df):
+        df['N'] = 2.0
+        df['high_20'] = 105.0  # Far away, won't trigger
+        df['high_55'] = 99.0
+        df['low_20'] = 95.0
+        df['low_55'] = 94.0
+        df['low_10'] = 96.0
+        df['high_10'] = 103.0
+        return df
+
+    data_provider = MockDataProvider()
+    indicator_calculator = MockIndicatorCalculator()
+    universe = ['TEST']
+    long_positions = {}
+    short_positions = {}
+
+    # System 2 should generate signals even when last trade was a win
+    last_trade_was_win = {('TEST', 'long'): True}
+
+    signals = SignalGenerator.generate_entry_signals(
+      universe, data_provider, indicator_calculator,
+      long_positions, short_positions,
+      enable_shorts=False, proximity_threshold=0.05,
+      last_trade_was_win=last_trade_was_win
+    )
+
+    system2_signals = [s for s in signals if s['system'] == 2 and s['ticker'] == 'TEST']
+    self.assertGreater(len(system2_signals), 0, "System 2 should always generate signals (no win filter)")
+
+  def test_dual_system_both_signals_for_same_ticker(self):
+    """Test that when both systems signal for the same ticker, both signals are included"""
+    class MockDataProvider:
+      def get_historical_data(self, ticker):
+        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
+        df = pd.DataFrame({
+          'open': np.full(100, 100.0),
+          'high': np.full(100, 102.0),
+          'low': np.full(100, 98.0),
+          'close': np.full(100, 100.0),
+        }, index=dates)
+        return df
+
+    class MockIndicatorCalculator:
+      def calculate_indicators(self, df):
+        df['N'] = 2.0
+        # Both channels at same level - both will trigger
+        df['high_20'] = 99.0
+        df['high_55'] = 99.0
+        df['low_20'] = 95.0
+        df['low_55'] = 94.0
+        df['low_10'] = 96.0
+        df['high_10'] = 103.0
+        return df
+
+    data_provider = MockDataProvider()
+    indicator_calculator = MockIndicatorCalculator()
+    universe = ['TEST']
+    long_positions = {}
+    short_positions = {}
+
+    signals = SignalGenerator.generate_entry_signals(
+      universe, data_provider, indicator_calculator,
+      long_positions, short_positions,
+      enable_shorts=False, proximity_threshold=0.05
+    )
+
+    test_signals = [s for s in signals if s['ticker'] == 'TEST']
+    system1_signals = [s for s in test_signals if s['system'] == 1]
+    system2_signals = [s for s in test_signals if s['system'] == 2]
+
+    # Both systems should generate signals (deduplication happens in process_entry_queue)
+    self.assertEqual(len(system1_signals), 1, "System 1 should generate signal")
+    self.assertEqual(len(system2_signals), 1, "System 2 should generate signal")
+
+    # System 2 signal should come first due to sorting
+    first_signal = test_signals[0]
+    self.assertEqual(first_signal['system'], 2, "System 2 signal should be first in sorted list")
+
 
 if __name__ == '__main__':
   unittest.main()

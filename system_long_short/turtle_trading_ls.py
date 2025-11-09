@@ -3,6 +3,12 @@ Turtle Trading System with Long and Short Positions
 
 This module orchestrates all components to implement the Turtle Trading strategy
 with support for both long and short positions.
+
+Dual System Logic with System 2 Priority:
+- System 1 (20-10): Entry on 20-day high/low, exit on 10-day low/high
+- System 2 (55-20): Entry on 55-day high/low, exit on 20-day low/high
+- Priority: System 2 > System 1 (when both signal for same ticker)
+- Only one position per ticker at a time
 """
 
 import sys
@@ -780,7 +786,7 @@ class TurtleTradingLS:
                 self.state.save_state()
 
   def process_entry_queue(self):
-    """Process pending entry signals"""
+    """Process pending entry signals with System 2 priority"""
     if not self.state.entry_queue:
       return
 
@@ -804,6 +810,22 @@ class TurtleTradingLS:
         continue
 
       signals_to_check.append(signal)
+
+    # Apply System 2 priority: if both systems signal for same ticker+side, keep only System 2
+    # Signals are already sorted by (system, proximity) from signal_generator
+    filtered_signals = []
+    seen_ticker_side = set()
+
+    for signal in signals_to_check:
+      ticker_side_key = (signal['ticker'], signal.get('side', 'long'))
+
+      if ticker_side_key not in seen_ticker_side:
+        filtered_signals.append(signal)
+        seen_ticker_side.add(ticker_side_key)
+      # If we've seen this ticker+side before, it means System 2 already added it
+      # (since signals are sorted with System 2 first), so skip this System 1 signal
+
+    signals_to_check = filtered_signals
 
     # Batch fetch current prices for all tickers at once
     if signals_to_check:
