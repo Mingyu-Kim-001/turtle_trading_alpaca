@@ -13,13 +13,13 @@ class IndicatorCalculator:
     Calculate Average True Range (ATR)
 
     Args:
-      df: DataFrame with OHLC data
+      df: DataFrame with OHLC data (will be modified in-place)
       period: Lookback period for ATR
 
     Returns:
       DataFrame with ATR column added (named 'N' for Turtle Trading)
     """
-    df = df.copy()
+    # Note: No copy() - caller is responsible for copying if needed
     df['prev_close'] = df['close'].shift(1)
     df['TR'] = np.maximum(
       df['high'] - df['low'],
@@ -41,7 +41,7 @@ class IndicatorCalculator:
     the high of the previous 20 days, not when today's high equals the 20-day high.
 
     Args:
-      df: DataFrame with OHLC data
+      df: DataFrame with OHLC data (will be modified in-place)
       entry_period: Period for System 1 entry (default 20)
       exit_period: Period for System 1 exit (default 10)
       long_entry_period: Period for System 2 entry (default 55)
@@ -52,7 +52,7 @@ class IndicatorCalculator:
         - high_10, low_10: System 1 exit
         - high_55, low_55: System 2 entry
     """
-    df = df.copy()
+    # Note: No copy() - caller is responsible for copying if needed
     # System 1 entry (20-day) - exclude current day with shift(1)
     df['high_20'] = df['high'].shift(1).rolling(window=entry_period).max()
     df['low_20'] = df['low'].shift(1).rolling(window=entry_period).min()

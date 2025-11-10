@@ -346,17 +346,30 @@ class TurtleUnifiedBacktester:
     # Save configuration
     self._save_config()
 
-    # Calculate indicators for all dataframes
+    # Calculate indicators for all dataframes (df.copy() already done in _calculate_indicators caller)
     processed_data = {ticker: self._calculate_indicators(df.copy()) for ticker, df in all_data.items()}
 
-    # Create a master date index
-    all_dates = sorted(list(set(date for df in processed_data.values() for date in df.index)))
+    # Create a master date index - optimized: use pandas merge_asof or direct union
+    # Old: all_dates = sorted(list(set(date for df in processed_data.values() for date in df.index)))
+    # New: More efficient approach using pandas Index union
+    date_index = processed_data[list(processed_data.keys())[0]].index
+    for df in list(processed_data.values())[1:]:
+      date_index = date_index.union(df.index)
+    all_dates = sorted(date_index.tolist())
 
+    # Optimize: Cache yesterday's equity to avoid recalculating
+    yesterday_equity = None
+    
     for i in range(1, len(all_dates)):
       today_date = all_dates[i]
       yesterday_date = all_dates[i-1]
 
-      total_equity_yesterday = self._calculate_total_equity(processed_data, yesterday_date)
+      # Use cached equity from previous iteration
+      if yesterday_equity is None:
+        total_equity_yesterday = self._calculate_total_equity(processed_data, yesterday_date)
+      else:
+        total_equity_yesterday = yesterday_equity
+      
       trades_today = []
 
       # 1. Process exits first to free up cash
@@ -371,8 +384,9 @@ class TurtleUnifiedBacktester:
       entry_trades = self._process_entries(processed_data, today_date, yesterday_date, total_equity_yesterday)
       trades_today.extend(entry_trades)
 
-      # Track history
+      # Track history - Calculate today's equity and cache for next iteration
       current_total_equity = self._calculate_total_equity(processed_data, today_date)
+      yesterday_equity = current_total_equity  # Cache for next iteration
       daily_pnl = current_total_equity - total_equity_yesterday
 
       # Ensure cash never goes negative
