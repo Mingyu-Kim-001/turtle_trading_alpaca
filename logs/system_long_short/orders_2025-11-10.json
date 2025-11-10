@@ -1,0 +1,148 @@
+[
+  {
+    "timestamp": "2025-11-10T07:37:54.951338",
+    "type": "SHORT_ENTRY",
+    "ticker": "ADBE",
+    "status": "PLACED",
+    "details": {
+      "order_id": "510564e9-e98f-4b42-a9a3-49fc8a26e8ad",
+      "units": 11,
+      "stop_price": 323.03,
+      "limit_price": 321.42,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-11-10T07:37:58.196432",
+    "type": "SHORT_ENTRY",
+    "ticker": "ADBE",
+    "status": "PENDING",
+    "details": {
+      "order_id": "510564e9-e98f-4b42-a9a3-49fc8a26e8ad",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-10T08:24:56.743842",
+    "type": "LONG_ENTRY",
+    "ticker": "BRK.B",
+    "status": "PLACED",
+    "details": {
+      "order_id": "cd5ec7b8-22f3-46dd-bbaa-6c7d94761f07",
+      "units": 15,
+      "stop_price": 499.93,
+      "limit_price": 502.43,
+      "is_pyramid": true,
+      "pyramid_level": 3
+    }
+  },
+  {
+    "timestamp": "2025-11-10T08:24:59.990344",
+    "type": "LONG_ENTRY",
+    "ticker": "BRK.B",
+    "status": "PENDING",
+    "details": {
+      "order_id": "cd5ec7b8-22f3-46dd-bbaa-6c7d94761f07",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-10T09:17:24.781790",
+    "type": "LONG_ENTRY",
+    "ticker": "AFL",
+    "status": "PLACED",
+    "details": {
+      "order_id": "f2c24048-e53c-4f5c-ac2c-4e6e71132088",
+      "units": 50,
+      "stop_price": 114.78,
+      "limit_price": 115.35,
+      "is_pyramid": false,
+      "pyramid_level": 1
+    }
+  },
+  {
+    "timestamp": "2025-11-10T09:17:27.983392",
+    "type": "LONG_ENTRY",
+    "ticker": "AFL",
+    "status": "PENDING",
+    "details": {
+      "order_id": "f2c24048-e53c-4f5c-ac2c-4e6e71132088",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-10T09:59:12.681188",
+    "type": "SHORT_ENTRY",
+    "ticker": "PG",
+    "status": "PLACED",
+    "details": {
+      "order_id": "488d896a-0bbb-4b3f-be9a-bd7c29b0015e",
+      "units": 40,
+      "stop_price": 144.56,
+      "limit_price": 143.83,
+      "is_pyramid": true,
+      "pyramid_level": 3
+    }
+  },
+  {
+    "timestamp": "2025-11-10T09:59:15.924753",
+    "type": "SHORT_ENTRY",
+    "ticker": "PG",
+    "status": "FILLED",
+    "details": {
+      "order_id": "488d896a-0bbb-4b3f-be9a-bd7c29b0015e",
+      "units": 40,
+      "filled_price": 144.37
+    }
+  },
+  {
+    "timestamp": "2025-11-10T11:07:06.313035",
+    "type": "LONG_ENTRY",
+    "ticker": "XOM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "27790627-e3c3-49a0-be9b-2c3178b24468",
+      "units": 55,
+      "stop_price": 118.07,
+      "limit_price": 118.66,
+      "is_pyramid": true,
+      "pyramid_level": 3
+    }
+  },
+  {
+    "timestamp": "2025-11-10T11:07:09.554666",
+    "type": "LONG_ENTRY",
+    "ticker": "XOM",
+    "status": "PENDING",
+    "details": {
+      "order_id": "27790627-e3c3-49a0-be9b-2c3178b24468",
+      "status": "new"
+    }
+  },
+  {
+    "timestamp": "2025-11-10T11:17:36.557129",
+    "type": "LONG_ENTRY",
+    "ticker": "AKAM",
+    "status": "PLACED",
+    "details": {
+      "order_id": "50e49f16-9df5-4932-a0a4-bae9073e5ea5",
+      "units": 41,
+      "stop_price": 87.43,
+      "limit_price": 87.87,
+      "is_pyramid": true,
+      "pyramid_level": 2
+    }
+  },
+  {
+    "timestamp": "2025-11-10T11:17:39.805572",
+    "type": "LONG_ENTRY",
+    "ticker": "AKAM",
+    "status": "FILLED",
+    "details": {
+      "order_id": "50e49f16-9df5-4932-a0a4-bae9073e5ea5",
+      "units": 41,
+      "filled_price": 87.49
+    }
+  }
+]
