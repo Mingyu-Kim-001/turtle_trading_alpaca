@@ -34,7 +34,7 @@ sys.path.append(project_root)
 from system_long_short.core.indicators import IndicatorCalculator
 
 # Global cache file path
-BACKTEST_CACHE_FILE = os.path.join(os.path.dirname(__file__), 'backtest_results_cache.csv')
+BACKTEST_CACHE_FILE = os.path.join(os.path.dirname(__file__), 'backtest_results_cache_v2.csv')
 
 
 class TurtleUnifiedBacktester:
@@ -423,7 +423,7 @@ class TurtleUnifiedBacktester:
       return None
   
   def _calculate_detailed_metrics(self, final_equity, all_trades, equity_history):
-    """Calculate detailed metrics broken down by system and direction."""
+    """Calculate detailed metrics broken down by system, direction, and specific pyramid count (1-4)."""
     metrics = {
       'final_equity': final_equity,
       'total_pnl': final_equity - self.initial_equity,
@@ -444,34 +444,44 @@ class TurtleUnifiedBacktester:
     winning_trades = [t for t in all_trades if t['pnl'] > 0]
     metrics['win_rate'] = (len(winning_trades) / len(all_trades) * 100) if all_trades else 0
     
-    # Break down by system and direction
-    # System 1 Long
-    s1_long_trades = [t for t in all_trades if t['side'] == 'long' and 
-                      (t.get('system') == 1 if self.track_systems else self.enable_system1)]
-    metrics['system1_long_pnl'] = sum(t['pnl'] for t in s1_long_trades)
-    metrics['system1_long_count'] = len(s1_long_trades)
-    metrics['system1_long_win_rate'] = (len([t for t in s1_long_trades if t['pnl'] > 0]) / len(s1_long_trades) * 100) if s1_long_trades else 0
+    # Break down by system, direction, and specific pyramid count (1, 2, 3, 4)
+    # pyramid_count = 1 means no additional pyramiding (initial entry only)
+    # pyramid_count = 2, 3, 4 means position was pyramided 1, 2, or 3 times
     
-    # System 1 Short
-    s1_short_trades = [t for t in all_trades if t['side'] == 'short' and 
-                       (t.get('system') == 1 if self.track_systems else self.enable_system1)]
-    metrics['system1_short_pnl'] = sum(t['pnl'] for t in s1_short_trades)
-    metrics['system1_short_count'] = len(s1_short_trades)
-    metrics['system1_short_win_rate'] = (len([t for t in s1_short_trades if t['pnl'] > 0]) / len(s1_short_trades) * 100) if s1_short_trades else 0
+    # Define all combinations
+    systems = [1, 2]
+    directions = ['long', 'short']
+    pyramid_counts = [1, 2, 3, 4]
     
-    # System 2 Long
-    s2_long_trades = [t for t in all_trades if t['side'] == 'long' and 
-                      (t.get('system') == 2 if self.track_systems else self.enable_system2)]
-    metrics['system2_long_pnl'] = sum(t['pnl'] for t in s2_long_trades)
-    metrics['system2_long_count'] = len(s2_long_trades)
-    metrics['system2_long_win_rate'] = (len([t for t in s2_long_trades if t['pnl'] > 0]) / len(s2_long_trades) * 100) if s2_long_trades else 0
+    for system in systems:
+      for direction in directions:
+        for pyramid_count in pyramid_counts:
+          # Filter trades for this combination
+          trades = [t for t in all_trades if 
+                   t['side'] == direction and
+                   (t.get('system') == system if self.track_systems else 
+                    (self.enable_system1 if system == 1 else self.enable_system2)) and
+                   t.get('pyramid_count', 1) == pyramid_count]
+          
+          # Calculate metrics
+          prefix = f'system{system}_{direction}_pyramid{pyramid_count}'
+          metrics[f'{prefix}_pnl'] = sum(t['pnl'] for t in trades)
+          metrics[f'{prefix}_count'] = len(trades)
+          metrics[f'{prefix}_win_rate'] = (len([t for t in trades if t['pnl'] > 0]) / len(trades) * 100) if trades else 0
     
-    # System 2 Short
-    s2_short_trades = [t for t in all_trades if t['side'] == 'short' and 
-                       (t.get('system') == 2 if self.track_systems else self.enable_system2)]
-    metrics['system2_short_pnl'] = sum(t['pnl'] for t in s2_short_trades)
-    metrics['system2_short_count'] = len(s2_short_trades)
-    metrics['system2_short_win_rate'] = (len([t for t in s2_short_trades if t['pnl'] > 0]) / len(s2_short_trades) * 100) if s2_short_trades else 0
+    # Also keep the aggregate system/direction metrics for backward compatibility
+    for system in systems:
+      for direction in directions:
+        # Get all trades for this system/direction regardless of pyramid count
+        trades = [t for t in all_trades if 
+                 t['side'] == direction and
+                 (t.get('system') == system if self.track_systems else 
+                  (self.enable_system1 if system == 1 else self.enable_system2))]
+        
+        prefix = f'system{system}_{direction}'
+        metrics[f'{prefix}_pnl'] = sum(t['pnl'] for t in trades)
+        metrics[f'{prefix}_count'] = len(trades)
+        metrics[f'{prefix}_win_rate'] = (len([t for t in trades if t['pnl'] > 0]) / len(trades) * 100) if trades else 0
     
     return metrics
   
