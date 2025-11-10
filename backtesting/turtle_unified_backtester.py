@@ -10,6 +10,7 @@ System 2 (55-20): Entry on 55-day high/low, exit on 20-day low/high, stop at ent
 - Pyramiding up to 4 units for both longs and shorts
 - Position sizing based on risk per unit
 - Each position tracks which system it belongs to for proper exit signals (when both systems enabled)
+- Optional balanced mode: Maintain equal total long and short units (including pyramiding)
 
 Entry Priority (when both systems enabled):
 1. Pyramiding existing positions (highest priority)
@@ -23,6 +24,7 @@ import sys
 import os
 import json
 import random
+import hashlib
 from typing import Dict, List, Tuple, Optional
 
 # Add the project root to the Python path
@@ -31,13 +33,17 @@ sys.path.append(project_root)
 
 from system_long_short.core.indicators import IndicatorCalculator
 
+# Global cache file path
+BACKTEST_CACHE_FILE = os.path.join(os.path.dirname(__file__), 'backtest_results_cache.csv')
+
 
 class TurtleUnifiedBacktester:
   def __init__(self, initial_equity=10_000, risk_per_unit_pct=0.005, max_positions=100,
                enable_longs=True, enable_shorts=True,
                enable_system1=True, enable_system2=False,
                check_shortability=False, shortable_tickers=None,
-               enable_logging=True, seed=None, save_results=True):
+               enable_logging=True, seed=None, save_results=True,
+               balance_long_short_units=False):
     """
     Initialize the unified backtester
 
@@ -54,6 +60,7 @@ class TurtleUnifiedBacktester:
       enable_logging: Whether to print exit logs
       seed: Random seed for reproducibility (None = not specified)
       save_results: Whether to save results to disk (default: True)
+      balance_long_short_units: If True, maintain equal total long and short units (including pyramiding)
     """
     if not enable_longs and not enable_shorts:
       raise ValueError("At least one of enable_longs or enable_shorts must be True")
@@ -73,6 +80,7 @@ class TurtleUnifiedBacktester:
     self.enable_logging = enable_logging
     self.seed = seed
     self.save_results = save_results
+    self.balance_long_short_units = balance_long_short_units
     
     # Determine if we need to track systems (only when both systems are enabled)
     self.track_systems = enable_system1 and enable_system2
@@ -80,7 +88,10 @@ class TurtleUnifiedBacktester:
     # Create result directory and set up log file only if saving results
     config_name = self._get_config_name()
     if self.save_results:
-      self.result_dir = os.path.join(os.path.dirname(__file__), f'turtle_unified_{config_name}_results')
+      # Save in results subdirectory for better organization
+      results_base = os.path.join(os.path.dirname(__file__), 'results')
+      os.makedirs(results_base, exist_ok=True)
+      self.result_dir = os.path.join(results_base, f'turtle_unified_{config_name}_results')
       os.makedirs(self.result_dir, exist_ok=True)
       self.daily_log_file = os.path.join(self.result_dir, f'daily_backtest_log_{config_name}.jsonl')
       if os.path.exists(self.daily_log_file):
@@ -139,6 +150,9 @@ class TurtleUnifiedBacktester:
     
     if self.check_shortability:
       parts.append("shortcheck")
+    
+    if self.balance_long_short_units:
+      parts.append("balanced")
     
     return "_".join(parts)
 
@@ -314,6 +328,36 @@ class TurtleUnifiedBacktester:
   def _total_position_count(self):
     """Get total number of positions (long + short)."""
     return len(self.long_positions) + len(self.short_positions)
+  
+  def _get_total_long_units(self):
+    """Get total number of long units across all positions (including pyramiding)."""
+    return sum(pos['pyramid_count'] for pos in self.long_positions.values())
+  
+  def _get_total_short_units(self):
+    """Get total number of short units across all positions (including pyramiding)."""
+    return sum(pos['pyramid_count'] for pos in self.short_positions.values())
+  
+  def _can_add_long_unit(self):
+    """Check if we can add a long unit while maintaining balance."""
+    if not self.balance_long_short_units:
+      return True
+    # Can add long only if long_units < short_units (strict balance)
+    # This ensures we never exceed short units
+    long_units = self._get_total_long_units()
+    short_units = self._get_total_short_units()
+    # Allow if we have fewer longs than shorts, OR if both are zero (initial state)
+    return long_units < short_units or (long_units == 0 and short_units == 0)
+  
+  def _can_add_short_unit(self):
+    """Check if we can add a short unit while maintaining balance."""
+    if not self.balance_long_short_units:
+      return True
+    # Can add short only if short_units < long_units (strict balance)
+    # This ensures we never exceed long units
+    long_units = self._get_total_long_units()
+    short_units = self._get_total_short_units()
+    # Allow if we have fewer shorts than longs, OR if both are zero (initial state)
+    return short_units < long_units or (long_units == 0 and short_units == 0)
 
   def _save_config(self):
     """Save configuration parameters to a JSON file in the results directory."""
@@ -329,6 +373,7 @@ class TurtleUnifiedBacktester:
       'enable_system1': self.enable_system1,
       'enable_system2': self.enable_system2,
       'check_shortability': self.check_shortability,
+      'balance_long_short_units': self.balance_long_short_units,
       'seed': self.seed,
       'config_name': self._get_config_name(),
       'result_directory': self.result_dir
@@ -339,6 +384,220 @@ class TurtleUnifiedBacktester:
       json.dump(config, f, indent=2)
     
     print(f"Configuration saved to: {config_file}")
+  
+  def _get_config_id(self):
+    """Generate a unique configuration ID for caching."""
+    config_dict = {
+      'initial_equity': self.initial_equity,
+      'risk_per_unit_pct': self.risk_per_unit_pct,
+      'max_positions': self.max_positions,
+      'enable_longs': self.enable_longs,
+      'enable_shorts': self.enable_shorts,
+      'enable_system1': self.enable_system1,
+      'enable_system2': self.enable_system2,
+      'balance_long_short_units': self.balance_long_short_units,
+      'seed': self.seed,
+    }
+    # Create a stable hash of the configuration
+    config_str = json.dumps(config_dict, sort_keys=True)
+    return hashlib.md5(config_str.encode()).hexdigest()
+  
+  def _check_cache(self):
+    """Check if results for this configuration already exist in cache."""
+    if not os.path.exists(BACKTEST_CACHE_FILE):
+      return None
+    
+    try:
+      cache_df = pd.read_csv(BACKTEST_CACHE_FILE)
+      config_id = self._get_config_id()
+      
+      # Find matching configuration
+      matching = cache_df[cache_df['config_id'] == config_id]
+      
+      if len(matching) > 0:
+        return matching.iloc[0].to_dict()
+      
+      return None
+    except Exception as e:
+      print(f"Warning: Error reading cache: {e}")
+      return None
+  
+  def _calculate_detailed_metrics(self, final_equity, all_trades, equity_history):
+    """Calculate detailed metrics broken down by system and direction."""
+    metrics = {
+      'final_equity': final_equity,
+      'total_pnl': final_equity - self.initial_equity,
+      'total_return_pct': (final_equity - self.initial_equity) / self.initial_equity * 100,
+      'num_trades': len(all_trades),
+    }
+    
+    # Calculate max drawdown
+    if equity_history:
+      equity_values = np.array([eq for _, eq in equity_history])
+      running_max = np.maximum.accumulate(equity_values)
+      drawdown = (running_max - equity_values) / running_max * 100
+      metrics['max_drawdown_pct'] = np.max(drawdown)
+    else:
+      metrics['max_drawdown_pct'] = 0
+    
+    # Overall win rate
+    winning_trades = [t for t in all_trades if t['pnl'] > 0]
+    metrics['win_rate'] = (len(winning_trades) / len(all_trades) * 100) if all_trades else 0
+    
+    # Break down by system and direction
+    # System 1 Long
+    s1_long_trades = [t for t in all_trades if t['side'] == 'long' and 
+                      (t.get('system') == 1 if self.track_systems else self.enable_system1)]
+    metrics['system1_long_pnl'] = sum(t['pnl'] for t in s1_long_trades)
+    metrics['system1_long_count'] = len(s1_long_trades)
+    metrics['system1_long_win_rate'] = (len([t for t in s1_long_trades if t['pnl'] > 0]) / len(s1_long_trades) * 100) if s1_long_trades else 0
+    
+    # System 1 Short
+    s1_short_trades = [t for t in all_trades if t['side'] == 'short' and 
+                       (t.get('system') == 1 if self.track_systems else self.enable_system1)]
+    metrics['system1_short_pnl'] = sum(t['pnl'] for t in s1_short_trades)
+    metrics['system1_short_count'] = len(s1_short_trades)
+    metrics['system1_short_win_rate'] = (len([t for t in s1_short_trades if t['pnl'] > 0]) / len(s1_short_trades) * 100) if s1_short_trades else 0
+    
+    # System 2 Long
+    s2_long_trades = [t for t in all_trades if t['side'] == 'long' and 
+                      (t.get('system') == 2 if self.track_systems else self.enable_system2)]
+    metrics['system2_long_pnl'] = sum(t['pnl'] for t in s2_long_trades)
+    metrics['system2_long_count'] = len(s2_long_trades)
+    metrics['system2_long_win_rate'] = (len([t for t in s2_long_trades if t['pnl'] > 0]) / len(s2_long_trades) * 100) if s2_long_trades else 0
+    
+    # System 2 Short
+    s2_short_trades = [t for t in all_trades if t['side'] == 'short' and 
+                       (t.get('system') == 2 if self.track_systems else self.enable_system2)]
+    metrics['system2_short_pnl'] = sum(t['pnl'] for t in s2_short_trades)
+    metrics['system2_short_count'] = len(s2_short_trades)
+    metrics['system2_short_win_rate'] = (len([t for t in s2_short_trades if t['pnl'] > 0]) / len(s2_short_trades) * 100) if s2_short_trades else 0
+    
+    return metrics
+  
+  def _save_to_cache(self, metrics):
+    """Save backtest results to cache file."""
+    # Prepare row data
+    row_data = {
+      'config_id': self._get_config_id(),
+      'config_name': self._get_config_name(),
+      'initial_equity': self.initial_equity,
+      'risk_per_unit_pct': self.risk_per_unit_pct,
+      'max_positions': self.max_positions,
+      'enable_longs': self.enable_longs,
+      'enable_shorts': self.enable_shorts,
+      'enable_system1': self.enable_system1,
+      'enable_system2': self.enable_system2,
+      'balance_long_short_units': self.balance_long_short_units,
+      'seed': self.seed,
+      # Metrics
+      **metrics
+    }
+    
+    # Convert to DataFrame
+    new_row = pd.DataFrame([row_data])
+    
+    # Append to cache file
+    if os.path.exists(BACKTEST_CACHE_FILE):
+      # Read existing cache
+      try:
+        existing_df = pd.read_csv(BACKTEST_CACHE_FILE)
+        # Remove any existing entry with same config_id
+        existing_df = existing_df[existing_df['config_id'] != row_data['config_id']]
+        # Append new row
+        updated_df = pd.concat([existing_df, new_row], ignore_index=True)
+        updated_df.to_csv(BACKTEST_CACHE_FILE, index=False)
+      except Exception as e:
+        print(f"Warning: Error updating cache, creating new: {e}")
+        new_row.to_csv(BACKTEST_CACHE_FILE, index=False)
+    else:
+      # Create new cache file
+      new_row.to_csv(BACKTEST_CACHE_FILE, index=False)
+    
+    print(f"Results cached to: {BACKTEST_CACHE_FILE}")
+
+  def generate_charts(self, cash_history, equity_history, long_unit_history, short_unit_history, net_unit_history):
+    """Generate and save chart visualizations."""
+    if not self.save_results or not self.result_dir:
+      return
+    
+    import matplotlib.pyplot as plt
+    
+    # Determine config description for titles
+    config_desc = []
+    if self.enable_longs and self.enable_shorts:
+      config_desc.append("Long + Short")
+    elif self.enable_longs:
+      config_desc.append("Long Only")
+    else:
+      config_desc.append("Short Only")
+    
+    if self.enable_system1 and self.enable_system2:
+      config_desc.append("Dual System")
+    elif self.enable_system1:
+      config_desc.append("System 1")
+    else:
+      config_desc.append("System 2")
+    
+    # Cash over time chart
+    if cash_history:
+      dates, cash_values = zip(*cash_history)
+      min_cash = min(cash_values)
+      max_cash = max(cash_values)
+      
+      plt.figure(figsize=(14, 7))
+      plt.plot(dates, cash_values, linewidth=2, color='green')
+      plt.axhline(y=self.initial_equity, color='r', linestyle='--', label='Initial Equity')
+      plt.axhline(y=0, color='black', linestyle='-', linewidth=1.0, alpha=0.7)
+      plt.title(f'Cash Over Time ({" / ".join(config_desc)})', fontsize=14)
+      plt.xlabel('Date')
+      plt.ylabel('Cash ($)')
+      plt.ylim(bottom=0)
+      plt.legend()
+      plt.grid(True, alpha=0.3)
+      plot_path = os.path.join(self.result_dir, 'cash_over_time.png')
+      plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+      plt.close()
+    
+    # Equity over time chart
+    if equity_history:
+      dates, equity_values = zip(*equity_history)
+      plt.figure(figsize=(14, 7))
+      plt.plot(dates, equity_values, linewidth=2)
+      plt.axhline(y=self.initial_equity, color='r', linestyle='--', label='Initial Equity')
+      plt.yscale('log')
+      plt.title(f'Total Equity Over Time - Log Scale ({" / ".join(config_desc)})', fontsize=14)
+      plt.xlabel('Date')
+      plt.ylabel('Total Equity ($) - Log Scale')
+      plt.legend()
+      plt.grid(True, alpha=0.3, which='both')
+      plt.minorticks_on()
+      plot_path = os.path.join(self.result_dir, 'equity_over_time.png')
+      plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+      plt.close()
+    
+    # Position units over time chart
+    if net_unit_history:
+      dates, net_units = zip(*net_unit_history)
+      _, long_units = zip(*long_unit_history)
+      _, short_units = zip(*short_unit_history)
+      
+      plt.figure(figsize=(14, 7))
+      if self.enable_longs:
+        plt.plot(dates, long_units, label='Long Units', color='green', alpha=0.7)
+      if self.enable_shorts:
+        plt.plot(dates, short_units, label='Short Units', color='red', alpha=0.7)
+      if self.enable_longs and self.enable_shorts:
+        plt.plot(dates, net_units, label='Net Units (Long - Short)', color='blue', linewidth=2)
+      plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+      plt.title(f'Position Units Over Time ({" / ".join(config_desc)})', fontsize=14)
+      plt.xlabel('Date')
+      plt.ylabel('Units')
+      plt.legend()
+      plt.grid(True, alpha=0.3)
+      plot_path = os.path.join(self.result_dir, 'units_over_time.png')
+      plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+      plt.close()
 
   def run(self, all_data):
     """Run the backtest for all tickers simultaneously."""
@@ -405,9 +664,63 @@ class TurtleUnifiedBacktester:
       self._log_daily_report(today_date, current_total_equity, daily_pnl, trades_today, processed_data, yesterday_date)
 
     final_equity = self._calculate_total_equity(processed_data, all_dates[-1])
+    
+    # Calculate detailed metrics and save to cache
+    metrics = self._calculate_detailed_metrics(final_equity, self.trades, self.equity_history)
+    self._save_to_cache(metrics)
+    
+    # Generate charts if save_results is enabled
+    if self.save_results:
+      self.generate_charts(self.cash_history, self.equity_history,
+                          self.long_unit_history, self.short_unit_history, self.net_unit_history)
+    
     return (final_equity, self.trades, self.cash,
             self.cash_history, self.equity_history,
             self.long_unit_history, self.short_unit_history, self.net_unit_history)
+  
+  def run_with_cache(self, all_data):
+    """
+    Run backtest with caching support.
+    
+    Checks if results for this configuration already exist in cache.
+    If found, returns cached results. If not, runs the backtest and caches results.
+    
+    Returns:
+      Tuple of (final_equity, trades, cash, cash_history, equity_history, 
+                long_unit_history, short_unit_history, net_unit_history, from_cache)
+      where from_cache is True if results were loaded from cache
+    """
+    # Check cache first
+    cached_result = self._check_cache()
+    
+    if cached_result is not None:
+      print(f"✓ Using cached results for config: {self._get_config_name()}")
+      print(f"   Config ID: {cached_result['config_id']}")
+      print(f"   Final Equity: ${cached_result['final_equity']:,.2f}")
+      print(f"   Total PnL: ${cached_result['total_pnl']:,.2f}")
+      
+      # Return minimal results structure with cache flag
+      # Note: Full history is not stored in cache, only metrics
+      return (
+        cached_result['final_equity'],
+        None,  # trades not cached
+        None,  # cash not cached
+        None,  # cash_history not cached
+        None,  # equity_history not cached
+        None,  # long_unit_history not cached
+        None,  # short_unit_history not cached
+        None,  # net_unit_history not cached
+        True   # from_cache = True
+      )
+    
+    # Cache miss - run the backtest
+    print(f"✗ No cached results found for config: {self._get_config_name()}")
+    print(f"   Running backtest...")
+    
+    results = self.run(all_data)
+    
+    # Add cache flag
+    return (*results, False)  # from_cache = False
 
   def _process_exits(self, processed_data, today_date, yesterday_date):
     """Process exits for both long and short positions, respecting their system."""
@@ -700,6 +1013,10 @@ class TurtleUnifiedBacktester:
 
     if self.cash <= 0:
       return None
+    
+    # Check balance constraint
+    if not self._can_add_long_unit():
+      return None
 
     unit_size = self._get_unit_size(total_equity, n_value)
     if unit_size == 0:
@@ -816,6 +1133,10 @@ class TurtleUnifiedBacktester:
     position = self.long_positions[ticker]
     if position['pyramid_count'] >= 4:
       return None
+    
+    # Check balance constraint
+    if not self._can_add_long_unit():
+      return None
 
     # Pyramid trigger: initial_entry + (pyramid_count * 0.5N)
     # This ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
@@ -860,6 +1181,10 @@ class TurtleUnifiedBacktester:
       return None
 
     if self.cash <= 0:
+      return None
+    
+    # Check balance constraint
+    if not self._can_add_short_unit():
       return None
 
     unit_size = self._get_unit_size(total_equity, n_value)
@@ -992,6 +1317,10 @@ class TurtleUnifiedBacktester:
     position = self.short_positions[ticker]
     if position['pyramid_count'] >= 4:
       return None
+    
+    # Check balance constraint
+    if not self._can_add_short_unit():
+      return None
 
     # Pyramid trigger for shorts: initial_entry - (pyramid_count * 0.5N)
     # This ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
@@ -1113,6 +1442,8 @@ Examples:
                       help='Enable detailed exit logging (default: False)')
   parser.add_argument('--no-save', action='store_true',
                       help='Skip saving results to disk (only show console output)')
+  parser.add_argument('--balance-long-short-units', action='store_true',
+                      help='Maintain equal total long and short units including pyramiding (default: False)')
   
   args = parser.parse_args()
   
@@ -1170,7 +1501,8 @@ Examples:
     shortable_tickers=shortable_tickers,
     enable_logging=args.enable_logging,
     seed=random_seed,
-    save_results=not args.no_save
+    save_results=not args.no_save,
+    balance_long_short_units=args.balance_long_short_units
   )
 
   config_desc = []

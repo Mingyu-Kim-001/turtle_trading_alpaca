@@ -85,7 +85,7 @@ def _init_worker():
 
 def run_single_backtest(args):
     """Run a single backtest with given parameters."""
-    seed, system_config, risk_per_unit_pct = args
+    seed, system_config, risk_per_unit_pct, balance_long_short_units = args
     
     # Use the data loaded in worker initialization
     global _worker_data
@@ -111,15 +111,37 @@ def run_single_backtest(args):
         shortable_tickers=None,
         enable_logging=False,  # Disable detailed logging for speed
         seed=seed,
-        save_results=False  # Don't save results
+        save_results=False,  # Don't save results
+        balance_long_short_units=balance_long_short_units
     )
     
-    # Run backtest
+    # Run backtest with caching
     try:
-        results = backtester.run(all_data)
-        final_equity, all_trades, final_cash, _, equity_history, _, _, _ = results
+        results = backtester.run_with_cache(all_data)
+        # Unpack results (includes from_cache flag as last element)
+        final_equity, all_trades, final_cash, _, equity_history, _, _, _, from_cache = results
         
-        # Calculate metrics
+        # If from cache, we need to get metrics from the cache entry
+        if from_cache:
+            # When using cache, we don't have full trades/equity_history
+            # Use the metrics from cached results
+            cached_metrics = backtester._check_cache()
+            return {
+                'seed': seed,
+                'system': system_config,
+                'final_equity': cached_metrics['final_equity'],
+                'total_pnl': cached_metrics['total_pnl'],
+                'return_pct': cached_metrics['total_return_pct'],
+                'num_trades': int(cached_metrics['num_trades']),
+                'win_rate': cached_metrics['win_rate'],
+                'avg_win': cached_metrics.get('system1_long_pnl', 0) / max(cached_metrics.get('system1_long_count', 1), 1),
+                'avg_loss': 0,  # Not stored in cache
+                'max_drawdown_pct': cached_metrics['max_drawdown_pct'],
+                'success': True,
+                'from_cache': True
+            }
+        
+        # Calculate metrics (for non-cached results)
         initial_equity = backtester.initial_equity
         total_pnl = final_equity - initial_equity
         total_return_pct = (total_pnl / initial_equity) * 100
@@ -152,7 +174,8 @@ def run_single_backtest(args):
             'avg_win': avg_win,
             'avg_loss': avg_loss,
             'max_drawdown_pct': max_drawdown_pct,
-            'success': True
+            'success': True,
+            'from_cache': False
         }
     except Exception as e:
         return {
@@ -178,11 +201,11 @@ Examples:
   # Run with higher risk (0.005 = 0.5%)
   python compare_systems_parallel.py --risk-per-unit 0.005
   
-  # Run with lower risk (0.0005 = 0.05%)
-  python compare_systems_parallel.py --risk-per-unit 0.0005
+  # Run with balanced long/short units
+  python compare_systems_parallel.py --balance-long-short-units
   
-  # Run with 1% risk
-  python compare_systems_parallel.py --risk-per-unit 0.01
+  # Run with 1% risk and balanced units
+  python compare_systems_parallel.py --risk-per-unit 0.01 --balance-long-short-units
         """
     )
     
@@ -198,10 +221,16 @@ Examples:
         default=None,
         help='Number of worker processes (default: use all CPU cores)'
     )
+    parser.add_argument(
+        '--balance-long-short-units',
+        action='store_true',
+        help='Maintain equal total long and short units including pyramiding (default: False)'
+    )
     
     args = parser.parse_args()
     risk_per_unit_pct = args.risk_per_unit
     num_workers = args.workers if args.workers else cpu_count()
+    balance_long_short_units = args.balance_long_short_units
     
     # Convert to basis points for display
     risk_bp = int(risk_per_unit_pct * 10000)
@@ -214,6 +243,7 @@ Examples:
     print(f"  Risk per unit: {risk_per_unit_pct} ({risk_per_unit_pct*100:.2f}% / {risk_bp}bp)")
     print(f"  Initial equity: $10,000")
     print(f"  Long + Short: Enabled")
+    print(f"  Balanced units: {'Enabled' if balance_long_short_units else 'Disabled'}")
     print(f"  System 1: 20-10 (entry/exit)")
     print(f"  Dual System: 20-10 + 55-20")
     print(f"  Saving results: Disabled (fast mode)")
@@ -224,11 +254,11 @@ Examples:
     
     # System 1 only tasks
     for seed in seeds:
-        tasks.append((seed, 'system1', risk_per_unit_pct))
+        tasks.append((seed, 'system1', risk_per_unit_pct, balance_long_short_units))
     
     # Dual system tasks
     for seed in seeds:
-        tasks.append((seed, 'dual', risk_per_unit_pct))
+        tasks.append((seed, 'dual', risk_per_unit_pct, balance_long_short_units))
     
     print(f"\nTotal backtests to run: {len(tasks)}")
     print(f"Using {num_workers} worker processes")
@@ -269,6 +299,12 @@ Examples:
     print(f"  - Worker init: {init_time:.1f}s")
     print(f"  - Backtests: {backtest_time:.1f}s")
     print(f"  - Avg per backtest: {backtest_time/len(tasks):.2f}s")
+    
+    # Cache statistics
+    cached_count = len([r for r in results if r.get('from_cache', False)])
+    if cached_count > 0:
+        print(f"  - Cached results: {cached_count}/{len(tasks)} ({cached_count/len(tasks)*100:.1f}%)")
+        print(f"  - Cache savings: ~{cached_count * (backtest_time/len(tasks)):.1f}s")
     
     # Separate results by system
     system1_results = [r for r in results if r['system'] == 'system1' and r['success']]
