@@ -48,7 +48,7 @@ class TurtleTradingLS:
         entry_margin=0.99, exit_margin=1.01, max_slippage=0.005,
         enable_longs=True, enable_shorts=True,
         enable_system1=True, enable_system2=False,
-        check_shortability=False):
+        check_shortability=False, risk_per_unit=0.005):
     """
     Initialize Turtle Trading System with Long/Short support
 
@@ -67,6 +67,7 @@ class TurtleTradingLS:
       enable_system1: Whether to enable System 1 (20-10)
       enable_system2: Whether to enable System 2 (55-20)
       check_shortability: Whether to check if tickers are shortable
+      risk_per_unit: Risk per unit as fraction of account equity (default 0.005 = 0.5%)
     """
     # Validate configuration
     if not enable_longs and not enable_shorts:
@@ -103,6 +104,7 @@ class TurtleTradingLS:
     self.enable_system1 = enable_system1
     self.enable_system2 = enable_system2
     self.check_shortability = check_shortability
+    self.risk_per_unit = risk_per_unit
     self.shortable_tickers = set()
     self.htb_exclusions = set()
 
@@ -896,7 +898,7 @@ class TurtleTradingLS:
         self.logger.log(f"[DEBUG] LONG {ticker} (S{system}): entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price >= entry_trigger:
           units = self.position_manager.calculate_position_size(
-            total_equity, signal['n']
+            total_equity, signal['n'], self.risk_per_unit
           )
           cost = units * signal['entry_price']
           self.logger.log(f"[DEBUG] {ticker}: units={units}, cost=${cost:,.2f}, buying_power=${buying_power:,.2f}")
@@ -928,7 +930,7 @@ class TurtleTradingLS:
         self.logger.log(f"[DEBUG] SHORT {ticker} (S{system}): entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price <= entry_trigger:
           units = self.position_manager.calculate_position_size(
-            total_equity, signal['n']
+            total_equity, signal['n'], self.risk_per_unit
           )
           margin_required = self.position_manager.calculate_margin_required(
             units, signal['entry_price']

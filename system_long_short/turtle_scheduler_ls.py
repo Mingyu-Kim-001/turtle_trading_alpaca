@@ -255,6 +255,8 @@ Examples:
                       help='Disable System 1 (20-10) - only use with --enable-system2')
   parser.add_argument('--check-shortability', action='store_true',
                       help='Check Alpaca shortable list (default: False)')
+  parser.add_argument('--risk-per-unit', type=float, default=0.005,
+                      help='Risk per unit as a fraction of account equity (default: 0.005)')
 
   args = parser.parse_args()
 
@@ -296,7 +298,8 @@ Examples:
     enable_shorts=ENABLE_SHORTS,
     enable_system1=ENABLE_SYSTEM1,
     enable_system2=ENABLE_SYSTEM2,
-    check_shortability=CHECK_SHORTABILITY
+    check_shortability=CHECK_SHORTABILITY,
+    risk_per_unit=args.risk_per_unit
   )
 
   # Build configuration description
@@ -320,6 +323,7 @@ Examples:
   print("="*60)
   print(f"Current time: {datetime.now()}")
   print(f"Configuration: {' / '.join(config_desc)}")
+  print(f"Risk per unit: {args.risk_per_unit*100:.2f}% of equity")
   if CHECK_SHORTABILITY:
     print(f"Shortability check: enabled")
   print("\nScheduled tasks:")
@@ -332,7 +336,8 @@ Examples:
   # Send startup notification
   system.slack.send_message(
     f"🚀 Turtle Trading System started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    f"Configuration: {' / '.join(config_desc)}",
+    f"Configuration: {' / '.join(config_desc)}\n"
+    f"Risk per unit: {args.risk_per_unit*100:.2f}% of equity",
     title="System Startup"
   )
 
