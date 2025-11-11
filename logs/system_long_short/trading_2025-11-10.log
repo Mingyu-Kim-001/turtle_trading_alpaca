@@ -4583,3 +4583,8 @@
 [2025-11-10 18:43:33] [INFO] Configuration: Long+Short / System 1 only
 [2025-11-10 18:43:33] [INFO] Checking for zombie orders...
 [2025-11-10 18:43:33] [INFO] No zombie orders found.
+[2025-11-10 23:30:43] [INFO] Loaded 6013 fractionable tickers from Alpaca
+[2025-11-10 23:30:43] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-10 23:30:43] [INFO] Configuration: Long+Short / System 1 only
+[2025-11-10 23:30:43] [INFO] Checking for zombie orders...
+[2025-11-10 23:30:43] [INFO] No zombie orders found.
