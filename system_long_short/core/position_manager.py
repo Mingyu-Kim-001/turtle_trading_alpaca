@@ -5,7 +5,7 @@ class PositionManager:
   """Manage trading positions and pyramid units for both long and short"""
 
   @staticmethod
-  def calculate_position_size(total_equity, n, risk_per_unit_pct=0.001):
+  def calculate_position_size(total_equity, n, risk_per_unit_pct=0.001, fractional=True):
     """
     Calculate position size based on total equity (matching backtester logic)
 
@@ -13,9 +13,10 @@ class PositionManager:
       total_equity: Total equity (cash + positions value)
       n: Current ATR value
       risk_per_unit_pct: Risk per unit as decimal (default 0.1% = 0.001)
+      fractional: Whether to allow fractional shares (default True)
 
     Returns:
-      Number of units to trade
+      Number of units to trade (fractional or integer)
     """
     if n == 0 or total_equity <= 0:
       return 0
@@ -23,7 +24,12 @@ class PositionManager:
     unit_risk = total_equity * risk_per_unit_pct
     # Risk per unit is N (matching backtester)
     units = unit_risk / n
-    return int(units)
+
+    if fractional:
+      # Round to 9 decimal places (Alpaca's max precision)
+      return round(units, 9)
+    else:
+      return int(units)
 
   @staticmethod
   def calculate_margin_required(units, entry_price, margin_pct=0.5):

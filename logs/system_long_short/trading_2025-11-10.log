@@ -4578,3 +4578,8 @@
 [2025-11-10 13:15:55] [INFO] POST-MARKET ROUTINE
 [2025-11-10 13:15:55] [INFO] ============================================================
 [2025-11-10 13:15:56] [INFO] State snapshot saved: market_close (pending_pyramids=0, pending_entries=5)
+[2025-11-10 18:43:33] [INFO] Loaded 6014 fractionable tickers from Alpaca
+[2025-11-10 18:43:33] [INFO] Turtle Trading System (Long/Short) initialized
+[2025-11-10 18:43:33] [INFO] Configuration: Long+Short / System 1 only
+[2025-11-10 18:43:33] [INFO] Checking for zombie orders...
+[2025-11-10 18:43:33] [INFO] No zombie orders found.

@@ -5,9 +5,10 @@ This backtester supports all combinations of:
 - Long only / Short only / Long and Short
 - System 1 only (20-10) / System 1 and System 2 (20-10 + 55-20)
 
-System 1 (20-10): Entry on 20-day high/low, exit on 10-day low/high, stop at entry ± 2N
-System 2 (55-20): Entry on 55-day high/low, exit on 20-day low/high, stop at entry ± 2N
-- Pyramiding up to 4 units for both longs and shorts
+System 1 (20-10): Entry on 20-day high/low, exit on 10-day low/high
+System 2 (55-20): Entry on 55-day high/low, exit on 20-day low/high
+- Stop loss: entry ± (stop_loss_atr_multiplier * N), default 2N
+- Pyramiding up to 4 units, triggered at (pyramid_atr_multiplier * N), default 0.5N
 - Position sizing based on risk per unit
 - Each position tracks which system it belongs to for proper exit signals (when both systems enabled)
 - Optional balanced mode: Maintain equal total long and short units (including pyramiding)
@@ -34,7 +35,7 @@ sys.path.append(project_root)
 from system_long_short.core.indicators import IndicatorCalculator
 
 # Global cache file path
-BACKTEST_CACHE_FILE = os.path.join(os.path.dirname(__file__), 'backtest_results_cache_v2.csv')
+BACKTEST_CACHE_FILE = os.path.join(os.path.dirname(__file__), 'backtest_results_cache_v3.csv')
 
 
 class TurtleUnifiedBacktester:
@@ -43,7 +44,9 @@ class TurtleUnifiedBacktester:
                enable_system1=True, enable_system2=False,
                check_shortability=False, shortable_tickers=None,
                enable_logging=True, seed=None, save_results=True,
-               balance_long_short_units=False):
+               balance_long_short_units=False,
+               stop_loss_atr_multiplier=2.0, pyramid_atr_multiplier=0.5,
+               use_margin=True, margin_multiplier=2.0):
     """
     Initialize the unified backtester
 
@@ -61,6 +64,10 @@ class TurtleUnifiedBacktester:
       seed: Random seed for reproducibility (None = not specified)
       save_results: Whether to save results to disk (default: True)
       balance_long_short_units: If True, maintain equal total long and short units (including pyramiding)
+      stop_loss_atr_multiplier: Multiplier for stop loss distance (default 2.0 = entry ± 2*N)
+      pyramid_atr_multiplier: Multiplier for pyramid trigger distance (default 0.5 = 0.5*N increments)
+      use_margin: Whether to use margin (2x buying power) like Alpaca (default: True)
+      margin_multiplier: Margin multiplier for buying power (default: 2.0 for Reg T margin)
     """
     if not enable_longs and not enable_shorts:
       raise ValueError("At least one of enable_longs or enable_shorts must be True")
@@ -81,7 +88,11 @@ class TurtleUnifiedBacktester:
     self.seed = seed
     self.save_results = save_results
     self.balance_long_short_units = balance_long_short_units
-    
+    self.stop_loss_atr_multiplier = stop_loss_atr_multiplier
+    self.pyramid_atr_multiplier = pyramid_atr_multiplier
+    self.use_margin = use_margin
+    self.margin_multiplier = margin_multiplier if use_margin else 1.0
+
     # Determine if we need to track systems (only when both systems are enabled)
     self.track_systems = enable_system1 and enable_system2
 
@@ -150,10 +161,23 @@ class TurtleUnifiedBacktester:
     
     if self.check_shortability:
       parts.append("shortcheck")
-    
+
     if self.balance_long_short_units:
       parts.append("balanced")
-    
+
+    # Add non-default stop loss and pyramid parameters
+    if self.stop_loss_atr_multiplier != 2.0:
+      parts.append(f"stop{self.stop_loss_atr_multiplier}N")
+
+    if self.pyramid_atr_multiplier != 0.5:
+      parts.append(f"pyr{self.pyramid_atr_multiplier}N")
+
+    # Add margin parameters if non-default
+    if not self.use_margin:
+      parts.append("cash_only")
+    elif self.margin_multiplier != 2.0:
+      parts.append(f"margin{self.margin_multiplier}x")
+
     return "_".join(parts)
 
   def _log_daily_report(self, date, equity, pnl, trades_this_day, processed_data, yesterday_date):
@@ -267,6 +291,51 @@ class TurtleUnifiedBacktester:
     # It calculates high_20, low_20, high_10, low_10, high_55, low_55
     df = IndicatorCalculator.calculate_donchian_channels(df, entry_period=20, exit_period=10)
     return df
+
+  def _get_available_buying_power(self):
+    """
+    Calculate available buying power based on Alpaca's margin system.
+
+    For margin accounts (use_margin=True):
+      - Buying Power = Equity × margin_multiplier
+      - Both long and short positions consume 1x of position value
+
+    For cash accounts (use_margin=False):
+      - Buying Power = Cash only
+
+    Returns:
+      Available buying power
+    """
+    if self.use_margin:
+      # Calculate total equity
+      # For simplicity, we'll use initial_equity as the base
+      # In reality, this would track unrealized P&L
+      # But for position limits, we use a simplified approach:
+      # Total buying power available = (Equity × multiplier) - used buying power
+
+      # Use initial equity as approximation (accounts don't track real-time P&L in buying power)
+      total_equity = self.initial_equity
+
+      # Calculate total buying power
+      total_buying_power = total_equity * self.margin_multiplier
+
+      # Calculate used buying power
+      used_buying_power = 0
+
+      # Long positions use their full value (1x)
+      for pos in self.long_positions.values():
+        used_buying_power += pos['units'] * pos['entry_price']
+
+      # Short positions also use their full value (1x), same as longs
+      for pos in self.short_positions.values():
+        short_value = pos['units'] * pos['entry_price']
+        used_buying_power += short_value  # 1x, same as longs
+
+      available = total_buying_power - used_buying_power
+      return max(0, available)
+    else:
+      # Cash account: only cash available
+      return max(0, self.cash)
 
   def _get_unit_size(self, total_equity, n_value):
     """
@@ -397,6 +466,10 @@ class TurtleUnifiedBacktester:
       'enable_system2': self.enable_system2,
       'balance_long_short_units': self.balance_long_short_units,
       'seed': self.seed,
+      'stop_loss_atr_multiplier': self.stop_loss_atr_multiplier,
+      'pyramid_atr_multiplier': self.pyramid_atr_multiplier,
+      'use_margin': self.use_margin,
+      'margin_multiplier': self.margin_multiplier,
     }
     # Create a stable hash of the configuration
     config_str = json.dumps(config_dict, sort_keys=True)
@@ -500,6 +573,10 @@ class TurtleUnifiedBacktester:
       'enable_system2': self.enable_system2,
       'balance_long_short_units': self.balance_long_short_units,
       'seed': self.seed,
+      'stop_loss_atr_multiplier': self.stop_loss_atr_multiplier,
+      'pyramid_atr_multiplier': self.pyramid_atr_multiplier,
+      'use_margin': self.use_margin,
+      'margin_multiplier': self.margin_multiplier,
       # Metrics
       **metrics
     }
@@ -1033,10 +1110,13 @@ class TurtleUnifiedBacktester:
       return None
 
     cost = unit_size * entry_price
-    if self.cash < cost:
+
+    # Check buying power (uses margin if enabled)
+    available_bp = self._get_available_buying_power()
+    if available_bp < cost:
       return None
 
-    stop_price = entry_price - 2 * n_value
+    stop_price = entry_price - self.stop_loss_atr_multiplier * n_value
 
     position_data = {
       'units': unit_size,
@@ -1148,15 +1228,18 @@ class TurtleUnifiedBacktester:
     if not self._can_add_long_unit():
       return None
 
-    # Pyramid trigger: initial_entry + (pyramid_count * 0.5N)
-    # This ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
-    pyramid_price = position['initial_entry_price'] + (position['pyramid_count'] * 0.5 * position['n_value'])
+    # Pyramid trigger: initial_entry + (pyramid_count * pyramid_atr_multiplier * N)
+    # Default 0.5N ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
+    pyramid_price = position['initial_entry_price'] + (position['pyramid_count'] * self.pyramid_atr_multiplier * position['n_value'])
 
     if today['high'] >= pyramid_price:
       unit_size = self._get_unit_size(total_equity, position['n_value'])
       if unit_size > 0:
         cost = unit_size * pyramid_price
-        if self.cash < cost:
+
+        # Check buying power (uses margin if enabled)
+        available_bp = self._get_available_buying_power()
+        if available_bp < cost:
           return None
 
         self.cash -= cost
@@ -1171,7 +1254,7 @@ class TurtleUnifiedBacktester:
         position['units'] = new_units
         position['entry_price'] = (position['entry_price'] * old_units + pyramid_price * unit_size) / new_units
         position['pyramid_count'] += 1
-        position['stop_price'] = pyramid_price - 2 * position['n_value']
+        position['stop_price'] = pyramid_price - self.stop_loss_atr_multiplier * position['n_value']
         
         return {
             'ticker': ticker,
@@ -1201,13 +1284,21 @@ class TurtleUnifiedBacktester:
     if unit_size == 0:
       return None
 
-    # For shorts, we need margin (use 50% of position value as simplified margin requirement)
-    margin_required = (unit_size * entry_price) * 0.5
-    if self.cash < margin_required:
+    # For shorts, check buying power
+    # Buying power consumption is 1x of short value (same as longs)
+    short_value = unit_size * entry_price
+    buying_power_required = short_value  # 1x, same as longs
+
+    # Check buying power (uses margin if enabled)
+    available_bp = self._get_available_buying_power()
+    if available_bp < buying_power_required:
       return None
 
+    # For cash tracking, we only deduct the margin held (50% of short value)
+    margin_held = short_value * 0.5
+
     # Short stop is ABOVE entry (price rises)
-    stop_price = entry_price + 2 * n_value
+    stop_price = entry_price + self.stop_loss_atr_multiplier * n_value
 
     position_data = {
       'units': unit_size,
@@ -1231,7 +1322,7 @@ class TurtleUnifiedBacktester:
     self.short_positions[ticker] = position_data
 
     # Deduct margin from cash
-    self.cash -= margin_required
+    self.cash -= margin_held
 
     # Safety check
     if self.cash < 0:
@@ -1332,18 +1423,26 @@ class TurtleUnifiedBacktester:
     if not self._can_add_short_unit():
       return None
 
-    # Pyramid trigger for shorts: initial_entry - (pyramid_count * 0.5N)
-    # This ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
-    pyramid_price = position['initial_entry_price'] - (position['pyramid_count'] * 0.5 * position['n_value'])
+    # Pyramid trigger for shorts: initial_entry - (pyramid_count * pyramid_atr_multiplier * N)
+    # Default 0.5N ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
+    pyramid_price = position['initial_entry_price'] - (position['pyramid_count'] * self.pyramid_atr_multiplier * position['n_value'])
 
     if today['low'] <= pyramid_price:
       unit_size = self._get_unit_size(total_equity, position['n_value'])
       if unit_size > 0:
-        margin_required = (unit_size * pyramid_price) * 0.5
-        if self.cash < margin_required:
+        # For shorts, check buying power
+        # Buying power consumption is 1x of short value (same as longs)
+        short_value = unit_size * pyramid_price
+        buying_power_required = short_value  # 1x, same as longs
+
+        # Check buying power (uses margin if enabled)
+        available_bp = self._get_available_buying_power()
+        if available_bp < buying_power_required:
           return None
 
-        self.cash -= margin_required
+        # For cash tracking, we only deduct the margin held (50% of short value)
+        margin_held = short_value * 0.5
+        self.cash -= margin_held
 
         # Safety check
         if self.cash < 0:
@@ -1356,7 +1455,7 @@ class TurtleUnifiedBacktester:
         position['entry_price'] = (position['entry_price'] * old_units + pyramid_price * unit_size) / new_units
         position['pyramid_count'] += 1
         # Short stop moves UP with entry
-        position['stop_price'] = pyramid_price + 2 * position['n_value']
+        position['stop_price'] = pyramid_price + self.stop_loss_atr_multiplier * position['n_value']
 
         return {
             'ticker': ticker,

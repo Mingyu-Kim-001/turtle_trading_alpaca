@@ -45,7 +45,7 @@ class TurtleTradingLS:
 
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
         universe_file='system_long_short/ticker_universe.txt', paper=True,
-        entry_margin=0.99, exit_margin=1.01, max_slippage=0.005,
+        entry_margin=0.995, exit_margin=1.005, max_slippage=0.005,
         enable_longs=True, enable_shorts=True,
         enable_system1=True, enable_system2=False,
         check_shortability=False, risk_per_unit=0.005):
@@ -116,8 +116,13 @@ class TurtleTradingLS:
       if self.check_shortability:
         self._load_shortable_tickers()
 
+    # Load fractionable tickers
+    self.fractionable_tickers = set()
+    self._load_fractionable_tickers()
+
     # Track daily PnL
-    self.daily_pnl = 0
+    self.daily_pnl = 0  # Realized P&L from closed positions
+    self.starting_equity = None  # Starting equity at market open
 
     # Log configuration
     config_parts = []
@@ -208,6 +213,26 @@ class TurtleTradingLS:
     except Exception as e:
       self.logger.log(f"Error loading shortable tickers: {e}", 'ERROR')
       self.shortable_tickers = set()
+
+  def _load_fractionable_tickers(self):
+    """
+    Load fractionable tickers from Alpaca
+
+    Checks asset.fractionable flag to determine which tickers support fractional trading.
+    If a ticker is not fractionable, position sizes will be rounded to whole shares.
+    """
+    try:
+      assets = self.trading_client.get_all_assets()
+      self.fractionable_tickers = {
+        asset.symbol for asset in assets
+        if (asset.tradable and
+            asset.fractionable and
+            asset.status == 'active')
+      }
+      self.logger.log(f"Loaded {len(self.fractionable_tickers)} fractionable tickers from Alpaca")
+    except Exception as e:
+      self.logger.log(f"Error loading fractionable tickers: {e}", 'ERROR')
+      self.fractionable_tickers = set()
 
   def _is_ticker_shortable(self, ticker):
     """
@@ -547,8 +572,8 @@ class TurtleTradingLS:
 
       stop_price = position['stop_price']
 
-      if current_price <= stop_price * 1.01:
-        self.logger.log(f"Long stop loss triggered for {ticker}: ${current_price:.2f} <= ${stop_price * 1.01:.2f}")
+      if current_price <= stop_price * 1.005:
+        self.logger.log(f"Long stop loss triggered for {ticker}: ${current_price:.2f} <= ${stop_price * 1.005:.2f}")
         self.exit_long_position(ticker, current_price, 'Stop loss')
 
   def check_short_stops(self):
@@ -568,8 +593,8 @@ class TurtleTradingLS:
 
       stop_price = position['stop_price']
 
-      if current_price >= stop_price * 0.99:
-        self.logger.log(f"Short stop loss triggered for {ticker}: ${current_price:.2f} >= ${stop_price * 0.99:.2f}")
+      if current_price >= stop_price * 0.995:
+        self.logger.log(f"Short stop loss triggered for {ticker}: ${current_price:.2f} >= ${stop_price * 0.995:.2f}")
         self.exit_short_position(ticker, current_price, 'Stop loss')
 
   def check_long_exit_signals(self):
@@ -681,7 +706,7 @@ class TurtleTradingLS:
         )
 
         # Check if current price is within trigger threshold (like entry queue logic)
-        trigger_threshold = pyramid_entry_price * 0.99
+        trigger_threshold = pyramid_entry_price * 0.995
         if current_price < trigger_threshold:
           self.logger.log(f"LONG {ticker}: Price not at trigger yet ({current_price:.2f} < {trigger_threshold:.2f})")
           continue
@@ -781,7 +806,7 @@ class TurtleTradingLS:
         )
 
         # Check if current price is within trigger threshold (like entry queue logic)
-        trigger_threshold = pyramid_entry_price * 1.01
+        trigger_threshold = pyramid_entry_price * 1.005
         if current_price > trigger_threshold:
           self.logger.log(f"SHORT {ticker}: Price not at trigger yet ({current_price:.2f} > {trigger_threshold:.2f})")
           continue
@@ -892,13 +917,15 @@ class TurtleTradingLS:
 
       # Check entry trigger
       if side == 'long':
-        entry_trigger = signal['entry_price'] * 0.99
+        entry_trigger = signal['entry_price'] * 0.995
         system = signal.get('system', 1)  # Get system from signal
         current_str = f"${current_price:.2f}" if current_price is not None else "None"
         self.logger.log(f"[DEBUG] LONG {ticker} (S{system}): entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price >= entry_trigger:
+          # Check if ticker supports fractional shares
+          is_fractionable = ticker in self.fractionable_tickers
           units = self.position_manager.calculate_position_size(
-            total_equity, signal['n'], self.risk_per_unit
+            total_equity, signal['n'], self.risk_per_unit, fractional=is_fractionable
           )
           cost = units * signal['entry_price']
           self.logger.log(f"[DEBUG] {ticker}: units={units}, cost=${cost:,.2f}, buying_power=${buying_power:,.2f}")
@@ -924,13 +951,15 @@ class TurtleTradingLS:
           self.logger.log(f"[DEBUG] {ticker}: Price not at trigger yet ({current_price:.2f} < {entry_trigger:.2f})")
 
       else:  # short
-        entry_trigger = signal['entry_price'] * 1.01
+        entry_trigger = signal['entry_price'] * 1.005
         system = signal.get('system', 1)  # Get system from signal
         current_str = f"${current_price:.2f}" if current_price is not None else "None"
         self.logger.log(f"[DEBUG] SHORT {ticker} (S{system}): entry_price=${signal['entry_price']:.2f}, trigger=${entry_trigger:.2f}, current={current_str}")
         if current_price <= entry_trigger:
+          # Check if ticker supports fractional shares
+          is_fractionable = ticker in self.fractionable_tickers
           units = self.position_manager.calculate_position_size(
-            total_equity, signal['n'], self.risk_per_unit
+            total_equity, signal['n'], self.risk_per_unit, fractional=is_fractionable
           )
           margin_required = self.position_manager.calculate_margin_required(
             units, signal['entry_price']
@@ -1253,6 +1282,9 @@ class TurtleTradingLS:
 
     account = self.trading_client.get_account()
 
+    # Capture starting equity for daily P&L calculation
+    self.starting_equity = float(account.equity)
+
     summary = {
       "Equity": f"${float(account.equity):,.2f}",
       "Buying Power": f"${float(account.buying_power):,.2f}",
@@ -1348,9 +1380,20 @@ class TurtleTradingLS:
     orders_placed = len([o for o in daily_orders if o['status'] == 'PLACED'])
     orders_filled = len([o for o in daily_orders if o['status'] == 'FILLED'])
 
+    # Calculate total daily P&L (including unrealized)
+    current_equity = float(account.equity) if account else None
+    if current_equity and self.starting_equity:
+      total_pnl = current_equity - self.starting_equity
+      unrealized_pnl = total_pnl - self.daily_pnl
+    else:
+      total_pnl = None
+      unrealized_pnl = None
+
     summary = {
-      "Daily P&L": f"${self.daily_pnl:,.2f}",
-      "Equity": f"${float(account.equity):,.2f}" if account else "N/A",
+      "Total Daily P&L": f"${total_pnl:,.2f}" if total_pnl is not None else "N/A",
+      "Realized P&L": f"${self.daily_pnl:,.2f}",
+      "Unrealized P&L": f"${unrealized_pnl:,.2f}" if unrealized_pnl is not None else "N/A",
+      "Equity": f"${current_equity:,.2f}" if current_equity else "N/A",
       "Buying Power": f"${float(account.buying_power):,.2f}" if account else "N/A",
       "Long Positions": len(self.state.long_positions),
       "Short Positions": len(self.state.short_positions),
@@ -1360,8 +1403,9 @@ class TurtleTradingLS:
 
     self.slack.send_summary("📊 Daily Summary", summary)
 
-    # Reset daily PnL
+    # Reset daily PnL and starting equity
     self.daily_pnl = 0
+    self.starting_equity = None
 
   def exit_all_positions_market(self):
     """Emergency exit all positions using market orders"""

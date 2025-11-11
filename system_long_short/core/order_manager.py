@@ -54,7 +54,7 @@ class OrderManager:
 
     Args:
       ticker: Stock symbol
-      units: Number of shares
+      units: Number of shares (can be fractional)
       target_price: Target entry price
       n: Current ATR
       is_pyramid: Whether this is a pyramid order
@@ -64,7 +64,8 @@ class OrderManager:
       Tuple of (success, order_id, filled_price)
     """
     try:
-      units = int(units)
+      # Round to 9 decimal places for Alpaca's precision
+      units = round(float(units), 9)
       if units <= 0:
         self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
         return False, None, None
@@ -77,7 +78,7 @@ class OrderManager:
 
       order_type = f"Long Pyramid Level {pyramid_level}" if is_pyramid else "Long Initial Entry"
       self._log(f"Placing {order_type.lower()} order for {ticker}: "
-           f"units={units}, stop=${stop_price:.2f}, limit=${limit_price:.2f}")
+           f"units={units:.4f}, stop=${stop_price:.2f}, limit=${limit_price:.2f}")
 
       # Place stop-limit buy order
       order_data = StopLimitOrderRequest(
@@ -97,7 +98,7 @@ class OrderManager:
         "Ticker": ticker,
         "Type": order_type,
         "Order ID": order_id,
-        "Units": units,
+        "Units": f"{units:.4f}",
         "Stop Price": f"${stop_price:.2f}",
         "Limit Price": f"${limit_price:.2f}",
         "Status": "PENDING"
@@ -151,7 +152,7 @@ class OrderManager:
 
     Args:
       ticker: Stock symbol
-      units: Number of shares
+      units: Number of shares (can be fractional)
       target_price: Target entry price
       n: Current ATR
       is_pyramid: Whether this is a pyramid order
@@ -161,7 +162,8 @@ class OrderManager:
       Tuple of (success, order_id, filled_price)
     """
     try:
-      units = int(units)
+      # Round to 9 decimal places for Alpaca's precision
+      units = round(float(units), 9)
       if units <= 0:
         self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
         return False, None, None
@@ -174,7 +176,7 @@ class OrderManager:
 
       order_type = f"Short Pyramid Level {pyramid_level}" if is_pyramid else "Short Initial Entry"
       self._log(f"Placing {order_type.lower()} order for {ticker}: "
-           f"units={units}, stop=${stop_price:.2f}, limit=${limit_price:.2f}")
+           f"units={units:.4f}, stop=${stop_price:.2f}, limit=${limit_price:.2f}")
 
       # Place stop-limit sell short order
       order_data = StopLimitOrderRequest(
@@ -194,7 +196,7 @@ class OrderManager:
         "Ticker": ticker,
         "Type": order_type,
         "Order ID": order_id,
-        "Units": units,
+        "Units": f"{units:.4f}",
         "Stop Price": f"${stop_price:.2f}",
         "Limit Price": f"${limit_price:.2f}",
         "Status": "PENDING"
@@ -290,7 +292,10 @@ class OrderManager:
       stop_price = round(target_price * self.exit_margin, 2)
       limit_price = round(stop_price * 0.995, 2)
 
-      self._log(f"Placing long exit order for {ticker}: units={units}, "
+      # Round units to 8 decimal places for Alpaca's precision
+      units = round(float(units), 8)
+
+      self._log(f"Placing long exit order for {ticker}: units={units:.4f}, "
            f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
 
       # Place stop-limit sell order with retry logic
@@ -302,7 +307,7 @@ class OrderManager:
         try:
           order_data = StopLimitOrderRequest(
             symbol=ticker,
-            qty=int(units),
+            qty=units,
             side=OrderSide.SELL,
             time_in_force=TimeInForce.DAY,
             stop_price=stop_price,
@@ -317,7 +322,7 @@ class OrderManager:
             "Ticker": ticker,
             "Reason": reason,
             "Order ID": order_id,
-            "Units": int(units),
+            "Units": f"{units:.4f}",
             "Stop Price": f"${stop_price:.2f}",
             "Limit Price": f"${limit_price:.2f}",
             "Status": "PENDING"
@@ -326,7 +331,7 @@ class OrderManager:
           if self.logger:
             self.logger.log_order('LONG_EXIT', ticker, 'PLACED', {
               'order_id': order_id,
-              'units': int(units),
+              'units': units,
               'stop_price': stop_price,
               'limit_price': limit_price,
               'reason': reason
@@ -381,7 +386,7 @@ class OrderManager:
         if self.logger:
           self.logger.log_order('LONG_EXIT', ticker, 'FILLED', {
             'order_id': order_id,
-            'units': int(units),
+            'units': units,
             'filled_price': filled_price
           })
 
@@ -420,13 +425,16 @@ class OrderManager:
       stop_price = round(target_price * self.entry_margin, 2)
       limit_price = round(stop_price * 1.005, 2)
 
-      self._log(f"Placing short exit order for {ticker}: units={units}, "
+      # Round units to 8 decimal places for Alpaca's precision
+      units = round(float(units), 8)
+
+      self._log(f"Placing short exit order for {ticker}: units={units:.4f}, "
            f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
 
       # Place stop-limit buy order to cover
       order_data = StopLimitOrderRequest(
         symbol=ticker,
-        qty=int(units),
+        qty=units,
         side=OrderSide.BUY,
         time_in_force=TimeInForce.DAY,
         stop_price=stop_price,
@@ -441,7 +449,7 @@ class OrderManager:
         "Ticker": ticker,
         "Reason": reason,
         "Order ID": order_id,
-        "Units": int(units),
+        "Units": f"{units:.4f}",
         "Stop Price": f"${stop_price:.2f}",
         "Limit Price": f"${limit_price:.2f}",
         "Status": "PENDING"
@@ -450,7 +458,7 @@ class OrderManager:
       if self.logger:
         self.logger.log_order('SHORT_EXIT', ticker, 'PLACED', {
           'order_id': order_id,
-          'units': int(units),
+          'units': units,
           'stop_price': stop_price,
           'limit_price': limit_price,
           'reason': reason
@@ -480,7 +488,7 @@ class OrderManager:
         if self.logger:
           self.logger.log_order('SHORT_EXIT', ticker, 'FILLED', {
             'order_id': order_id,
-            'units': int(units),
+            'units': units,
             'filled_price': filled_price
           })
 
@@ -514,12 +522,15 @@ class OrderManager:
       Tuple of (success, order_id, filled_price)
     """
     try:
+      # Round units to 8 decimal places for Alpaca's precision
+      units = round(float(units), 8)
+
       order_side = OrderSide.SELL if side == 'long' else OrderSide.BUY
-      self._log(f"Placing MARKET {order_side.name.lower()} order for {ticker}: {int(units)} units")
+      self._log(f"Placing MARKET {order_side.name.lower()} order for {ticker}: {units:.4f} units")
 
       order_data = MarketOrderRequest(
         symbol=ticker,
-        qty=int(units),
+        qty=units,
         side=order_side,
         time_in_force=TimeInForce.DAY
       )
@@ -531,7 +542,7 @@ class OrderManager:
       if self.logger:
         self.logger.log_order(f'{side.upper()}_EXIT_MARKET', ticker, 'PLACED', {
           'order_id': order_id,
-          'units': int(units),
+          'units': units,
           'order_type': 'MARKET'
         })
 
@@ -567,7 +578,7 @@ class OrderManager:
         if self.logger:
           self.logger.log_order(f'{side.upper()}_EXIT_MARKET', ticker, 'FILLED', {
             'order_id': order_id,
-            'units': int(units),
+            'units': units,
             'filled_price': filled_price
           })
 
