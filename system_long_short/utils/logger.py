@@ -85,7 +85,7 @@ class DailyLogger:
     with open(state_log_file, 'w') as f:
       json.dump(self.state_snapshots, f, indent=2)
 
-    self.log(f"State snapshot saved: {label} (pending_pyramids={len(state.pending_pyramid_orders)}, pending_entries={len(state.pending_entry_orders)})")
+    self.log(f"State snapshot saved: {label} (pending_pyramids={len(state.pending_pyramid_orders)}, pending_entries={len(state.pending_entry_orders)}, pending_exits={len(getattr(state, 'pending_exit_orders', {}))})")
 
   def get_daily_orders(self):
     """Get all orders logged today"""

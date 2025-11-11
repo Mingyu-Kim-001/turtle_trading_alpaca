@@ -1116,6 +1116,10 @@ class TurtleUnifiedBacktester:
     if available_bp < cost:
       return None
 
+    # For longs, also check if we have enough cash (even with margin, you need cash to buy)
+    if self.cash < cost:
+      return None
+
     stop_price = entry_price - self.stop_loss_atr_multiplier * n_value
 
     position_data = {
@@ -1242,6 +1246,10 @@ class TurtleUnifiedBacktester:
         if available_bp < cost:
           return None
 
+        # For longs, also check if we have enough cash (even with margin, you need cash to buy)
+        if self.cash < cost:
+          return None
+
         self.cash -= cost
 
         # Safety check
@@ -1296,6 +1304,10 @@ class TurtleUnifiedBacktester:
 
     # For cash tracking, we only deduct the margin held (50% of short value)
     margin_held = short_value * 0.5
+
+    # Check if we have enough cash for the margin requirement
+    if self.cash < margin_held:
+      return None
 
     # Short stop is ABOVE entry (price rises)
     stop_price = entry_price + self.stop_loss_atr_multiplier * n_value
@@ -1442,6 +1454,11 @@ class TurtleUnifiedBacktester:
 
         # For cash tracking, we only deduct the margin held (50% of short value)
         margin_held = short_value * 0.5
+
+        # Check if we have enough cash for the margin requirement
+        if self.cash < margin_held:
+          return None
+
         self.cash -= margin_held
 
         # Safety check
@@ -1572,11 +1589,24 @@ Examples:
   ENABLE_SYSTEM2 = not args.no_system2
   CHECK_SHORTABILITY = args.check_shortability
 
+  # Get API credentials from .env file or environment
+  import sys
+  sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+  try:
+    from system_long_short.utils.config import BacktesterConfig
+    config = BacktesterConfig()
+    alpaca_key = config.alpaca_key
+    alpaca_secret = config.alpaca_secret
+    print(f"Loaded API credentials from .env file")
+  except Exception as e:
+    print(f"Warning: Could not load .env file ({e}), trying environment variables")
+    alpaca_key = os.environ.get('ALPACA_PAPER_KEY')
+    alpaca_secret = os.environ.get('ALPACA_PAPER_SECRET')
+
   # Optionally fetch shortable tickers from Alpaca
   shortable_tickers = None
   if CHECK_SHORTABILITY:
-    alpaca_key = os.environ.get('ALPACA_PAPER_KEY')
-    alpaca_secret = os.environ.get('ALPACA_PAPER_SECRET')
     if alpaca_key and alpaca_secret:
       shortable_tickers = get_shortable_tickers_from_alpaca(alpaca_key, alpaca_secret)
     else:

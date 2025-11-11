@@ -67,6 +67,38 @@ This system implements the **dual Turtle Trading system** with short selling sup
 
 **Backtesting shows the dual system significantly outperforms single-system approaches** due to the combination of quick profits (System 1) and large trend captures (System 2).
 
+### Whipsaw Protection (System 1 Only)
+
+System 1 implements a **win filter** to avoid whipsaws in choppy markets:
+
+**Filter Rule:**
+- ✅ **After a LOSING trade**: Take the next System 1 entry signal
+- ❌ **After a WINNING trade**: Skip the next System 1 entry signal
+- ✅ **System 2 entries**: Always taken (no filter)
+
+**Breaking Condition:**
+The win filter is automatically reset when price moves to the opposite breakout:
+- **Long positions**: Reset when price breaks below 20-day low
+- **Short positions**: Reset when price breaks above 20-day high
+
+**Example Flow (Long):**
+1. Enter AAPL long on 20-day high breakout → Exit with profit
+2. AAPL triggers another 20-day high → **SKIP** (win filter active)
+3. AAPL breaks below 20-day low → **Reset filter** (opposite signal)
+4. AAPL triggers 20-day high again → **TAKE ENTRY** (filter cleared)
+
+**Why This Works:**
+- After a quick win, the market may be choppy → Skip to avoid whipsaw
+- If price reverses to opposite breakout → Market regime has changed → Reset filter
+- Prevents permanent blocking while still protecting against whipsaws
+
+**Single System Considerations:**
+When running **System 1 only** (without System 2):
+- The breaking condition is CRITICAL to avoid permanent blocking
+- Without it, winning tickers would be blocked forever
+- The opposite breakout acts as a "regime change" indicator
+- System 2 would normally provide an alternative entry, but isn't available
+
 ### Risk Management
 - Position sizing: 1% of equity per unit risk
 - Stop loss: 2N from entry price (N = 20-day ATR)

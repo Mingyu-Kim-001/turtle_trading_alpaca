@@ -449,7 +449,7 @@ class TurtleTradingLS:
 
     return False
 
-  def exit_long_position(self, ticker, target_price, reason):
+  def exit_long_position(self, ticker, target_price, reason, is_stop_loss=False):
     """Exit entire long position"""
     if ticker not in self.state.long_positions:
       self.logger.log(f"No long position found for {ticker}", 'ERROR')
@@ -462,7 +462,7 @@ class TurtleTradingLS:
 
     # Place exit order
     success, order_id, filled_price = self.order_manager.place_long_exit_order(
-      ticker, total_units, target_price, reason
+      ticker, total_units, target_price, reason, is_stop_loss=is_stop_loss
     )
 
     if success and filled_price:
@@ -490,7 +490,7 @@ class TurtleTradingLS:
       self.slack.send_summary(f"{emoji} LONG EXIT EXECUTED", {
         "Ticker": ticker,
         "Reason": reason,
-        "Units": int(total_units),
+        "Units": f"{total_units:.4f}",
         "Exit Price": f"${filled_price:.2f}",
         "Entry Value": f"${entry_value:,.2f}",
         "Exit Value": f"${exit_value:,.2f}",
@@ -499,10 +499,18 @@ class TurtleTradingLS:
       })
 
       return True
+    elif success and order_id:
+      # Order placed but not filled immediately - mark as pending
+      if not hasattr(self.state, 'pending_exit_orders'):
+        self.state.pending_exit_orders = {}
+      self.state.pending_exit_orders[ticker] = order_id
+      self.state.save_state()
+      self.logger.log(f"Long exit order for {ticker} is pending (order ID: {order_id})")
+      return True
 
     return False
 
-  def exit_short_position(self, ticker, target_price, reason):
+  def exit_short_position(self, ticker, target_price, reason, is_stop_loss=False):
     """Exit entire short position"""
     if ticker not in self.state.short_positions:
       self.logger.log(f"No short position found for {ticker}", 'ERROR')
@@ -515,7 +523,7 @@ class TurtleTradingLS:
 
     # Place exit order (buy to cover)
     success, order_id, filled_price = self.order_manager.place_short_exit_order(
-      ticker, total_units, target_price, reason
+      ticker, total_units, target_price, reason, is_stop_loss=is_stop_loss
     )
 
     if success and filled_price:
@@ -543,7 +551,7 @@ class TurtleTradingLS:
       self.slack.send_summary(f"{emoji} SHORT EXIT EXECUTED", {
         "Ticker": ticker,
         "Reason": reason,
-        "Units": int(total_units),
+        "Units": f"{total_units:.4f}",
         "Exit Price": f"${filled_price:.2f}",
         "Entry Value": f"${entry_value:,.2f}",
         "Exit Value": f"${exit_value:,.2f}",
@@ -552,8 +560,108 @@ class TurtleTradingLS:
       })
 
       return True
+    elif success and order_id:
+      # Order placed but not filled immediately - mark as pending
+      if not hasattr(self.state, 'pending_exit_orders'):
+        self.state.pending_exit_orders = {}
+      self.state.pending_exit_orders[ticker] = order_id
+      self.state.save_state()
+      self.logger.log(f"Short exit order for {ticker} is pending (order ID: {order_id})")
+      return True
 
     return False
+
+  def cleanup_entry_queue_for_removed_tickers(self):
+    """Remove entry signals for tickers no longer in universe"""
+    if not self.state.entry_queue:
+      return
+
+    initial_count = len(self.state.entry_queue)
+    removed_tickers = []
+
+    # Filter out signals for tickers not in current universe
+    filtered_queue = []
+    for signal in self.state.entry_queue:
+      if signal['ticker'] in self.universe:
+        filtered_queue.append(signal)
+      else:
+        removed_tickers.append(f"{signal['ticker']} ({signal.get('side', 'long')})")
+
+    if removed_tickers:
+      self.state.entry_queue = filtered_queue
+      self.state.save_state()
+      self.logger.log(
+        f"Cleaned entry queue: removed {len(removed_tickers)} signal(s) for tickers no longer in universe: {', '.join(removed_tickers)}",
+        'INFO'
+      )
+      self.logger.log(f"Entry queue: {initial_count} -> {len(filtered_queue)} signals")
+
+  def detect_and_adjust_for_deposits_withdrawals(self):
+    """
+    Detect mid-session deposits/withdrawals and adjust starting_equity baseline
+
+    This ensures daily PnL reports are accurate even if cash is added/removed during trading.
+    Compares actual equity with expected equity (starting + realized + unrealized P&L).
+    """
+    if self.starting_equity is None:
+      return
+
+    try:
+      account = self.trading_client.get_account()
+      current_equity = float(account.equity)
+
+      # Calculate unrealized P&L from all positions
+      unrealized_pnl = 0
+
+      # Batch fetch prices for all positions
+      all_tickers = list(self.state.long_positions.keys()) + list(self.state.short_positions.keys())
+      if all_tickers:
+        current_prices = self.data_provider.get_current_prices_batch(all_tickers)
+
+        for ticker, position in self.state.long_positions.items():
+          current_price = current_prices.get(ticker)
+          if current_price:
+            _, _, _, pnl, _ = self.position_manager.calculate_long_position_pnl(position, current_price)
+            unrealized_pnl += pnl
+
+        for ticker, position in self.state.short_positions.items():
+          current_price = current_prices.get(ticker)
+          if current_price:
+            _, _, _, pnl, _ = self.position_manager.calculate_short_position_pnl(position, current_price)
+            unrealized_pnl += pnl
+
+      # Expected equity = starting equity + realized P&L + unrealized P&L
+      expected_equity = self.starting_equity + self.daily_pnl + unrealized_pnl
+      equity_diff = current_equity - expected_equity
+
+      # Use threshold of $100 to avoid false positives from rounding/slippage
+      if abs(equity_diff) > 100:
+        change_type = "Deposit" if equity_diff > 0 else "Withdrawal"
+        self.logger.log(
+          f"Account balance change detected: ${equity_diff:+,.2f}",
+          'WARNING'
+        )
+        self.logger.log(f"  → {change_type} detected: ${abs(equity_diff):,.2f}", 'WARNING')
+
+        # Adjust starting equity to maintain accurate daily P&L
+        self.starting_equity += equity_diff
+        self.logger.log(
+          f"  → Adjusted starting equity baseline: ${self.starting_equity:,.2f}",
+          'WARNING'
+        )
+
+        # Send Slack notification
+        emoji = "💰" if equity_diff > 0 else "💸"
+        self.slack.send_summary(f"{emoji} Account Balance Change Detected", {
+          "Type": change_type,
+          "Amount": f"${abs(equity_diff):,.2f}",
+          "New Starting Equity": f"${self.starting_equity:,.2f}",
+          "Current Equity": f"${current_equity:,.2f}",
+          "Note": "Daily P&L baseline adjusted"
+        })
+
+    except Exception as e:
+      self.logger.log(f"Error detecting deposits/withdrawals: {e}", 'ERROR')
 
   def check_long_stops(self):
     """Check if any long positions hit stop loss"""
@@ -565,6 +673,10 @@ class TurtleTradingLS:
     current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in list(self.state.long_positions.items()):
+      # Enhanced logging for removed tickers
+      if ticker not in self.universe:
+        self.logger.log(f"Managing long position for {ticker} (removed from universe)", 'INFO')
+
       current_price = current_prices.get(ticker)
 
       if current_price is None:
@@ -574,7 +686,7 @@ class TurtleTradingLS:
 
       if current_price <= stop_price * 1.005:
         self.logger.log(f"Long stop loss triggered for {ticker}: ${current_price:.2f} <= ${stop_price * 1.005:.2f}")
-        self.exit_long_position(ticker, current_price, 'Stop loss')
+        self.exit_long_position(ticker, current_price, 'Stop loss', is_stop_loss=True)
 
   def check_short_stops(self):
     """Check if any short positions hit stop loss"""
@@ -586,6 +698,10 @@ class TurtleTradingLS:
     current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in list(self.state.short_positions.items()):
+      # Enhanced logging for removed tickers
+      if ticker not in self.universe:
+        self.logger.log(f"Managing short position for {ticker} (removed from universe)", 'INFO')
+
       current_price = current_prices.get(ticker)
 
       if current_price is None:
@@ -595,7 +711,7 @@ class TurtleTradingLS:
 
       if current_price >= stop_price * 0.995:
         self.logger.log(f"Short stop loss triggered for {ticker}: ${current_price:.2f} >= ${stop_price * 0.995:.2f}")
-        self.exit_short_position(ticker, current_price, 'Stop loss')
+        self.exit_short_position(ticker, current_price, 'Stop loss', is_stop_loss=True)
 
   def check_long_exit_signals(self):
     """Check if any long positions hit exit signals"""
@@ -607,6 +723,14 @@ class TurtleTradingLS:
     current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in list(self.state.long_positions.items()):
+      # Enhanced logging for removed tickers
+      if ticker not in self.universe:
+        self.logger.log(f"Checking exit signals for long {ticker} (removed from universe)", 'INFO')
+
+      # Check for pending exit order to prevent duplicates
+      if ticker in getattr(self.state, 'pending_exit_orders', {}):
+        continue
+
       df = self.data_provider.get_historical_data(ticker, days=30)
       if df is None:
         continue
@@ -635,6 +759,14 @@ class TurtleTradingLS:
     current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in list(self.state.short_positions.items()):
+      # Enhanced logging for removed tickers
+      if ticker not in self.universe:
+        self.logger.log(f"Checking exit signals for short {ticker} (removed from universe)", 'INFO')
+
+      # Check for pending exit order to prevent duplicates
+      if ticker in getattr(self.state, 'pending_exit_orders', {}):
+        continue
+
       df = self.data_provider.get_historical_data(ticker, days=30)
       if df is None:
         continue
@@ -665,6 +797,10 @@ class TurtleTradingLS:
     current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in self.state.long_positions.items():
+      # Enhanced logging for removed tickers
+      if ticker not in self.universe:
+        self.logger.log(f"Checking pyramid opportunities for long {ticker} (removed from universe)", 'INFO')
+
       # Check limits
       if not self.position_manager.can_pyramid(position):
         continue
@@ -765,6 +901,10 @@ class TurtleTradingLS:
     current_prices = self.data_provider.get_current_prices_batch(tickers)
 
     for ticker, position in self.state.short_positions.items():
+      # Enhanced logging for removed tickers
+      if ticker not in self.universe:
+        self.logger.log(f"Checking pyramid opportunities for short {ticker} (removed from universe)", 'INFO')
+
       # Check limits
       if not self.position_manager.can_pyramid(position):
         continue
@@ -1093,7 +1233,73 @@ class TurtleTradingLS:
           self.state.save_state()
 
         elif order.status in [OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
-          self.logger.log(f"Pending entry order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+          # Check for partial fills before removing
+          filled_qty = float(order.filled_qty) if order.filled_qty else 0
+
+          if filled_qty > 0:
+            self.logger.log(
+              f"Pending entry order for {ticker} ({order_id}) is {order.status} with PARTIAL FILL: "
+              f"{filled_qty}/{order.qty} filled",
+              'WARNING'
+            )
+
+            # Process the partial fill
+            filled_price = float(order.filled_avg_price)
+            side = order.side.name.lower()
+
+            # Get current data to calculate N
+            df = self.data_provider.get_historical_data(ticker, days=30)
+            if df is not None:
+              df = self.indicator_calculator.calculate_indicators(df)
+              n = df['N'].iloc[-1]
+
+              # Create position based on side
+              if side == 'buy':  # Long position
+                if ticker not in self.state.long_positions:
+                  self.state.long_positions[ticker] = self.position_manager.create_new_long_position(
+                    filled_qty, filled_price, n, order_id
+                  )
+                  self.logger.log(f"Created long position for {ticker}: {filled_qty:.4f} units @ ${filled_price:.2f} (partial fill)")
+
+                  # Send notification
+                  stop_price = self.state.long_positions[ticker]['stop_price']
+                  total_equity = self.get_total_equity()
+                  self.slack.send_summary("🟢 LONG ENTRY EXECUTED (Partial Fill)", {
+                    "Ticker": ticker,
+                    "Type": "Long initial entry",
+                    "Units": f"{filled_qty:.4f}",
+                    "Requested": f"{order.qty}",
+                    "Price": f"${filled_price:.2f}",
+                    "Cost": f"${filled_qty * filled_price:,.2f}",
+                    "Stop Price": f"${stop_price:.2f}",
+                    "Total Equity": f"${total_equity:,.2f}",
+                    "Note": f"Partial fill - order {order.status}"
+                  })
+              else:  # Short position
+                if ticker not in self.state.short_positions:
+                  self.state.short_positions[ticker] = self.position_manager.create_new_short_position(
+                    filled_qty, filled_price, n, order_id
+                  )
+                  self.logger.log(f"Created short position for {ticker}: {filled_qty:.4f} units @ ${filled_price:.2f} (partial fill)")
+
+                  # Send notification
+                  stop_price = self.state.short_positions[ticker]['stop_price']
+                  total_equity = self.get_total_equity()
+                  margin_required = self.position_manager.calculate_margin_required(filled_qty, filled_price)
+                  self.slack.send_summary("🔴 SHORT ENTRY EXECUTED (Partial Fill)", {
+                    "Ticker": ticker,
+                    "Type": "Short initial entry",
+                    "Units": f"{filled_qty:.4f}",
+                    "Requested": f"{order.qty}",
+                    "Price": f"${filled_price:.2f}",
+                    "Margin": f"${margin_required:,.2f}",
+                    "Stop Price": f"${stop_price:.2f}",
+                    "Total Equity": f"${total_equity:,.2f}",
+                    "Note": f"Partial fill - order {order.status}"
+                  })
+          else:
+            self.logger.log(f"Pending entry order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+
           del self.state.pending_entry_orders[ticker]
           self.state.save_state()
 
@@ -1196,7 +1402,76 @@ class TurtleTradingLS:
           self.state.save_state()
 
         elif order.status in [OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
-          self.logger.log(f"Pending pyramid order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+          # Check for partial fills before removing
+          filled_qty = float(order.filled_qty) if order.filled_qty else 0
+
+          if filled_qty > 0:
+            self.logger.log(
+              f"Pending pyramid order for {ticker} ({order_id}) is {order.status} with PARTIAL FILL: "
+              f"{filled_qty}/{order.qty} filled",
+              'WARNING'
+            )
+
+            # Process the partial fill
+            filled_price = float(order.filled_avg_price)
+            side = order.side.name.lower()
+
+            # Update the position with the partially filled pyramid unit
+            if side == 'buy' and ticker in self.state.long_positions:
+              position = self.state.long_positions[ticker]
+              initial_n = position.get('initial_n')
+              pyramid_level = len(position['pyramid_units']) + 1
+
+              self.state.long_positions[ticker] = self.position_manager.add_pyramid_unit(
+                position, filled_qty, filled_price, initial_n, order_id
+              )
+              self.logger.log(f"Added pyramid unit to long position {ticker}: level {pyramid_level}, {filled_qty:.4f} units @ ${filled_price:.2f} (partial fill)")
+
+              # Send notification
+              stop_price = self.state.long_positions[ticker]['stop_price']
+              total_equity = self.get_total_equity()
+              self.slack.send_summary("🟢 LONG PYRAMID EXECUTED (Partial Fill)", {
+                "Ticker": ticker,
+                "Type": f"Long pyramid level {pyramid_level}",
+                "Units": f"{filled_qty:.4f}",
+                "Requested": f"{order.qty}",
+                "Price": f"${filled_price:.2f}",
+                "Cost": f"${filled_qty * filled_price:,.2f}",
+                "Stop Price": f"${stop_price:.2f}",
+                "Total Equity": f"${total_equity:,.2f}",
+                "Note": f"Partial fill - order {order.status}"
+              })
+
+            elif side == 'sell' and ticker in self.state.short_positions:
+              position = self.state.short_positions[ticker]
+              initial_n = position.get('initial_n')
+              pyramid_level = len(position['pyramid_units']) + 1
+
+              self.state.short_positions[ticker] = self.position_manager.add_pyramid_unit(
+                position, filled_qty, filled_price, initial_n, order_id
+              )
+              self.logger.log(f"Added pyramid unit to short position {ticker}: level {pyramid_level}, {filled_qty:.4f} units @ ${filled_price:.2f} (partial fill)")
+
+              # Send notification
+              stop_price = self.state.short_positions[ticker]['stop_price']
+              total_equity = self.get_total_equity()
+              margin_required = self.position_manager.calculate_margin_required(filled_qty, filled_price)
+              self.slack.send_summary("🔴 SHORT PYRAMID EXECUTED (Partial Fill)", {
+                "Ticker": ticker,
+                "Type": f"Short pyramid level {pyramid_level}",
+                "Units": f"{filled_qty:.4f}",
+                "Requested": f"{order.qty}",
+                "Price": f"${filled_price:.2f}",
+                "Margin": f"${margin_required:,.2f}",
+                "Stop Price": f"${stop_price:.2f}",
+                "Total Equity": f"${total_equity:,.2f}",
+                "Note": f"Partial fill - order {order.status}"
+              })
+            else:
+              self.logger.log(f"Warning: Partial fill for pyramid order {ticker} but position not found or side mismatch", 'WARNING')
+          else:
+            self.logger.log(f"Pending pyramid order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+
           del self.state.pending_pyramid_orders[ticker]
           self.state.save_state()
 
@@ -1212,6 +1487,246 @@ class TurtleTradingLS:
         # Remove from tracking after attempting cancellation
         del self.state.pending_pyramid_orders[ticker]
         self.state.save_state()
+
+    # Check pending exit orders
+    if hasattr(self.state, 'pending_exit_orders'):
+      for ticker, order_id in list(self.state.pending_exit_orders.items()):
+        try:
+          order = self.trading_client.get_order_by_id(order_id)
+
+          if order.status == OrderStatus.FILLED:
+            self.logger.log(f"Pending exit order for {ticker} ({order_id}) has FILLED. Closing position.")
+
+            # Get filled details
+            filled_qty = float(order.filled_qty)
+            filled_price = float(order.filled_avg_price)
+            side = order.side.name.lower()
+
+            # Determine if this was a long or short exit
+            if side == 'sell' and ticker in self.state.long_positions:
+              # Long exit (sell)
+              position = self.state.long_positions[ticker]
+              _, entry_value, exit_value, pnl, pnl_pct = self.position_manager.calculate_long_position_pnl(
+                position, filled_price
+              )
+
+              # Track daily PnL
+              self.daily_pnl += pnl
+
+              # Update win tracking for System 1 only
+              if position.get('system') == 1:
+                self.state.last_trade_was_win[(ticker, 'long')] = pnl > 0
+                self.logger.log(f"System 1 long trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
+
+              # Remove position
+              del self.state.long_positions[ticker]
+
+              total_equity = self.get_total_equity()
+
+              # Send notification
+              emoji = "🟢" if pnl > 0 else "🔴"
+              self.slack.send_summary(f"{emoji} LONG EXIT EXECUTED (Pending Order Filled)", {
+                "Ticker": ticker,
+                "Units": f"{filled_qty:.4f}",
+                "Exit Price": f"${filled_price:.2f}",
+                "Entry Value": f"${entry_value:,.2f}",
+                "Exit Value": f"${exit_value:,.2f}",
+                "P&L": f"${pnl:,.2f} ({pnl_pct:.2f}%)",
+                "Total Equity": f"${total_equity:,.2f}"
+              })
+
+            elif side == 'buy' and ticker in self.state.short_positions:
+              # Short exit (buy to cover)
+              position = self.state.short_positions[ticker]
+              _, entry_value, exit_value, pnl, pnl_pct = self.position_manager.calculate_short_position_pnl(
+                position, filled_price
+              )
+
+              # Track daily PnL
+              self.daily_pnl += pnl
+
+              # Update win tracking for System 1 only
+              if position.get('system') == 1:
+                self.state.last_trade_was_win[(ticker, 'short')] = pnl > 0
+                self.logger.log(f"System 1 short trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
+
+              # Remove position
+              del self.state.short_positions[ticker]
+
+              total_equity = self.get_total_equity()
+
+              # Send notification
+              emoji = "🟢" if pnl > 0 else "🔴"
+              self.slack.send_summary(f"{emoji} SHORT EXIT EXECUTED (Pending Order Filled)", {
+                "Ticker": ticker,
+                "Units": f"{filled_qty:.4f}",
+                "Exit Price": f"${filled_price:.2f}",
+                "Entry Value": f"${entry_value:,.2f}",
+                "Exit Value": f"${exit_value:,.2f}",
+                "P&L": f"${pnl:,.2f} ({pnl_pct:.2f}%)",
+                "Total Equity": f"${total_equity:,.2f}"
+              })
+            else:
+              self.logger.log(f"Warning: Filled exit order for {ticker} but position not found or side mismatch", 'WARNING')
+
+            del self.state.pending_exit_orders[ticker]
+            self.state.save_state()
+
+          elif order.status in [OrderStatus.CANCELED, OrderStatus.EXPIRED, OrderStatus.REJECTED]:
+            # Check for partial fills before removing
+            filled_qty = float(order.filled_qty) if order.filled_qty else 0
+
+            if filled_qty > 0:
+              self.logger.log(
+                f"Pending exit order for {ticker} ({order_id}) is {order.status} with PARTIAL FILL: "
+                f"{filled_qty}/{order.qty} filled",
+                'WARNING'
+              )
+
+              # Process the partial fill
+              filled_price = float(order.filled_avg_price)
+              side = order.side.name.lower()
+
+              # Determine if this was a long or short exit
+              if side == 'sell' and ticker in self.state.long_positions:
+                # Long exit (sell) - partially closed
+                position = self.state.long_positions[ticker]
+                total_units = sum(p['units'] for p in position['pyramid_units'])
+
+                # Calculate P&L for the partial exit
+                avg_entry_price = sum(p['units'] * p['entry_price'] for p in position['pyramid_units']) / total_units
+                pnl = (filled_price - avg_entry_price) * filled_qty
+                pnl_pct = (pnl / (avg_entry_price * filled_qty)) * 100
+
+                # Track daily PnL
+                self.daily_pnl += pnl
+
+                # Update position by removing units proportionally from pyramid levels
+                remaining_to_remove = filled_qty
+                updated_pyramid_units = []
+                for unit in position['pyramid_units']:
+                  if remaining_to_remove >= unit['units']:
+                    # Remove entire unit
+                    remaining_to_remove -= unit['units']
+                  elif remaining_to_remove > 0:
+                    # Partial removal from this unit
+                    unit['units'] -= remaining_to_remove
+                    unit['entry_value'] = unit['units'] * unit['entry_price']
+                    updated_pyramid_units.append(unit)
+                    remaining_to_remove = 0
+                  else:
+                    # No more to remove, keep unit
+                    updated_pyramid_units.append(unit)
+
+                if updated_pyramid_units:
+                  # Position still exists with remaining units
+                  position['pyramid_units'] = updated_pyramid_units
+                  self.state.long_positions[ticker] = position
+                  remaining_units = sum(p['units'] for p in updated_pyramid_units)
+                  self.logger.log(f"Partially closed long position {ticker}: {filled_qty:.4f} units closed, {remaining_units:.4f} units remaining")
+                else:
+                  # Position fully closed
+                  del self.state.long_positions[ticker]
+                  self.logger.log(f"Fully closed long position {ticker} (partial fill matched total position)")
+
+                  # Update win tracking for System 1 only
+                  if position.get('system') == 1:
+                    self.state.last_trade_was_win[(ticker, 'long')] = pnl > 0
+
+                total_equity = self.get_total_equity()
+
+                # Send notification
+                emoji = "🟢" if pnl > 0 else "🔴"
+                position_status = "CLOSED" if ticker not in self.state.long_positions else "PARTIALLY CLOSED"
+                self.slack.send_summary(f"{emoji} LONG EXIT {position_status} (Partial Fill)", {
+                  "Ticker": ticker,
+                  "Units Closed": f"{filled_qty:.4f}",
+                  "Units Requested": f"{order.qty}",
+                  "Exit Price": f"${filled_price:.2f}",
+                  "P&L": f"${pnl:,.2f} ({pnl_pct:.2f}%)",
+                  "Total Equity": f"${total_equity:,.2f}",
+                  "Note": f"Partial fill - order {order.status}"
+                })
+
+              elif side == 'buy' and ticker in self.state.short_positions:
+                # Short exit (buy to cover) - partially closed
+                position = self.state.short_positions[ticker]
+                total_units = sum(p['units'] for p in position['pyramid_units'])
+
+                # Calculate P&L for the partial exit
+                avg_entry_price = sum(p['units'] * p['entry_price'] for p in position['pyramid_units']) / total_units
+                pnl = (avg_entry_price - filled_price) * filled_qty
+                pnl_pct = (pnl / (avg_entry_price * filled_qty)) * 100
+
+                # Track daily PnL
+                self.daily_pnl += pnl
+
+                # Update position by removing units proportionally from pyramid levels
+                remaining_to_remove = filled_qty
+                updated_pyramid_units = []
+                for unit in position['pyramid_units']:
+                  if remaining_to_remove >= unit['units']:
+                    # Remove entire unit
+                    remaining_to_remove -= unit['units']
+                  elif remaining_to_remove > 0:
+                    # Partial removal from this unit
+                    unit['units'] -= remaining_to_remove
+                    unit['entry_value'] = unit['units'] * unit['entry_price']
+                    updated_pyramid_units.append(unit)
+                    remaining_to_remove = 0
+                  else:
+                    # No more to remove, keep unit
+                    updated_pyramid_units.append(unit)
+
+                if updated_pyramid_units:
+                  # Position still exists with remaining units
+                  position['pyramid_units'] = updated_pyramid_units
+                  self.state.short_positions[ticker] = position
+                  remaining_units = sum(p['units'] for p in updated_pyramid_units)
+                  self.logger.log(f"Partially closed short position {ticker}: {filled_qty:.4f} units closed, {remaining_units:.4f} units remaining")
+                else:
+                  # Position fully closed
+                  del self.state.short_positions[ticker]
+                  self.logger.log(f"Fully closed short position {ticker} (partial fill matched total position)")
+
+                  # Update win tracking for System 1 only
+                  if position.get('system') == 1:
+                    self.state.last_trade_was_win[(ticker, 'short')] = pnl > 0
+
+                total_equity = self.get_total_equity()
+
+                # Send notification
+                emoji = "🟢" if pnl > 0 else "🔴"
+                position_status = "CLOSED" if ticker not in self.state.short_positions else "PARTIALLY CLOSED"
+                self.slack.send_summary(f"{emoji} SHORT EXIT {position_status} (Partial Fill)", {
+                  "Ticker": ticker,
+                  "Units Closed": f"{filled_qty:.4f}",
+                  "Units Requested": f"{order.qty}",
+                  "Exit Price": f"${filled_price:.2f}",
+                  "P&L": f"${pnl:,.2f} ({pnl_pct:.2f}%)",
+                  "Total Equity": f"${total_equity:,.2f}",
+                  "Note": f"Partial fill - order {order.status}"
+                })
+              else:
+                self.logger.log(f"Warning: Partial fill for exit order {ticker} but position not found or side mismatch", 'WARNING')
+            else:
+              self.logger.log(f"Pending exit order for {ticker} ({order_id}) is {order.status}. Removing from pending list.")
+
+            del self.state.pending_exit_orders[ticker]
+            self.state.save_state()
+
+        except Exception as e:
+          self.logger.log(f"Could not get status for pending exit order {order_id} ({ticker}): {e}. Attempting to cancel order.", 'WARNING')
+          try:
+            # Try to cancel the order before removing from tracking to avoid zombie orders
+            self.order_manager.cancel_order(order_id)
+            self.logger.log(f"Successfully canceled pending exit order {order_id} ({ticker})", 'WARNING')
+          except Exception as cancel_error:
+            self.logger.log(f"Failed to cancel order {order_id} ({ticker}): {cancel_error}. Manual intervention may be required.", 'ERROR')
+
+          # Remove from tracking after attempting cancellation
+          del self.state.pending_exit_orders[ticker]
+          self.state.save_state()
 
   def daily_eod_analysis(self):
     """Run end-of-day analysis to generate entry signals"""
@@ -1310,6 +1825,14 @@ class TurtleTradingLS:
       self.update_entry_queue()
       time.sleep(0.5)
 
+      # Clean up entry queue for any tickers removed from universe
+      self.cleanup_entry_queue_for_removed_tickers()
+      time.sleep(0.5)
+
+      # Detect and adjust for mid-session deposits/withdrawals
+      self.detect_and_adjust_for_deposits_withdrawals()
+      time.sleep(0.5)
+
       self.logger.log_state_snapshot(self.state, f'intraday_{datetime.now().strftime("%H%M")}')
 
       self.logger.log("1. Checking long position stops...")
@@ -1376,9 +1899,24 @@ class TurtleTradingLS:
           # Use cached equity value as fallback
           account = None
 
+    # Analyze daily orders with detailed breakdown
     daily_orders = self.logger.get_daily_orders()
-    orders_placed = len([o for o in daily_orders if o['status'] == 'PLACED'])
-    orders_filled = len([o for o in daily_orders if o['status'] == 'FILLED'])
+
+    # Categorize orders
+    long_entry_placed = len([o for o in daily_orders if o['type'] == 'LONG_ENTRY' and o['status'] == 'PLACED' and not o['details'].get('is_pyramid', False)])
+    long_entry_filled = len([o for o in daily_orders if o['type'] == 'LONG_ENTRY' and o['status'] == 'FILLED' and not o['details'].get('is_pyramid', False)])
+    long_pyramid_placed = len([o for o in daily_orders if o['type'] == 'LONG_ENTRY' and o['status'] == 'PLACED' and o['details'].get('is_pyramid', False)])
+    long_pyramid_filled = len([o for o in daily_orders if o['type'] == 'LONG_ENTRY' and o['status'] == 'FILLED' and o['details'].get('is_pyramid', False)])
+
+    short_entry_placed = len([o for o in daily_orders if o['type'] == 'SHORT_ENTRY' and o['status'] == 'PLACED' and not o['details'].get('is_pyramid', False)])
+    short_entry_filled = len([o for o in daily_orders if o['type'] == 'SHORT_ENTRY' and o['status'] == 'FILLED' and not o['details'].get('is_pyramid', False)])
+    short_pyramid_placed = len([o for o in daily_orders if o['type'] == 'SHORT_ENTRY' and o['status'] == 'PLACED' and o['details'].get('is_pyramid', False)])
+    short_pyramid_filled = len([o for o in daily_orders if o['type'] == 'SHORT_ENTRY' and o['status'] == 'FILLED' and o['details'].get('is_pyramid', False)])
+
+    long_exit_stoploss = len([o for o in daily_orders if o['type'] == 'LONG_EXIT' and o['status'] == 'FILLED' and 'stop loss' in o['details'].get('reason', '').lower()])
+    long_exit_signal = len([o for o in daily_orders if o['type'] == 'LONG_EXIT' and o['status'] == 'FILLED' and 'exit signal' in o['details'].get('reason', '').lower()])
+    short_exit_stoploss = len([o for o in daily_orders if o['type'] == 'SHORT_EXIT' and o['status'] == 'FILLED' and 'stop loss' in o['details'].get('reason', '').lower()])
+    short_exit_signal = len([o for o in daily_orders if o['type'] == 'SHORT_EXIT' and o['status'] == 'FILLED' and 'exit signal' in o['details'].get('reason', '').lower()])
 
     # Calculate total daily P&L (including unrealized)
     current_equity = float(account.equity) if account else None
@@ -1395,10 +1933,19 @@ class TurtleTradingLS:
       "Unrealized P&L": f"${unrealized_pnl:,.2f}" if unrealized_pnl is not None else "N/A",
       "Equity": f"${current_equity:,.2f}" if current_equity else "N/A",
       "Buying Power": f"${float(account.buying_power):,.2f}" if account else "N/A",
+      "─────": "─────",
       "Long Positions": len(self.state.long_positions),
       "Short Positions": len(self.state.short_positions),
-      "Orders Placed": orders_placed,
-      "Orders Filled": orders_filled
+      "──────": "──────",
+      "Long Entries": f"{long_entry_filled}/{long_entry_placed} filled",
+      "Long Pyramids": f"{long_pyramid_filled}/{long_pyramid_placed} filled",
+      "Short Entries": f"{short_entry_filled}/{short_entry_placed} filled",
+      "Short Pyramids": f"{short_pyramid_filled}/{short_pyramid_placed} filled",
+      "───────": "───────",
+      "Long Exits (Stop)": long_exit_stoploss,
+      "Long Exits (Signal)": long_exit_signal,
+      "Short Exits (Stop)": short_exit_stoploss,
+      "Short Exits (Signal)": short_exit_signal
     }
 
     self.slack.send_summary("📊 Daily Summary", summary)

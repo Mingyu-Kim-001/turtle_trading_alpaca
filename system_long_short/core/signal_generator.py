@@ -191,9 +191,10 @@ class SignalGenerator:
 
     Implements proper Turtle Trading system logic with System 2 priority:
     - System 1: Skip entry if last System 1 trade for this ticker was a winner
-    - System 2: Always take entries (no filter)
+    - System 2: Always take entries (no win filter)
     - Priority: System 2 > System 1 (handled in processing, not here)
     - Systems checked independently based on enable flags
+    - Breaking condition: Reset win flag if price breaks opposite signal
 
     Args:
       universe: List of ticker symbols
@@ -246,12 +247,20 @@ class SignalGenerator:
           s1_long_signal = SignalGenerator.check_long_entry_signal(
             df, latest['close'], proximity_threshold, system=1
           )
-          # Only add System 1 long signal if last trade wasn't a win
-          if s1_long_signal and not last_trade_was_win.get((ticker, 'long'), False):
+          # Check if we're blocked by a previous win
+          is_blocked = last_trade_was_win.get((ticker, 'long'), False)
+
+          if s1_long_signal and not is_blocked:
+            # Not blocked, add signal
             signals.append({
               'ticker': ticker,
               **s1_long_signal
             })
+          elif is_blocked and pd.notna(latest['low_20']):
+            # Blocked by previous win - check breaking condition
+            # Reset flag if price has broken below 20-day low (opposite signal)
+            if latest['close'] < latest['low_20']:
+              last_trade_was_win[(ticker, 'long')] = False
 
       # Check for short entry signals (if enabled and ticker is shortable)
       if enable_shorts:
@@ -274,12 +283,20 @@ class SignalGenerator:
             s1_short_signal = SignalGenerator.check_short_entry_signal(
               df, latest['close'], proximity_threshold, system=1
             )
-            # Only add System 1 short signal if last trade wasn't a win
-            if s1_short_signal and not last_trade_was_win.get((ticker, 'short'), False):
+            # Check if we're blocked by a previous win
+            is_blocked = last_trade_was_win.get((ticker, 'short'), False)
+
+            if s1_short_signal and not is_blocked:
+              # Not blocked, add signal
               signals.append({
                 'ticker': ticker,
                 **s1_short_signal
               })
+            elif is_blocked and pd.notna(latest['high_20']):
+              # Blocked by previous win - check breaking condition
+              # Reset flag if price has broken above 20-day high (opposite signal)
+              if latest['close'] > latest['high_20']:
+                last_trade_was_win[(ticker, 'short')] = False
 
     # Sort by system (System 2 first, then System 1) then by proximity
     # System 2 has higher priority, so it gets processed first

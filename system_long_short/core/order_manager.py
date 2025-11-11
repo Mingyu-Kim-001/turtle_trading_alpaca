@@ -126,7 +126,9 @@ class OrderManager:
           self.logger.log_order('LONG_ENTRY', ticker, 'FILLED', {
             'order_id': order_id,
             'units': units,
-            'filled_price': filled_price
+            'filled_price': filled_price,
+            'is_pyramid': is_pyramid,
+            'pyramid_level': pyramid_level if is_pyramid else None
           })
 
         return True, order_id, filled_price
@@ -136,7 +138,9 @@ class OrderManager:
         if self.logger:
           self.logger.log_order('LONG_ENTRY', ticker, 'PENDING', {
             'order_id': order_id,
-            'status': filled_order.status
+            'status': filled_order.status,
+            'is_pyramid': is_pyramid,
+            'pyramid_level': pyramid_level if is_pyramid else None
           })
         return False, order_id, None
 
@@ -224,7 +228,9 @@ class OrderManager:
           self.logger.log_order('SHORT_ENTRY', ticker, 'FILLED', {
             'order_id': order_id,
             'units': units,
-            'filled_price': filled_price
+            'filled_price': filled_price,
+            'is_pyramid': is_pyramid,
+            'pyramid_level': pyramid_level if is_pyramid else None
           })
 
         return True, order_id, filled_price
@@ -234,7 +240,9 @@ class OrderManager:
         if self.logger:
           self.logger.log_order('SHORT_ENTRY', ticker, 'PENDING', {
             'order_id': order_id,
-            'status': filled_order.status
+            'status': filled_order.status,
+            'is_pyramid': is_pyramid,
+            'pyramid_level': pyramid_level if is_pyramid else None
           })
         return False, order_id, None
 
@@ -244,7 +252,7 @@ class OrderManager:
         self.notifier.send_message(f"❌ Error entering short {ticker}: {str(e)}")
       return False, None, None
 
-  def place_long_exit_order(self, ticker, units, target_price, reason):
+  def place_long_exit_order(self, ticker, units, target_price, reason, is_stop_loss=False):
     """
     Place a long exit order (sell)
 
@@ -290,7 +298,9 @@ class OrderManager:
 
       # Calculate prices
       stop_price = round(target_price * self.exit_margin, 2)
-      limit_price = round(stop_price * 0.995, 2)
+      # Use wider 2% margin for stop-loss orders to ensure fills, 0.5% for exit signals
+      slippage = 0.02 if is_stop_loss else 0.005
+      limit_price = round(stop_price * (1 - slippage), 2)
 
       # Round units to 8 decimal places for Alpaca's precision
       units = round(float(units), 8)
@@ -407,7 +417,7 @@ class OrderManager:
         self.notifier.send_message(f"❌ Error exiting long {ticker}: {str(e)}")
       return False, None, None
 
-  def place_short_exit_order(self, ticker, units, target_price, reason):
+  def place_short_exit_order(self, ticker, units, target_price, reason, is_stop_loss=False):
     """
     Place a short exit order (buy to cover)
 
@@ -423,7 +433,9 @@ class OrderManager:
     try:
       # Calculate prices - for short exits (buy to cover), stop is ABOVE current price
       stop_price = round(target_price * self.entry_margin, 2)
-      limit_price = round(stop_price * 1.005, 2)
+      # Use wider 2% margin for stop-loss orders to ensure fills, 0.5% for exit signals
+      slippage = 0.02 if is_stop_loss else 0.005
+      limit_price = round(stop_price * (1 + slippage), 2)
 
       # Round units to 8 decimal places for Alpaca's precision
       units = round(float(units), 8)

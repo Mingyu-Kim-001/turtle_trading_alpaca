@@ -260,63 +260,58 @@ Examples:
 
   args = parser.parse_args()
 
-  # Configuration from arguments
-  ENABLE_LONGS = not args.no_longs
-  ENABLE_SHORTS = not args.no_shorts
-  ENABLE_SYSTEM1 = not args.no_system1
-  ENABLE_SYSTEM2 = args.enable_system2
-  CHECK_SHORTABILITY = args.check_shortability
+  # Note: Trading configuration now loaded from .env file
+  # (Command-line args removed in favor of .env configuration)
 
-  # Validate configuration
-  if not ENABLE_LONGS and not ENABLE_SHORTS:
-    parser.error("At least one of --no-longs or --no-shorts must not be set (need to trade something)")
-  if not ENABLE_SYSTEM1 and not ENABLE_SYSTEM2:
-    parser.error("At least one system must be enabled (use --enable-system2 if disabling System 1)")
+  # Load configuration from .env file
+  from utils.config import TradingConfig
 
-  # Get API credentials from environment
-  alpaca_key = os.environ.get('ALPACA_PAPER_LS_KEY')
-  alpaca_secret = os.environ.get('ALPACA_PAPER_LS_SECRET')
-  slack_token = os.environ.get('PERSONAL_SLACK_TOKEN')
-  slack_channel = os.environ.get('PERSONAL_SLACK_CHANNEL_ID')
-
-  if not alpaca_key or not alpaca_secret:
-    print("Error: ALPACA_PAPER_LS_KEY and ALPACA_PAPER_LS_SECRET environment variables must be set")
+  try:
+    config = TradingConfig()
+    print(f"Loaded configuration from .env file:")
+    print(config)
+  except ValueError as e:
+    print(f"Error loading configuration: {e}")
     return
-  
-  if not slack_channel:
-    print("Warning: PERSONAL_SLACK_CHANNEL_ID not set, notifications will be disabled")
-    slack_channel = None
+  except FileNotFoundError as e:
+    print(f"Error: .env file not found. Please create one based on .env.example")
+    return
 
-  # Initialize trading system with configuration
+  # Initialize trading system with configuration from .env
+  # Command-line args can override .env values
   system = TurtleTradingLS(
-    api_key=alpaca_key,
-    api_secret=alpaca_secret,
-    slack_token=slack_token,
-    slack_channel=slack_channel,
-    paper=True,
-    enable_longs=ENABLE_LONGS,
-    enable_shorts=ENABLE_SHORTS,
-    enable_system1=ENABLE_SYSTEM1,
-    enable_system2=ENABLE_SYSTEM2,
-    check_shortability=CHECK_SHORTABILITY,
-    risk_per_unit=args.risk_per_unit
+    api_key=config.alpaca_key,
+    api_secret=config.alpaca_secret,
+    slack_token=config.slack_token,
+    slack_channel=config.slack_channel,
+    universe_file=config.universe_file,
+    paper=config.paper,
+    entry_margin=config.entry_margin,
+    exit_margin=config.exit_margin,
+    max_slippage=config.max_slippage,
+    enable_longs=config.enable_longs,
+    enable_shorts=config.enable_shorts,
+    enable_system1=config.enable_system1,
+    enable_system2=config.enable_system2,
+    check_shortability=config.check_shortability,
+    risk_per_unit=args.risk_per_unit if args.risk_per_unit else config.risk_per_unit
   )
 
   # Build configuration description
   config_desc = []
-  if ENABLE_LONGS and ENABLE_SHORTS:
+  if config.enable_longs and config.enable_shorts:
     config_desc.append("Long + Short")
-  elif ENABLE_LONGS:
+  elif config.enable_longs:
     config_desc.append("Long Only")
   else:
     config_desc.append("Short Only")
 
-  if ENABLE_SYSTEM1 and ENABLE_SYSTEM2:
+  if config.enable_system1 and config.enable_system2:
     config_desc.append("Dual System (S1 + S2)")
-  elif ENABLE_SYSTEM1:
-    config_desc.append("System 1 (20-10)")
+  elif config.enable_system1:
+    config_desc.append("System 1 (55-20)")
   else:
-    config_desc.append("System 2 (55-20)")
+    config_desc.append("System 2 (20-10)")
 
   print("="*60)
   print("TURTLE TRADING SCHEDULER (LONG/SHORT) STARTED")

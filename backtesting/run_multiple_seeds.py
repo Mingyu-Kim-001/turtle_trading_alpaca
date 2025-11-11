@@ -80,7 +80,7 @@ def _init_worker():
 
 def run_backtest_for_seed(args):
     """Run a single backtest for the given seed."""
-    seed, risk_per_unit_pct, enable_system2, balance_long_short_units = args
+    seed, risk_per_unit_pct, enable_system2, balance_long_short_units, stop_loss_atr_multiplier, pyramid_atr_multiplier = args
     
     # Use the data loaded in worker initialization
     global _worker_data
@@ -103,7 +103,9 @@ def run_backtest_for_seed(args):
         enable_logging=False,  # Disable console logging for cleaner output
         seed=seed,
         save_results=True,  # Enable detailed result saving
-        balance_long_short_units=balance_long_short_units  # Configurable
+        balance_long_short_units=balance_long_short_units,  # Configurable
+        stop_loss_atr_multiplier=stop_loss_atr_multiplier,  # Configurable
+        pyramid_atr_multiplier=pyramid_atr_multiplier  # Configurable
     )
     
     try:
@@ -152,16 +154,19 @@ def main():
 Examples:
   # Run seeds 1-100 with default (System 1 only, no balance)
   python run_multiple_seeds.py
-  
+
   # Run with Dual System (System 1 + System 2)
   python run_multiple_seeds.py --enable-system2
-  
+
   # Run with balance mode
   python run_multiple_seeds.py --balance-long-short-units
-  
+
+  # Run with custom stop loss and pyramid multipliers
+  python run_multiple_seeds.py --stop-loss-atr-multiplier 3.0 --pyramid-atr-multiplier 0.75
+
   # Run with all options
-  python run_multiple_seeds.py --start-seed 1 --end-seed 50 --risk-per-unit 0.01 --enable-system2 --balance-long-short-units
-  
+  python run_multiple_seeds.py --start-seed 1 --end-seed 50 --risk-per-unit 0.01 --enable-system2 --balance-long-short-units --stop-loss-atr-multiplier 2.5 --pyramid-atr-multiplier 0.5
+
   # Limit CPU usage
   python run_multiple_seeds.py --workers 4
         """
@@ -196,6 +201,18 @@ Examples:
         help='Maintain equal total long and short units including pyramiding (default: disabled)'
     )
     parser.add_argument(
+        '--stop-loss-atr-multiplier',
+        type=float,
+        default=2.0,
+        help='Stop loss ATR multiplier (default: 2.0)'
+    )
+    parser.add_argument(
+        '--pyramid-atr-multiplier',
+        type=float,
+        default=0.5,
+        help='Pyramid trigger ATR multiplier (default: 0.5)'
+    )
+    parser.add_argument(
         '--workers',
         type=int,
         default=None,
@@ -218,9 +235,11 @@ Examples:
     risk_per_unit_pct = args.risk_per_unit
     enable_system2 = args.enable_system2
     balance_long_short_units = args.balance_long_short_units
+    stop_loss_atr_multiplier = args.stop_loss_atr_multiplier
+    pyramid_atr_multiplier = args.pyramid_atr_multiplier
     num_workers = args.workers if args.workers else cpu_count()
     num_seeds = end_seed - start_seed + 1
-    
+
     # Convert to basis points for display
     risk_bp = int(risk_per_unit_pct * 10000)
     
@@ -251,7 +270,8 @@ Examples:
     # Prepare task list
     tasks = []
     for seed in range(start_seed, end_seed + 1):
-        tasks.append((seed, risk_per_unit_pct, enable_system2, balance_long_short_units))
+        tasks.append((seed, risk_per_unit_pct, enable_system2, balance_long_short_units,
+                      stop_loss_atr_multiplier, pyramid_atr_multiplier))
     
     print(f"\nTotal backtests to run: {len(tasks)}")
     print(f"\nInitializing worker processes...")

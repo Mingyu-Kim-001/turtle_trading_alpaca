@@ -87,10 +87,18 @@
           "entry_value": 6494.4,
           "entry_date": "2025-11-10T11:12:12.968765",
           "order_id": "27790627-e3c3-49a0-be9b-2c3178b24468"
+        },
+        {
+          "units": 55,
+          "entry_price": 119.13,
+          "entry_n": 1.7789849999999994,
+          "entry_value": 6552.15,
+          "entry_date": "2025-11-11T06:32:05.080810",
+          "order_id": "6d9bc919-1fe4-4714-a14a-09f3e181bf02"
         }
       ],
       "entry_date": "2025-11-07T06:50:28.843901",
-      "stop_price": 114.52203,
+      "stop_price": 115.57203,
       "initial_n": 1.7789849999999994,
       "initial_units": 55
     },
@@ -113,10 +121,26 @@
           "entry_value": 3587.0899999999997,
           "entry_date": "2025-11-10T11:17:39.807371",
           "order_id": "50e49f16-9df5-4932-a0a4-bae9073e5ea5"
+        },
+        {
+          "units": 41.0,
+          "entry_price": 89.02,
+          "entry_n": 2.3973099999999983,
+          "entry_value": 3649.8199999999997,
+          "entry_date": "2025-11-11T07:40:07.852280",
+          "order_id": "7156c315-11bc-44ed-a2f6-5245c73c0126"
+        },
+        {
+          "units": 41.0,
+          "entry_price": 89.93,
+          "entry_n": 2.3973099999999983,
+          "entry_value": 3687.13,
+          "entry_date": "2025-11-11T08:01:11.051161",
+          "order_id": "f646c4e6-ec60-4044-8265-4528489bc3ef"
         }
       ],
       "entry_date": "2025-11-07T12:08:56.585085",
-      "stop_price": 82.69538,
+      "stop_price": 85.13538000000001,
       "initial_n": 2.3973099999999983,
       "initial_units": 41.0
     },
@@ -131,10 +155,26 @@
           "entry_value": 4216.55,
           "entry_date": "2025-11-10T06:40:14.631377",
           "order_id": "f23f6abd-6008-422d-b179-cbb44fbb37b1"
+        },
+        {
+          "units": 13.0,
+          "entry_price": 328.58,
+          "entry_n": 7.223070000000002,
+          "entry_value": 4271.54,
+          "entry_date": "2025-11-11T07:24:39.299619",
+          "order_id": "55e1c0e0-9d52-4cde-9158-127af16fb864"
+        },
+        {
+          "units": 12.0,
+          "entry_price": 333.1,
+          "entry_n": 7.223070000000002,
+          "entry_value": 3997.2000000000003,
+          "entry_date": "2025-11-11T18:42:18.414634",
+          "order_id": "edb30a0a-6c24-4f05-8a13-4456a77601a0"
         }
       ],
       "entry_date": "2025-11-10T06:40:14.631407",
-      "stop_price": 309.90386,
+      "stop_price": 318.65386,
       "initial_n": 7.223070000000002,
       "initial_units": 13.0
     },
@@ -173,6 +213,42 @@
       "stop_price": 216.49339,
       "initial_n": 4.673304999999999,
       "initial_units": 21.0
+    },
+    "AFL": {
+      "side": "long",
+      "system": 1,
+      "pyramid_units": [
+        {
+          "units": 51.05108735,
+          "entry_price": 114.79,
+          "entry_n": 1.963284999999999,
+          "entry_value": 5860.154316906501,
+          "entry_date": "2025-11-11T07:34:55.170481",
+          "order_id": "b2661707-e95d-4f2c-84c2-4ce0671f4ec7"
+        }
+      ],
+      "entry_date": "2025-11-11T07:34:55.170489",
+      "stop_price": 110.86343000000001,
+      "initial_n": 1.963284999999999,
+      "initial_units": 51.05108735
+    },
+    "GOOGL": {
+      "side": "long",
+      "system": 1,
+      "pyramid_units": [
+        {
+          "units": 12.604239006,
+          "entry_price": 291.592216,
+          "entry_n": 7.964250000000005,
+          "entry_value": 3675.2979827531776,
+          "entry_date": "2025-11-11T12:58:13.043998",
+          "order_id": "455e64ef-b108-45a7-941c-12118d507f73"
+        }
+      ],
+      "entry_date": "2025-11-11T12:58:13.044008",
+      "stop_price": 275.663716,
+      "initial_n": 7.964250000000005,
+      "initial_units": 12.604239006
     }
   },
   "short_positions": {
@@ -243,24 +319,6 @@
       "stop_price": 149.2348,
       "initial_n": 2.4324,
       "initial_units": 40.0
-    },
-    "JNJ": {
-      "side": "short",
-      "system": 1,
-      "pyramid_units": [
-        {
-          "units": 35,
-          "entry_price": 186.1,
-          "entry_n": 2.7638999999999996,
-          "entry_value": 6513.5,
-          "entry_date": "2025-11-06T06:47:41.774648",
-          "order_id": "945c8c3e-5687-47a8-902b-c173d237c897"
-        }
-      ],
-      "entry_date": "2025-11-06T06:47:41.774666",
-      "stop_price": 191.62779999999998,
-      "initial_n": 2.7638999999999996,
-      "initial_units": 35
     },
     "V": {
       "side": "short",
@@ -355,269 +413,249 @@
   },
   "entry_queue": [
     {
-      "ticker": "AGG",
-      "entry_price": 99.8201,
-      "current_price": 100.16,
-      "n": 0.273265,
-      "proximity": 0.3393570287539937,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "GOOGL",
-      "entry_price": 291.59,
-      "current_price": 290.15,
-      "n": 8.065000000000005,
-      "proximity": 0.4962950198173351,
+      "ticker": "JNJ",
+      "entry_price": 194.48,
+      "current_price": 193.78,
+      "n": 2.735299999999998,
+      "proximity": 0.3612343895138758,
       "side": "long",
       "system": 1
     },
     {
-      "ticker": "AFL",
-      "entry_price": 114.78,
-      "current_price": 113.61,
-      "n": 1.9587849999999989,
-      "proximity": 1.0298389226300517,
+      "ticker": "AGG",
+      "entry_price": 99.8201,
+      "current_price": 100.48,
+      "n": 0.2767649999999996,
+      "proximity": 0.6567476114649756,
+      "side": "short",
+      "system": 1
+    },
+    {
+      "ticker": "AAPL",
+      "entry_price": 277.32,
+      "current_price": 275.15,
+      "n": 5.419045000000002,
+      "proximity": 0.7886607305106365,
       "side": "long",
       "system": 1
     },
     {
       "ticker": "AGG",
       "entry_price": 101.3499,
-      "current_price": 100.16,
-      "n": 0.273265,
-      "proximity": 1.1879992012779639,
+      "current_price": 100.48,
+      "n": 0.2767649999999996,
+      "proximity": 0.8657444267515935,
+      "side": "long",
+      "system": 1
+    },
+    {
+      "ticker": "ALL",
+      "entry_price": 209.91,
+      "current_price": 207.38,
+      "n": 3.897819999999996,
+      "proximity": 1.219982640563218,
       "side": "long",
       "system": 1
     },
     {
       "ticker": "AMCR",
       "entry_price": 8.575,
-      "current_price": 8.435,
-      "n": 0.19375000000000003,
-      "proximity": 1.6597510373443838,
+      "current_price": 8.47,
+      "n": 0.18525,
+      "proximity": 1.2396694214875872,
+      "side": "long",
+      "system": 1
+    },
+    {
+      "ticker": "AEE",
+      "entry_price": 106.73,
+      "current_price": 105.17,
+      "n": 1.5690799999999996,
+      "proximity": 1.4833127317676165,
       "side": "long",
       "system": 1
     },
     {
       "ticker": "ADP",
       "entry_price": 249.68,
-      "current_price": 254.12,
-      "n": 5.048794999999998,
-      "proximity": 1.747206044388477,
+      "current_price": 255.065,
+      "n": 5.031624999999998,
+      "proximity": 2.11122655009507,
       "side": "short",
       "system": 1
     },
     {
-      "ticker": "ADBE",
-      "entry_price": 323.0329,
-      "current_price": 329.215,
-      "n": 8.572059999999999,
-      "proximity": 1.877830597026257,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "AEE",
-      "entry_price": 106.73,
-      "current_price": 104.35,
-      "n": 1.556579999999999,
-      "proximity": 2.280785816962156,
+      "ticker": "ACGL",
+      "entry_price": 92.81,
+      "current_price": 90.66,
+      "n": 1.8683350000000005,
+      "proximity": 2.3714979042576725,
       "side": "long",
       "system": 1
     },
     {
       "ticker": "ALLE",
       "entry_price": 163.345,
-      "current_price": 167.175,
-      "n": 3.5891099999999967,
-      "proximity": 2.2910124121429716,
+      "current_price": 167.61,
+      "n": 3.447594999999997,
+      "proximity": 2.544597577710169,
+      "side": "short",
+      "system": 1
+    },
+    {
+      "ticker": "ADBE",
+      "entry_price": 323.0329,
+      "current_price": 332.905,
+      "n": 8.499559999999999,
+      "proximity": 2.965440591159637,
       "side": "short",
       "system": 1
     },
     {
       "ticker": "MA",
       "entry_price": 540.36,
-      "current_price": 553.13,
-      "n": 10.814934999999991,
-      "proximity": 2.3086796955507713,
+      "current_price": 557.335,
+      "n": 10.625434999999992,
+      "proximity": 3.0457444804291893,
       "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "WMT",
-      "entry_price": 100.03,
-      "current_price": 102.47,
-      "n": 1.991150000000001,
-      "proximity": 2.381184736996192,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "ABNB",
-      "entry_price": 117.1473,
-      "current_price": 120.21,
-      "n": 3.4201300000000026,
-      "proximity": 2.5477913651110495,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "ABT",
-      "entry_price": 122.44,
-      "current_price": 125.86,
-      "n": 2.528785000000002,
-      "proximity": 2.7173049419990476,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "AMT",
-      "entry_price": 175.0,
-      "current_price": 180.07,
-      "n": 4.178870000000002,
-      "proximity": 2.8155717221080656,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "ALL",
-      "entry_price": 209.91,
-      "current_price": 203.88,
-      "n": 3.8973249999999964,
-      "proximity": 2.957622130665098,
-      "side": "long",
-      "system": 1
-    },
-    {
-      "ticker": "AMAT",
-      "entry_price": 242.5,
-      "current_price": 235.32,
-      "n": 7.885119999999999,
-      "proximity": 3.051164371919092,
-      "side": "long",
-      "system": 1
-    },
-    {
-      "ticker": "AAPL",
-      "entry_price": 277.32,
-      "current_price": 269.0494,
-      "n": 5.302295000000003,
-      "proximity": 3.074007970283525,
-      "side": "long",
-      "system": 1
-    },
-    {
-      "ticker": "ABBV",
-      "entry_price": 211.69,
-      "current_price": 218.455,
-      "n": 4.172505000000003,
-      "proximity": 3.0967476139250714,
-      "side": "short",
-      "system": 1
-    },
-    {
-      "ticker": "AME",
-      "entry_price": 204.15,
-      "current_price": 198.01,
-      "n": 4.403744999999998,
-      "proximity": 3.100853492247874,
-      "side": "long",
-      "system": 1
-    },
-    {
-      "ticker": "ACGL",
-      "entry_price": 92.855,
-      "current_price": 89.81,
-      "n": 1.9008350000000014,
-      "proximity": 3.3904910366328935,
-      "side": "long",
       "system": 1
     },
     {
       "ticker": "ALB",
       "entry_price": 106.955,
-      "current_price": 103.225,
-      "n": 5.667854999999999,
-      "proximity": 3.613465730201021,
+      "current_price": 103.6675,
+      "n": 5.463354999999999,
+      "proximity": 3.171196373019504,
       "side": "long",
       "system": 1
     },
     {
-      "ticker": "AMP",
-      "entry_price": 442.2,
-      "current_price": 459.21,
-      "n": 11.254200000000003,
-      "proximity": 3.7041876265760747,
+      "ticker": "AME",
+      "entry_price": 204.15,
+      "current_price": 197.585,
+      "n": 4.260244999999999,
+      "proximity": 3.322620644279676,
+      "side": "long",
+      "system": 1
+    },
+    {
+      "ticker": "WMT",
+      "entry_price": 100.03,
+      "current_price": 103.495,
+      "n": 1.7721500000000012,
+      "proximity": 3.3479878254988193,
       "side": "short",
       "system": 1
     },
     {
-      "ticker": "ADI",
-      "entry_price": 223.47,
-      "current_price": 232.5,
-      "n": 6.130809999999999,
-      "proximity": 3.8838709677419363,
+      "ticker": "ABBV",
+      "entry_price": 232.81,
+      "current_price": 225.12,
+      "n": 4.351005000000001,
+      "proximity": 3.4159559346126502,
+      "side": "long",
+      "system": 1
+    },
+    {
+      "ticker": "ABT",
+      "entry_price": 122.44,
+      "current_price": 126.985,
+      "n": 2.4922850000000016,
+      "proximity": 3.5791628932551105,
       "side": "short",
       "system": 1
     },
     {
-      "ticker": "AEE",
-      "entry_price": 100.14,
-      "current_price": 104.35,
-      "n": 1.556579999999999,
-      "proximity": 4.034499281264968,
+      "ticker": "ACN",
+      "entry_price": 233.6,
+      "current_price": 242.715,
+      "n": 6.337285,
+      "proximity": 3.7554333271532494,
       "side": "short",
       "system": 1
     },
     {
       "ticker": "AMZN",
       "entry_price": 258.6,
-      "current_price": 248.57,
-      "n": 7.248745000000004,
-      "proximity": 4.035080661383123,
+      "current_price": 248.875,
+      "n": 7.001240000000005,
+      "proximity": 3.907584128578613,
       "side": "long",
       "system": 1
     },
     {
-      "ticker": "ACN",
-      "entry_price": 233.6,
-      "current_price": 244.51,
-      "n": 6.345285,
-      "proximity": 4.461985194879554,
+      "ticker": "MA",
+      "entry_price": 580.82,
+      "current_price": 557.335,
+      "n": 10.625434999999992,
+      "proximity": 4.213803188387597,
+      "side": "long",
+      "system": 1
+    },
+    {
+      "ticker": "ADI",
+      "entry_price": 223.47,
+      "current_price": 233.48,
+      "n": 5.826309999999999,
+      "proximity": 4.287305122494428,
       "side": "short",
       "system": 1
     },
     {
-      "ticker": "ACN",
-      "entry_price": 255.44,
-      "current_price": 244.51,
-      "n": 6.345285,
-      "proximity": 4.470164819434791,
+      "ticker": "ABNB",
+      "entry_price": 117.1473,
+      "current_price": 122.43,
+      "n": 3.2540800000000027,
+      "proximity": 4.314873805439848,
+      "side": "short",
+      "system": 1
+    },
+    {
+      "ticker": "ALGN",
+      "entry_price": 150.78,
+      "current_price": 144.465,
+      "n": 4.915615000000005,
+      "proximity": 4.371301007164363,
       "side": "long",
       "system": 1
     },
     {
-      "ticker": "AJG",
-      "entry_price": 239.47,
-      "current_price": 251.515,
-      "n": 7.660350000000001,
-      "proximity": 4.788978788541434,
+      "ticker": "JNJ",
+      "entry_price": 184.66,
+      "current_price": 193.78,
+      "n": 2.735299999999998,
+      "proximity": 4.706368046238004,
+      "side": "short",
+      "system": 1
+    },
+    {
+      "ticker": "AEE",
+      "entry_price": 100.14,
+      "current_price": 105.17,
+      "n": 1.5690799999999996,
+      "proximity": 4.782732718455835,
+      "side": "short",
+      "system": 1
+    },
+    {
+      "ticker": "AMP",
+      "entry_price": 442.2,
+      "current_price": 465.08,
+      "n": 10.919700000000002,
+      "proximity": 4.919583727530746,
       "side": "short",
       "system": 1
     }
   ],
   "pending_pyramid_orders": {},
   "pending_entry_orders": {
-    "AGG": "2d392b94-abee-40e7-957b-92e998eaa18d",
-    "GOOGL": "d14ad0b2-62bb-4807-b1f9-37fd4e40dd3f",
-    "ADP": "5e9b8552-5ef9-4c62-8851-ff12485e9d6f",
-    "ADBE": "510564e9-e98f-4b42-a9a3-49fc8a26e8ad",
-    "AFL": "f2c24048-e53c-4f5c-ac2c-4e6e71132088"
+    "JNJ": "b6a16e8d-6507-4cc8-8c12-0aacbfa5976b"
   },
   "placing_marker_timestamps": {
     "JNJ": "2025-11-05T06:43:57.910986"
   },
-  "last_trade_was_win": {},
-  "last_updated": "2025-11-10T12:56:46.302280"
+  "last_trade_was_win": {
+    "JNJ_short": false
+  },
+  "last_updated": "2025-11-11T13:32:46.315503"
 }

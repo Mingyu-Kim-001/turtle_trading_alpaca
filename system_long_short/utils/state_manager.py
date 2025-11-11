@@ -33,6 +33,7 @@ class StateManager:
             self.entry_queue = data.get('entry_queue', [])
             self.pending_pyramid_orders = data.get('pending_pyramid_orders', {})
             self.pending_entry_orders = data.get('pending_entry_orders', {})
+            self.pending_exit_orders = data.get('pending_exit_orders', {})
             self.placing_marker_timestamps = data.get('placing_marker_timestamps', {})
             # Deserialize last_trade_was_win from string keys back to tuple keys
             last_trade_was_win_data = data.get('last_trade_was_win', {})
@@ -43,7 +44,8 @@ class StateManager:
             print(f"State loaded: long_positions={len(self.long_positions)}, "
                   f"short_positions={len(self.short_positions)}, "
                   f"pending_pyramids={len(self.pending_pyramid_orders)}, "
-                  f"pending_entries={len(self.pending_entry_orders)}")
+                  f"pending_entries={len(self.pending_entry_orders)}, "
+                  f"pending_exits={len(self.pending_exit_orders)}")
 
     except FileNotFoundError:
         print("No existing state found, initializing new state")
@@ -56,6 +58,7 @@ class StateManager:
       self.entry_queue = []
       self.pending_pyramid_orders = {}
       self.pending_entry_orders = {}
+      self.pending_exit_orders = {}  # Track pending exit orders to prevent duplicates
       self.placing_marker_timestamps = {}  # Track PLACING marker timestamps for timeout
       self.last_trade_was_win = {}  # Track if last System 1 trade was a win: {(ticker, side): bool}
       self.last_updated = None
@@ -74,6 +77,7 @@ class StateManager:
       'entry_queue': self.entry_queue,
       'pending_pyramid_orders': self.pending_pyramid_orders,
       'pending_entry_orders': self.pending_entry_orders,
+      'pending_exit_orders': getattr(self, 'pending_exit_orders', {}),
       'placing_marker_timestamps': getattr(self, 'placing_marker_timestamps', {}),
       'last_trade_was_win': last_trade_was_win_serializable,
       'last_updated': datetime.now().isoformat()
