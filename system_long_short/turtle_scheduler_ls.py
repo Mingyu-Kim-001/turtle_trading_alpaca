@@ -42,114 +42,6 @@ def is_market_day():
   return datetime.now().weekday() < 5  # Monday = 0, Friday = 4
 
 
-def git_fetch():
-  """Fetch latest changes from remote repository"""
-  try:
-    repo_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    result = subprocess.run(
-      ['git', 'fetch', 'origin'],
-      cwd=repo_path,
-      capture_output=True,
-      text=True,
-      timeout=30
-    )
-    if result.returncode == 0:
-      print(f"✅ Git fetch successful: {result.stdout.strip()}")
-      return True
-    else:
-      print(f"⚠️ Git fetch warning: {result.stderr.strip()}")
-      return False
-  except subprocess.TimeoutExpired:
-    print("⚠️ Git fetch timed out")
-    return False
-  except Exception as e:
-    print(f"⚠️ Error during git fetch: {e}")
-    return False
-
-
-def git_push_logs():
-  """Add, commit, and push log files to repository"""
-  try:
-    repo_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
-    # Add log files and trading state files
-    # Logs are in logs/ directory and trading_state.json files
-    log_paths = [
-      'logs/',
-      'system_long/trading_state.json',
-      'system_long_short/trading_state.json'
-    ]
-    
-    has_changes = False
-    
-    # Add log files
-    for path in log_paths:
-      full_path = os.path.join(repo_path, path)
-      if os.path.exists(full_path):
-        add_result = subprocess.run(
-          ['git', 'add', path],
-          cwd=repo_path,
-          capture_output=True,
-          text=True,
-          timeout=10
-        )
-        if add_result.returncode == 0:
-          has_changes = True
-    
-    if has_changes:
-      # Check if there are staged changes
-      diff_result = subprocess.run(
-        ['git', 'diff', '--cached', '--quiet'],
-        cwd=repo_path,
-        capture_output=True,
-        text=True
-      )
-      
-      if diff_result.returncode == 1:  # Has staged changes
-        # Commit with timestamp
-        commit_message = f"Auto-commit: EOD logs and updates - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        commit_result = subprocess.run(
-          ['git', 'commit', '-m', commit_message],
-          cwd=repo_path,
-          capture_output=True,
-          text=True,
-          timeout=10
-        )
-        
-        if commit_result.returncode == 0:
-          # Push to remote
-          push_result = subprocess.run(
-            ['git', 'push', 'origin', 'main'],
-            cwd=repo_path,
-            capture_output=True,
-            text=True,
-            timeout=30
-          )
-          
-          if push_result.returncode == 0:
-            print(f"✅ Git push successful: {commit_result.stdout.strip()}")
-            return True
-          else:
-            print(f"⚠️ Git push warning: {push_result.stderr.strip()}")
-            return False
-        else:
-          print(f"⚠️ Git commit warning: {commit_result.stderr.strip()}")
-          return False
-      else:
-        print("ℹ️ No changes to commit after adding log files")
-        return True
-    else:
-      print("ℹ️ No log files found to commit")
-      return True
-      
-  except subprocess.TimeoutExpired:
-    print("⚠️ Git operation timed out")
-    return False
-  except Exception as e:
-    print(f"⚠️ Error during git push: {e}")
-    return False
-
-
 def run_eod_analysis():
   """Run end-of-day analysis"""
   if is_market_day():
@@ -170,11 +62,7 @@ def run_market_open_setup():
       print(f"\n{'='*60}")
       print(f"Running Market Open Setup at {datetime.now()}")
       print(f"{'='*60}")
-      
-      # Fetch latest changes from repository
-      print("Fetching latest changes from repository...")
-      git_fetch()
-      
+
       system.market_open_setup()
     except Exception as e:
       print(f"Error in market open setup: {e}")
@@ -211,10 +99,6 @@ def run_post_market():
       print(f"Running Post-Market Routine at {datetime.now()}")
       print(f"{'='*60}")
       system.post_market_routine()
-      
-      # Push logs and changes to repository
-      print("\nPushing logs and changes to repository...")
-      git_push_logs()
     except Exception as e:
       print(f"Error in post-market routine: {e}")
       system.slack.send_message(f"❌ Error in post-market routine: {str(e)}")
