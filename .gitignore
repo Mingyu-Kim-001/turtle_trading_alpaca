@@ -5,6 +5,6 @@ data/
 .python-version
 tickers_universe.txt
 __pycache__
-.env
+.env*
 launch.json
 backtesting/*results/
