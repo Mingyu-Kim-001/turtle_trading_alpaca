@@ -274,6 +274,9 @@ class TurtleTradingLS:
       tracked_order_ids.update(
         oid for oid in self.state.pending_pyramid_orders.values() if oid != 'PLACING'
       )
+      tracked_order_ids.update(
+        getattr(self.state, 'pending_exit_orders', {}).values()
+      )
 
       # Find zombie orders
       zombies = []
@@ -673,6 +676,10 @@ class TurtleTradingLS:
       if ticker not in self.universe:
         self.logger.log(f"Managing long position for {ticker} (removed from universe)", 'INFO')
 
+      # Check for pending exit order to prevent duplicates
+      if ticker in getattr(self.state, 'pending_exit_orders', {}):
+        continue
+
       current_price = current_prices.get(ticker)
 
       if current_price is None:
@@ -697,6 +704,10 @@ class TurtleTradingLS:
       # Enhanced logging for removed tickers
       if ticker not in self.universe:
         self.logger.log(f"Managing short position for {ticker} (removed from universe)", 'INFO')
+
+      # Check for pending exit order to prevent duplicates
+      if ticker in getattr(self.state, 'pending_exit_orders', {}):
+        continue
 
       current_price = current_prices.get(ticker)
 
@@ -1720,6 +1731,28 @@ class TurtleTradingLS:
           except Exception as cancel_error:
             self.logger.log(f"Failed to cancel order {order_id} ({ticker}): {cancel_error}. Manual intervention may be required.", 'ERROR')
 
+          # CRITICAL: Verify if position actually exists in Alpaca before just removing from pending
+          # If position doesn't exist in Alpaca but exists in our state, we have a sync issue
+          try:
+            alpaca_positions = self.trading_client.get_all_positions()
+            alpaca_tickers = {p.symbol for p in alpaca_positions}
+
+            if ticker not in alpaca_tickers:
+              # Position doesn't exist in Alpaca - remove from our state too
+              self.logger.log(f"Position {ticker} not found in Alpaca - removing from state to fix sync issue", 'WARNING')
+
+              if ticker in self.state.long_positions:
+                del self.state.long_positions[ticker]
+                self.logger.log(f"Removed orphaned long position {ticker} from state", 'WARNING')
+              elif ticker in self.state.short_positions:
+                del self.state.short_positions[ticker]
+                self.logger.log(f"Removed orphaned short position {ticker} from state", 'WARNING')
+            else:
+              self.logger.log(f"Position {ticker} still exists in Alpaca - will retry exit on next cycle", 'INFO')
+
+          except Exception as verify_error:
+            self.logger.log(f"Could not verify position existence for {ticker}: {verify_error}", 'ERROR')
+
           # Remove from tracking after attempting cancellation
           del self.state.pending_exit_orders[ticker]
           self.state.save_state()
@@ -1876,6 +1909,15 @@ class TurtleTradingLS:
     self.logger.log("="*60)
     self.logger.log("POST-MARKET ROUTINE")
     self.logger.log("="*60)
+
+    # CRITICAL: Check pending orders first to catch any fills from end of day
+    # This is essential because the last intraday monitor runs before 1:00 PM,
+    # but orders placed near market close may fill after the last check
+    self.logger.log("Checking pending orders before generating end-of-day report...")
+    try:
+      self.check_pending_orders()
+    except Exception as e:
+      self.logger.log(f"Error checking pending orders in post-market routine: {e}", 'ERROR')
 
     self.logger.log_state_snapshot(self.state, 'market_close')
 

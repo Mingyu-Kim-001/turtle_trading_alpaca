@@ -4,8 +4,8 @@ Scheduler for Turtle Trading System with Long/Short Positions
 This script runs the appropriate workflows at the right times:
 - 5:00 AM PT: EOD Analysis (prepare for next trading day)
 - 6:25 AM PT: Market Open Setup
-- 6:30 AM - 1:00 PM PT: Intraday Monitor (every 5 minutes)
-- 1:15 PM PT: Post-Market Routine
+- 6:30 AM - 1:05 PM PT: Intraday Monitor (every 5 minutes)
+- 1:15 PM PT: Post-Market Routine (includes final pending order check)
 
 Usage:
   python -m system_long_short.turtle_scheduler_ls [OPTIONS]
@@ -77,8 +77,10 @@ def run_intraday_monitor():
     hour = now.hour
     minute = now.minute
 
-    # Market hours check (6:30 AM - 1:00 PM PT is 6:30 - 13:00)
-    market_open = (hour == 6 and minute >= 30) or (7 <= hour < 13)
+    # Market hours check (6:30 AM - 1:05 PM PT)
+    # Market closes at 1:00 PM, but we run until 1:05 PM to catch any last-minute fills
+    # After 1:05 PM, the post-market routine at 1:15 PM will do the final check
+    market_open = (hour == 6 and minute >= 30) or (7 <= hour < 13) or (hour == 13 and minute <= 5)
 
     if market_open:
       try:
@@ -208,8 +210,8 @@ Examples:
   print("\nScheduled tasks:")
   print("  - 05:00 AM PT: EOD Analysis")
   print("  - 06:25 AM PT: Market Open Setup")
-  print("  - 06:30-13:00 PT: Intraday Monitor (every 5 minutes)")
-  print("  - 13:15 PM PT: Post-Market Routine")
+  print("  - 06:30-13:05 PT: Intraday Monitor (every 5 minutes)")
+  print("  - 13:15 PM PT: Post-Market Routine (with final pending order check)")
   print("\nPress Ctrl+C to stop\n")
 
   # Send startup notification

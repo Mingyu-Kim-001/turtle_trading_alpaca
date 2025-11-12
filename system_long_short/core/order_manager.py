@@ -427,6 +427,36 @@ class OrderManager:
       Tuple of (success, order_id, filled_price)
     """
     try:
+      # Check for existing open orders
+      try:
+        request = GetOrdersRequest(
+          status=QueryOrderStatus.OPEN,
+          symbols=[ticker],
+          limit=10
+        )
+        open_orders = self.trading_client.get_orders(request)
+
+        # Check if there's already a buy order (exit order for shorts)
+        existing_buy = [o for o in open_orders if o.side == OrderSide.BUY]
+        if existing_buy:
+          self._log(f"Buy order already exists for {ticker}: {existing_buy[0].id}", 'WARNING')
+          return False, None, None
+
+        # Cancel any sell orders to free up margin
+        sell_orders = [o for o in open_orders if o.side == OrderSide.SELL]
+        if sell_orders:
+          self._log(f"Cancelling {len(sell_orders)} sell orders for {ticker} to free margin")
+          for order in sell_orders:
+            try:
+              self.trading_client.cancel_order_by_id(order.id)
+              self._log(f"Cancelled order {order.id}")
+              time.sleep(0.5)
+            except Exception as e:
+              self._log(f"Error cancelling order {order.id}: {e}", 'ERROR')
+
+      except Exception as e:
+        self._log(f"Error checking existing orders for {ticker}: {e}", 'WARNING')
+
       # Calculate prices - for short exits (buy to cover), stop is ABOVE current price
       stop_price = round(target_price, 2)
       # Use wider 2% margin for stop-loss orders to ensure fills, 0.5% for exit signals
