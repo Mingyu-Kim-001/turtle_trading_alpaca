@@ -297,7 +297,7 @@ class OrderManager:
         self._log(f"Error checking existing orders for {ticker}: {e}", 'WARNING')
 
       # Calculate prices
-      stop_price = round(target_price * self.exit_margin, 2)
+      stop_price = round(target_price, 2)
       # Use wider 2% margin for stop-loss orders to ensure fills, 0.5% for exit signals
       slippage = 0.02 if is_stop_loss else 0.005
       limit_price = round(stop_price * (1 - slippage), 2)
@@ -432,7 +432,7 @@ class OrderManager:
     """
     try:
       # Calculate prices - for short exits (buy to cover), stop is ABOVE current price
-      stop_price = round(target_price * self.entry_margin, 2)
+      stop_price = round(target_price, 2)
       # Use wider 2% margin for stop-loss orders to ensure fills, 0.5% for exit signals
       slippage = 0.02 if is_stop_loss else 0.005
       limit_price = round(stop_price * (1 + slippage), 2)
