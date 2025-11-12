@@ -45,7 +45,7 @@ class TurtleTradingLS:
 
   def __init__(self, api_key, api_secret, slack_token, slack_channel,
         universe_file='system_long_short/ticker_universe.txt', paper=True,
-        entry_margin=0.995, exit_margin=1.005, max_slippage=0.005,
+        max_slippage=0.005,
         enable_longs=True, enable_shorts=True,
         enable_system1=True, enable_system2=False,
         check_shortability=False, risk_per_unit=0.005):
@@ -59,8 +59,6 @@ class TurtleTradingLS:
       slack_channel: Slack channel ID
       universe_file: File containing ticker universe
       paper: Whether to use paper trading
-      entry_margin: Margin for entry orders
-      exit_margin: Margin for exit orders
       max_slippage: Maximum slippage for limit prices (default 0.005 = 0.5%)
       enable_longs: Whether to enable long positions
       enable_shorts: Whether to enable short selling
@@ -90,8 +88,6 @@ class TurtleTradingLS:
       self.trading_client,
       self.logger,
       self.slack,
-      entry_margin,
-      exit_margin,
       max_slippage
     )
 

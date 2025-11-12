@@ -170,8 +170,6 @@ Examples:
     slack_channel=config.slack_channel,
     universe_file=config.universe_file,
     paper=config.paper,
-    entry_margin=config.entry_margin,
-    exit_margin=config.exit_margin,
     max_slippage=config.max_slippage,
     enable_longs=config.enable_longs,
     enable_shorts=config.enable_shorts,

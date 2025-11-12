@@ -263,15 +263,6 @@ def calculate_position_size(total_equity, n, risk_per_unit_pct=0.001):
     # Adjust risk_per_unit_pct here
 ```
 
-### Entry/Exit Margins
-
-Adjust order margins in initialization:
-```python
-system = TurtleTradingLS(
-    entry_margin=0.99,  # Entry orders at 99% of breakout price
-    exit_margin=1.01    # Exit orders at 101% of signal price
-)
-```
 
 ## State Management
 

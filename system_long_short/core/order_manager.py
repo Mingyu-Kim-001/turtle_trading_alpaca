@@ -17,7 +17,7 @@ class OrderManager:
   """Handle order execution, tracking, and reconciliation for long and short positions"""
 
   def __init__(self, trading_client, logger=None, notifier=None,
-        entry_margin=0.99, exit_margin=1.01, max_slippage=0.005):
+        max_slippage=0.005):
     """
     Initialize order manager
 
@@ -25,15 +25,11 @@ class OrderManager:
       trading_client: Alpaca TradingClient instance
       logger: DailyLogger instance (optional)
       notifier: SlackNotifier instance (optional)
-      entry_margin: Margin for entry stop orders (default 0.99)
-      exit_margin: Margin for exit stop orders (default 1.01)
       max_slippage: Maximum slippage for limit prices (default 0.005 = 0.5%)
     """
     self.trading_client = trading_client
     self.logger = logger
     self.notifier = notifier
-    self.entry_margin = entry_margin
-    self.exit_margin = exit_margin
     self.max_slippage = max_slippage
 
   def _log(self, message, level='INFO'):
