@@ -139,8 +139,8 @@ Examples:
                       help='Disable System 1 (20-10) - only use with --enable-system2')
   parser.add_argument('--check-shortability', action='store_true',
                       help='Check Alpaca shortable list (default: False)')
-  parser.add_argument('--risk-per-unit', type=float, default=0.005,
-                      help='Risk per unit as a fraction of account equity (default: 0.005)')
+  parser.add_argument('--risk-per-unit', type=float, default=None,
+                      help='Risk per unit as a fraction of account equity (default: from .env or 0.001)')
 
   args = parser.parse_args()
 
@@ -148,7 +148,7 @@ Examples:
   # (Command-line args removed in favor of .env configuration)
 
   # Load configuration from .env file
-  from utils.config import TradingConfig
+  from system_long_short.utils.config import TradingConfig
 
   try:
     config = TradingConfig()
@@ -163,6 +163,8 @@ Examples:
 
   # Initialize trading system with configuration from .env
   # Command-line args can override .env values
+  risk_per_unit_value = args.risk_per_unit if args.risk_per_unit is not None else config.risk_per_unit
+  
   system = TurtleTradingLS(
     api_key=config.alpaca_key,
     api_secret=config.alpaca_secret,
@@ -176,7 +178,7 @@ Examples:
     enable_system1=config.enable_system1,
     enable_system2=config.enable_system2,
     check_shortability=config.check_shortability,
-    risk_per_unit=args.risk_per_unit if args.risk_per_unit else config.risk_per_unit
+    risk_per_unit=risk_per_unit_value
   )
 
   # Build configuration description
@@ -191,17 +193,17 @@ Examples:
   if config.enable_system1 and config.enable_system2:
     config_desc.append("Dual System (S1 + S2)")
   elif config.enable_system1:
-    config_desc.append("System 1 (55-20)")
+    config_desc.append("System 1 (20-10)")
   else:
-    config_desc.append("System 2 (20-10)")
+    config_desc.append("System 2 (55-20)")
 
   print("="*60)
   print("TURTLE TRADING SCHEDULER (LONG/SHORT) STARTED")
   print("="*60)
   print(f"Current time: {datetime.now()}")
   print(f"Configuration: {' / '.join(config_desc)}")
-  print(f"Risk per unit: {args.risk_per_unit*100:.2f}% of equity")
-  if CHECK_SHORTABILITY:
+  print(f"Risk per unit: {risk_per_unit_value*100:.2f}% of equity")
+  if config.check_shortability:
     print(f"Shortability check: enabled")
   print("\nScheduled tasks:")
   print("  - 05:00 AM PT: EOD Analysis")
@@ -214,7 +216,7 @@ Examples:
   system.slack.send_message(
     f"🚀 Turtle Trading System started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
     f"Configuration: {' / '.join(config_desc)}\n"
-    f"Risk per unit: {args.risk_per_unit*100:.2f}% of equity",
+    f"Risk per unit: {risk_per_unit_value*100:.2f}% of equity",
     title="System Startup"
   )
 
