@@ -140,8 +140,8 @@ This architecture makes the system easier to test, maintain, and extend.
 2.  **Configure API Keys and Slack**:
 
     ```bash
-    export ALPACA_PAPER_LS_KEY="your_alpaca_api_key"
-    export ALPACA_PAPER_LS_SECRET="your_alpaca_api_secret"
+    export ALPACA_API_KEY="your_alpaca_api_key"
+    export ALPACA_SECRET="your_alpaca_api_secret"
     export SLACK_BOT_TOKEN="xoxb-your-slack-bot-token"
     export PERSONAL_SLACK_CHANNEL_ID="C01234567"  # Your Slack channel ID
     ```

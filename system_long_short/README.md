@@ -137,8 +137,8 @@ pip install alpaca-py pandas numpy slack-sdk schedule
 
 2. **Set environment variables**:
 ```bash
-export ALPACA_PAPER_LS_KEY="your_alpaca_api_key"
-export ALPACA_PAPER_LS_SECRET="your_alpaca_api_secret"
+export ALPACA_API_KEY="your_alpaca_api_key"
+export ALPACA_SECRET="your_alpaca_api_secret"
 export PERSONAL_SLACK_TOKEN="your_slack_bot_token"
 ```
 

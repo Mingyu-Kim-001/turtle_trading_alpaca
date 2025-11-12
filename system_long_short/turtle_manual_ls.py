@@ -219,8 +219,8 @@ Examples:
     parser.error("At least one system must be enabled (use --enable-system2 if disabling System 1)")
 
   # Load configuration
-  alpaca_key = os.environ.get('ALPACA_PAPER_LS_KEY')
-  alpaca_secret = os.environ.get('ALPACA_PAPER_LS_SECRET')
+  alpaca_key = os.environ.get('ALPACA_API_KEY')
+  alpaca_secret = os.environ.get('ALPACA_SECRET')
   slack_token = os.environ.get('SLACK_BOT_TOKEN')
   slack_channel = os.environ.get('PERSONAL_SLACK_CHANNEL_ID')
   
