@@ -48,7 +48,8 @@ class TurtleTradingLS:
         max_slippage=0.005,
         enable_longs=True, enable_shorts=True,
         enable_system1=True, enable_system2=False,
-        check_shortability=False, risk_per_unit=0.005):
+        check_shortability=False, risk_per_unit=0.005,
+        use_latest_n_for_pyramiding=False):
     """
     Initialize Turtle Trading System with Long/Short support
 
@@ -66,6 +67,7 @@ class TurtleTradingLS:
       enable_system2: Whether to enable System 2 (55-20)
       check_shortability: Whether to check if tickers are shortable
       risk_per_unit: Risk per unit as fraction of account equity (default 0.005 = 0.5%)
+      use_latest_n_for_pyramiding: Use latest N (ATR) for pyramiding calculations (default False)
     """
     # Validate configuration
     if not enable_longs and not enable_shorts:
@@ -101,8 +103,19 @@ class TurtleTradingLS:
     self.enable_system2 = enable_system2
     self.check_shortability = check_shortability
     self.risk_per_unit = risk_per_unit
+    self.use_latest_n_for_pyramiding = use_latest_n_for_pyramiding
     self.shortable_tickers = set()
     self.htb_exclusions = set()
+
+    # Log pyramiding mode configuration
+    pyramid_mode = "LATEST_N (adaptive volatility)" if use_latest_n_for_pyramiding else "INITIAL_N (fixed volatility)"
+    self.logger.log(f"Pyramiding Mode: {pyramid_mode}")
+    if use_latest_n_for_pyramiding:
+      self.logger.log("  - Pyramids based on last entry + 0.5 * latest_N")
+      self.logger.log("  - Stops calculated using latest_N (adapts to volatility)")
+    else:
+      self.logger.log("  - Pyramids based on initial entry + (count * 0.5 * initial_N)")
+      self.logger.log("  - Stops calculated using initial_N (fixed volatility)")
 
     # Determine if we need to track systems (only when both systems are enabled)
     self.track_systems = enable_system1 and enable_system2
@@ -271,9 +284,16 @@ class TurtleTradingLS:
 
       # Build set of tracked order IDs
       tracked_order_ids = set(self.state.pending_entry_orders.values())
-      tracked_order_ids.update(
-        oid for oid in self.state.pending_pyramid_orders.values() if oid != 'PLACING'
-      )
+
+      # Handle pending_pyramid_orders which can be string or dict
+      for order_info in self.state.pending_pyramid_orders.values():
+        if isinstance(order_info, dict):
+          oid = order_info.get('order_id')
+          if oid and oid != 'PLACING':
+            tracked_order_ids.add(oid)
+        elif order_info != 'PLACING':
+          tracked_order_ids.add(order_info)
+
       tracked_order_ids.update(
         getattr(self.state, 'pending_exit_orders', {}).values()
       )
@@ -345,7 +365,7 @@ class TurtleTradingLS:
         self.logger.log(f"Error calculating total equity manually: {e2}", 'ERROR')
         return 10000  # Fallback value
 
-  def enter_long_position(self, ticker, units, target_price, n, system=1):
+  def enter_long_position(self, ticker, units, target_price, n, system=1, latest_n=None):
     """Enter or pyramid a long position"""
     is_pyramid = ticker in self.state.long_positions
     pyramid_level = len(self.state.long_positions[ticker]['pyramid_units']) + 1 if is_pyramid else 1
@@ -360,9 +380,10 @@ class TurtleTradingLS:
 
       # Update or create position
       if is_pyramid:
+        # Pass latest_n if provided (for use_latest_n_for_pyramiding mode)
         self.state.long_positions[ticker] = self.position_manager.add_pyramid_unit(
           self.state.long_positions[ticker],
-          units, filled_price, n, order_id
+          units, filled_price, n, order_id, latest_n
         )
         reason = f"Long pyramid level {pyramid_level}"
       else:
@@ -391,7 +412,7 @@ class TurtleTradingLS:
 
     return False
 
-  def enter_short_position(self, ticker, units, target_price, n, system=1):
+  def enter_short_position(self, ticker, units, target_price, n, system=1, latest_n=None):
     """Enter or pyramid a short position"""
     # Double-check shortability (in case signal was stale)
     if not self._is_ticker_shortable(ticker):
@@ -417,9 +438,10 @@ class TurtleTradingLS:
     if success and filled_price:
       # Update or create position
       if is_pyramid:
+        # Pass latest_n if provided (for use_latest_n_for_pyramiding mode)
         self.state.short_positions[ticker] = self.position_manager.add_pyramid_unit(
           self.state.short_positions[ticker],
-          units, filled_price, n, order_id
+          units, filled_price, n, order_id, latest_n
         )
         reason = f"Short pyramid level {pyramid_level}"
       else:
@@ -498,8 +520,9 @@ class TurtleTradingLS:
       })
 
       return True
-    elif success and order_id:
+    elif order_id:
       # Order placed but not filled immediately - mark as pending
+      # NOTE: success can be False if order is pending, but order_id is still valid
       if not hasattr(self.state, 'pending_exit_orders'):
         self.state.pending_exit_orders = {}
       self.state.pending_exit_orders[ticker] = order_id
@@ -559,8 +582,9 @@ class TurtleTradingLS:
       })
 
       return True
-    elif success and order_id:
+    elif order_id:
       # Order placed but not filled immediately - mark as pending
+      # NOTE: success can be False if order is pending, but order_id is still valid
       if not hasattr(self.state, 'pending_exit_orders'):
         self.state.pending_exit_orders = {}
       self.state.pending_exit_orders[ticker] = order_id
@@ -829,23 +853,54 @@ class TurtleTradingLS:
         self.logger.log(f"Missing initial_n or initial_units for {ticker}, skipping pyramid", 'WARNING')
         continue
 
+      # Get latest N from current data (using only completed daily bars)
+      df = self.data_provider.get_historical_data(ticker)
+      if df is None or len(df) < 1:
+        self.logger.log(f"No historical data for {ticker}, skipping pyramid", 'WARNING')
+        continue
+
+      df = self.indicator_calculator.calculate_indicators(df)
+      # Use latest COMPLETED N (excludes today's incomplete bar during market hours)
+      latest_n = self.indicator_calculator.get_latest_completed_n(df)
+
+      if latest_n is None or pd.isna(latest_n) or latest_n == 0:
+        self.logger.log(f"Invalid latest N for {ticker}, skipping pyramid", 'WARNING')
+        continue
+
       # Check pyramid opportunity
-      # Use FIRST pyramid (initial entry) for calculating trigger, not last
-      initial_entry_price = position['pyramid_units'][0]['entry_price']
       pyramid_count = len(position['pyramid_units'])
 
-      # Calculate pyramid trigger based on initial entry and pyramid count
-      # This ensures pyramids at 0.5N, 1.0N, 1.5N from initial entry
-      pyramid_entry_price = initial_entry_price + (pyramid_count * 0.5 * initial_n)
+      # Determine which N and reference price to use based on parameter
+      if self.use_latest_n_for_pyramiding:
+        # Use latest N and last entry price
+        n_for_pyramid = latest_n
+        last_entry_price = position['pyramid_units'][-1]['entry_price']
+        pyramid_entry_price = last_entry_price + (0.5 * n_for_pyramid)
+      else:
+        # Original behavior: use initial N and initial entry price
+        n_for_pyramid = initial_n
+        initial_entry_price = position['pyramid_units'][0]['entry_price']
+        pyramid_entry_price = initial_entry_price + (pyramid_count * 0.5 * n_for_pyramid)
+
+      # Check pyramid opportunity with appropriate reference price and threshold
+      if self.use_latest_n_for_pyramiding:
+        # Check from last entry with 0.5 * latest_N threshold
+        reference_price = position['pyramid_units'][-1]['entry_price']
+        threshold = 0.5
+      else:
+        # Original: check from initial entry with cumulative threshold
+        reference_price = position['pyramid_units'][0]['entry_price']
+        threshold = pyramid_count * 0.5
 
       if self.signal_generator.check_long_pyramid_opportunity(
-          initial_entry_price, current_price, initial_n, threshold=pyramid_count * 0.5):
+          reference_price, current_price, n_for_pyramid, threshold=threshold):
         pyramid_level = pyramid_count + 1
 
-        # Log detailed pyramid trigger information
+        # Log detailed pyramid trigger information with N tracking
         self.logger.log_pyramid_trigger(
           ticker, 'LONG', pyramid_level, pyramid_entry_price,
-          current_price, initial_entry_price, initial_n
+          current_price, reference_price, n_for_pyramid,
+          initial_n=initial_n, latest_n=latest_n, use_latest_n=self.use_latest_n_for_pyramiding
         )
 
         # Check if current price is within trigger threshold (like entry queue logic)
@@ -866,7 +921,11 @@ class TurtleTradingLS:
           self.state.save_state()
           self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
 
-          success = self.enter_long_position(ticker, units, pyramid_entry_price, initial_n)
+          # Pass latest_n if use_latest_n_for_pyramiding is enabled
+          if self.use_latest_n_for_pyramiding:
+            success = self.enter_long_position(ticker, units, pyramid_entry_price, initial_n, latest_n=latest_n)
+          else:
+            success = self.enter_long_position(ticker, units, pyramid_entry_price, initial_n)
 
           if success:
             # Order filled immediately, position updated, remove pending marker
@@ -875,17 +934,22 @@ class TurtleTradingLS:
               self.state.save_state()
               self.logger.log(f"Removed pending marker for {ticker} (filled immediately)")
           else:
-            # Track actual pending order
+            # Track actual pending order with latest_n for later use
             open_orders = self.order_manager.get_open_orders(ticker)
             order_found = False
             for order in open_orders:
               if order.side.name == 'BUY':
-                self.state.pending_pyramid_orders[ticker] = str(order.id)
+                # Store order info including latest_n if using latest_n mode
+                self.state.pending_pyramid_orders[ticker] = {
+                  'order_id': str(order.id),
+                  'latest_n': latest_n if self.use_latest_n_for_pyramiding else None,
+                  'timestamp': datetime.now().isoformat()
+                }
                 # Clear timestamp since we found the order
                 if ticker in self.state.placing_marker_timestamps:
                   del self.state.placing_marker_timestamps[ticker]
                 self.state.save_state()
-                self.logger.log(f"Updated pending marker for {ticker} with order ID: {order.id}")
+                self.logger.log(f"Updated pending marker for {ticker} with order ID: {order.id}, latest_n: {latest_n if self.use_latest_n_for_pyramiding else 'N/A'}")
                 order_found = True
                 break
 
@@ -933,23 +997,54 @@ class TurtleTradingLS:
         self.logger.log(f"Missing initial_n or initial_units for {ticker}, skipping pyramid", 'WARNING')
         continue
 
+      # Get latest N from current data (using only completed daily bars)
+      df = self.data_provider.get_historical_data(ticker)
+      if df is None or len(df) < 1:
+        self.logger.log(f"No historical data for {ticker}, skipping pyramid", 'WARNING')
+        continue
+
+      df = self.indicator_calculator.calculate_indicators(df)
+      # Use latest COMPLETED N (excludes today's incomplete bar during market hours)
+      latest_n = self.indicator_calculator.get_latest_completed_n(df)
+
+      if latest_n is None or pd.isna(latest_n) or latest_n == 0:
+        self.logger.log(f"Invalid latest N for {ticker}, skipping pyramid", 'WARNING')
+        continue
+
       # Check pyramid opportunity
-      # Use FIRST pyramid (initial entry) for calculating trigger, not last
-      initial_entry_price = position['pyramid_units'][0]['entry_price']
       pyramid_count = len(position['pyramid_units'])
 
-      # Calculate pyramid trigger based on initial entry and pyramid count
-      # This ensures pyramids at 0.5N, 1.0N, 1.5N from initial entry
-      pyramid_entry_price = initial_entry_price - (pyramid_count * 0.5 * initial_n)
+      # Determine which N and reference price to use based on parameter
+      if self.use_latest_n_for_pyramiding:
+        # Use latest N and last entry price
+        n_for_pyramid = latest_n
+        last_entry_price = position['pyramid_units'][-1]['entry_price']
+        pyramid_entry_price = last_entry_price - (0.5 * n_for_pyramid)
+      else:
+        # Original behavior: use initial N and initial entry price
+        n_for_pyramid = initial_n
+        initial_entry_price = position['pyramid_units'][0]['entry_price']
+        pyramid_entry_price = initial_entry_price - (pyramid_count * 0.5 * n_for_pyramid)
+
+      # Check pyramid opportunity with appropriate reference price and threshold
+      if self.use_latest_n_for_pyramiding:
+        # Check from last entry with 0.5 * latest_N threshold
+        reference_price = position['pyramid_units'][-1]['entry_price']
+        threshold = 0.5
+      else:
+        # Original: check from initial entry with cumulative threshold
+        reference_price = position['pyramid_units'][0]['entry_price']
+        threshold = pyramid_count * 0.5
 
       if self.signal_generator.check_short_pyramid_opportunity(
-          initial_entry_price, current_price, initial_n, threshold=pyramid_count * 0.5):
+          reference_price, current_price, n_for_pyramid, threshold=threshold):
         pyramid_level = pyramid_count + 1
 
-        # Log detailed pyramid trigger information
+        # Log detailed pyramid trigger information with N tracking
         self.logger.log_pyramid_trigger(
           ticker, 'SHORT', pyramid_level, pyramid_entry_price,
-          current_price, initial_entry_price, initial_n
+          current_price, reference_price, n_for_pyramid,
+          initial_n=initial_n, latest_n=latest_n, use_latest_n=self.use_latest_n_for_pyramiding
         )
 
         # Check if current price is within trigger threshold (like entry queue logic)
@@ -970,7 +1065,11 @@ class TurtleTradingLS:
           self.state.save_state()
           self.logger.log(f"Marked {ticker} as pending pyramid to prevent duplicates")
 
-          success = self.enter_short_position(ticker, units, pyramid_entry_price, initial_n)
+          # Pass latest_n if use_latest_n_for_pyramiding is enabled
+          if self.use_latest_n_for_pyramiding:
+            success = self.enter_short_position(ticker, units, pyramid_entry_price, initial_n, latest_n=latest_n)
+          else:
+            success = self.enter_short_position(ticker, units, pyramid_entry_price, initial_n)
 
           if success:
             # Order filled immediately, position updated, remove pending marker
@@ -979,17 +1078,22 @@ class TurtleTradingLS:
               self.state.save_state()
               self.logger.log(f"Removed pending marker for {ticker} (filled immediately)")
           else:
-            # Track actual pending order
+            # Track actual pending order with latest_n for later use
             open_orders = self.order_manager.get_open_orders(ticker)
             order_found = False
             for order in open_orders:
               if order.side.name == 'SELL':
-                self.state.pending_pyramid_orders[ticker] = str(order.id)
+                # Store order info including latest_n if using latest_n mode
+                self.state.pending_pyramid_orders[ticker] = {
+                  'order_id': str(order.id),
+                  'latest_n': latest_n if self.use_latest_n_for_pyramiding else None,
+                  'timestamp': datetime.now().isoformat()
+                }
                 # Clear timestamp since we found the order
                 if ticker in self.state.placing_marker_timestamps:
                   del self.state.placing_marker_timestamps[ticker]
                 self.state.save_state()
-                self.logger.log(f"Updated pending marker for {ticker} with order ID: {order.id}")
+                self.logger.log(f"Updated pending marker for {ticker} with order ID: {order.id}, latest_n: {latest_n if self.use_latest_n_for_pyramiding else 'N/A'}")
                 order_found = True
                 break
 
@@ -1324,7 +1428,16 @@ class TurtleTradingLS:
         self.state.save_state()
 
     # Check pending pyramid orders
-    for ticker, order_id in list(self.state.pending_pyramid_orders.items()):
+    for ticker, order_info in list(self.state.pending_pyramid_orders.items()):
+      # Extract order_id and latest_n, handling both old (string) and new (dict) formats
+      if isinstance(order_info, dict):
+        order_id = order_info.get('order_id')
+        latest_n_stored = order_info.get('latest_n')
+      else:
+        # Backward compatibility: old format was just string order_id or 'PLACING'
+        order_id = order_info
+        latest_n_stored = None
+
       # Handle 'PLACING' marker - these are temporary and will be updated or removed
       if order_id == 'PLACING':
         # Track how long this marker has been stuck
@@ -1361,10 +1474,12 @@ class TurtleTradingLS:
             initial_n = position.get('initial_n')
             pyramid_level = len(position['pyramid_units']) + 1
 
+            # Use stored latest_n if available
             self.state.long_positions[ticker] = self.position_manager.add_pyramid_unit(
-              position, filled_qty, filled_price, initial_n, order_id
+              position, filled_qty, filled_price, initial_n, order_id, latest_n_stored
             )
-            self.logger.log(f"Added pyramid unit to long position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}")
+            latest_n_msg = f" (latest_n={latest_n_stored:.3f})" if latest_n_stored else ""
+            self.logger.log(f"Added pyramid unit to long position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}{latest_n_msg}")
 
             # Send notification
             stop_price = self.state.long_positions[ticker]['stop_price']
@@ -1384,10 +1499,12 @@ class TurtleTradingLS:
             initial_n = position.get('initial_n')
             pyramid_level = len(position['pyramid_units']) + 1
 
+            # Use stored latest_n if available
             self.state.short_positions[ticker] = self.position_manager.add_pyramid_unit(
-              position, filled_qty, filled_price, initial_n, order_id
+              position, filled_qty, filled_price, initial_n, order_id, latest_n_stored
             )
-            self.logger.log(f"Added pyramid unit to short position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}")
+            latest_n_msg = f" (latest_n={latest_n_stored:.3f})" if latest_n_stored else ""
+            self.logger.log(f"Added pyramid unit to short position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}{latest_n_msg}")
 
             # Send notification
             stop_price = self.state.short_positions[ticker]['stop_price']
@@ -1847,12 +1964,13 @@ class TurtleTradingLS:
     except Exception as e:
       self.logger.log(f"Error checking for stale orders: {e}", 'WARNING')
 
-    self.logger.log_state_snapshot(self.state, 'market_open')
-
     account = self.trading_client.get_account()
 
     # Capture starting equity for daily P&L calculation
     self.starting_equity = float(account.equity)
+
+    # Log state snapshot with starting equity for recovery if system restarts
+    self.logger.log_state_snapshot(self.state, 'market_open', equity=self.starting_equity)
 
     summary = {
       "Equity": f"${float(account.equity):,.2f}",
@@ -1983,6 +2101,25 @@ class TurtleTradingLS:
 
     # Calculate total daily P&L (including unrealized)
     current_equity = float(account.equity) if account else None
+
+    # If starting_equity is None (e.g., system restarted mid-day), try to recover it
+    if self.starting_equity is None and current_equity is not None:
+      # Try to get starting equity from market_open snapshot
+      try:
+        for snapshot in self.logger.state_snapshots:
+          if snapshot.get('label') == 'market_open' and 'equity' in snapshot:
+            # Recover from stored equity value
+            self.starting_equity = snapshot['equity']
+            self.logger.log(f"Recovered starting_equity from market_open snapshot: ${self.starting_equity:,.2f}", 'WARNING')
+            break
+        else:
+          # Fallback: estimate from current equity - realized PnL
+          if self.daily_pnl != 0:
+            self.starting_equity = current_equity - self.daily_pnl
+            self.logger.log(f"Estimated starting_equity: ${self.starting_equity:,.2f} (current equity - realized PnL)", 'WARNING')
+      except Exception as e:
+        self.logger.log(f"Could not recover starting_equity: {e}", 'WARNING')
+
     if current_equity and self.starting_equity:
       total_pnl = current_equity - self.starting_equity
       unrealized_pnl = total_pnl - self.daily_pnl

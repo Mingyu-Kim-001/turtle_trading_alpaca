@@ -166,7 +166,7 @@ Examples:
   # Initialize trading system with configuration from .env
   # Command-line args can override .env values
   risk_per_unit_value = args.risk_per_unit if args.risk_per_unit is not None else config.risk_per_unit
-  
+
   system = TurtleTradingLS(
     api_key=config.alpaca_key,
     api_secret=config.alpaca_secret,
@@ -180,7 +180,8 @@ Examples:
     enable_system1=config.enable_system1,
     enable_system2=config.enable_system2,
     check_shortability=config.check_shortability,
-    risk_per_unit=risk_per_unit_value
+    risk_per_unit=risk_per_unit_value,
+    use_latest_n_for_pyramiding=config.use_latest_n_for_pyramiding
   )
 
   # Build configuration description

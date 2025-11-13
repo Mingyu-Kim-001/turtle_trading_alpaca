@@ -23,10 +23,15 @@ class SignalGenerator:
     if df is None or len(df) < 55:
       return None
 
+    from system_long_short.core.indicators import IndicatorCalculator
+
     latest = df.iloc[-1]
     channel_key = 'high_20' if system == 1 else 'high_55'
 
-    if pd.notna(latest[channel_key]) and pd.notna(latest['N']):
+    # Use latest COMPLETED N (excludes today's incomplete bar during market hours)
+    latest_n = IndicatorCalculator.get_latest_completed_n(df)
+
+    if pd.notna(latest[channel_key]) and latest_n is not None:
       entry_price = latest[channel_key]
       proximity = (entry_price - current_price) / current_price
 
@@ -35,7 +40,7 @@ class SignalGenerator:
         return {
           'entry_price': entry_price,
           'current_price': current_price,
-          'n': latest['N'],
+          'n': latest_n,
           'proximity': proximity * 100,
           'side': 'long',
           'system': system
@@ -60,10 +65,15 @@ class SignalGenerator:
     if df is None or len(df) < 55:
       return None
 
+    from system_long_short.core.indicators import IndicatorCalculator
+
     latest = df.iloc[-1]
     channel_key = 'low_20' if system == 1 else 'low_55'
 
-    if pd.notna(latest[channel_key]) and pd.notna(latest['N']):
+    # Use latest COMPLETED N (excludes today's incomplete bar during market hours)
+    latest_n = IndicatorCalculator.get_latest_completed_n(df)
+
+    if pd.notna(latest[channel_key]) and latest_n is not None:
       entry_price = latest[channel_key]
       # For shorts, proximity is inverted (price below breakdown is negative)
       proximity = (current_price - entry_price) / current_price
@@ -73,7 +83,7 @@ class SignalGenerator:
         return {
           'entry_price': entry_price,
           'current_price': current_price,
-          'n': latest['N'],
+          'n': latest_n,
           'proximity': proximity * 100,
           'side': 'short',
           'system': system

@@ -152,7 +152,7 @@ class OrderManager:
 
     Args:
       ticker: Stock symbol
-      units: Number of shares (can be fractional)
+      units: Number of shares (will be rounded down to whole shares)
       target_price: Target entry price
       n: Current ATR
       is_pyramid: Whether this is a pyramid order
@@ -162,11 +162,20 @@ class OrderManager:
       Tuple of (success, order_id, filled_price)
     """
     try:
-      # Round to 9 decimal places for Alpaca's precision
-      units = round(float(units), 9)
+      import math
+
+      # Alpaca does NOT allow fractional short selling - must be whole shares
+      # Round DOWN to nearest whole number to ensure we don't exceed position size
+      original_units = float(units)
+      units = int(math.floor(original_units))
+
       if units <= 0:
-        self._log(f"Invalid units for {ticker}: {units}", 'ERROR')
+        self._log(f"Invalid units for {ticker}: {original_units:.4f} rounded to {units}", 'ERROR')
         return False, None, None
+
+      # Log if we lost significant units due to rounding
+      if original_units - units >= 0.5:
+        self._log(f"Note: {ticker} short units rounded from {original_units:.4f} to {units} (Alpaca doesn't allow fractional shorts)", 'WARNING')
 
       # Calculate prices - for shorts, enter at target price
       # Stop price is the target entry price
@@ -463,10 +472,17 @@ class OrderManager:
       slippage = 0.02 if is_stop_loss else 0.005
       limit_price = round(stop_price * (1 + slippage), 2)
 
-      # Round units to 8 decimal places for Alpaca's precision
-      units = round(float(units), 8)
+      # Round to whole shares to match the short entry (which must be whole shares)
+      # Short positions can only be whole shares, so exits must also be whole shares
+      import math
+      original_units = float(units)
+      units = int(math.floor(original_units))
 
-      self._log(f"Placing short exit order for {ticker}: units={units:.4f}, "
+      if units <= 0:
+        self._log(f"Invalid exit units for {ticker}: {original_units:.4f} rounded to {units}", 'ERROR')
+        return False, None, None
+
+      self._log(f"Placing short exit order for {ticker}: units={units}, "
            f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
 
       # Place stop-limit buy order to cover

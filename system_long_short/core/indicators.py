@@ -81,3 +81,55 @@ class IndicatorCalculator:
     df = IndicatorCalculator.calculate_atr(df)
     df = IndicatorCalculator.calculate_donchian_channels(df)
     return df
+
+  @staticmethod
+  def get_latest_completed_n(df):
+    """
+    Get N (ATR) from the last completed daily bar, excluding today's incomplete bar.
+
+    This ensures N is calculated only from complete daily data, matching the shift(1)
+    behavior used in Donchian channels. During market hours, today's incomplete bar
+    is excluded to prevent N from changing throughout the trading day.
+
+    Args:
+      df: DataFrame with calculated indicators (must have 'N' column and date index)
+
+    Returns:
+      Latest completed N value, or None if not available
+    """
+    if df is None or len(df) == 0 or 'N' not in df.columns:
+      return None
+
+    from datetime import datetime
+    import pytz
+
+    # Get the last bar's date
+    last_bar_date = df.index[-1]
+
+    # Convert to date (handle both date and datetime)
+    if hasattr(last_bar_date, 'date'):
+      last_bar_date = last_bar_date.date()
+    elif hasattr(last_bar_date, 'to_pydatetime'):
+      last_bar_date = last_bar_date.to_pydatetime().date()
+
+    # Get today's date in market timezone (US/Eastern)
+    eastern = pytz.timezone('US/Eastern')
+    now_eastern = datetime.now(eastern)
+    today = now_eastern.date()
+
+    # If last bar is from today, it might be incomplete during market hours
+    if last_bar_date == today:
+      # Check if market is currently open (9:30 AM - 4:00 PM ET)
+      market_time = now_eastern.time()
+      from datetime import time
+      market_open = time(9, 30)
+      market_close = time(16, 0)
+
+      if market_open <= market_time <= market_close:
+        # Market is open, last bar is incomplete - use second-to-last bar
+        if len(df) < 2:
+          return None
+        return df.iloc[-2]['N']
+
+    # Last bar is complete (either not today, or market is closed)
+    return df.iloc[-1]['N']

@@ -229,6 +229,110 @@ class TestPositionManagerLongShort(unittest.TestCase):
     # Expected: 100*2*2 + 100*2*2.1 = 400 + 420 = 820
     self.assertAlmostEqual(allocated_risk, 820, places=2)
 
+  def test_calculate_long_stop_with_latest_n(self):
+    """Test long stop calculation with latest_n parameter"""
+    position = {
+      'side': 'long',
+      'initial_n': 2.0,
+      'pyramid_units': [
+        {'entry_price': 100, 'entry_n': 2.0, 'units': 50},
+        {'entry_price': 101, 'entry_n': 2.0, 'units': 50}
+      ]
+    }
+    # Without latest_n: uses initial_n = 2.0
+    stop_price = PositionManager.calculate_long_stop(position)
+    # Stop is last_entry - 2*initial_N = 101 - 2*2.0 = 97.0
+    self.assertAlmostEqual(stop_price, 97.0, places=2)
+
+    # With latest_n = 3.0
+    stop_price_latest = PositionManager.calculate_long_stop(position, latest_n=3.0)
+    # Stop is last_entry - 2*latest_N = 101 - 2*3.0 = 95.0
+    self.assertAlmostEqual(stop_price_latest, 95.0, places=2)
+
+  def test_calculate_short_stop_with_latest_n(self):
+    """Test short stop calculation with latest_n parameter"""
+    position = {
+      'side': 'short',
+      'initial_n': 2.0,
+      'pyramid_units': [
+        {'entry_price': 100, 'entry_n': 2.0, 'units': 50},
+        {'entry_price': 99, 'entry_n': 2.0, 'units': 50}
+      ]
+    }
+    # Without latest_n: uses initial_n = 2.0
+    stop_price = PositionManager.calculate_short_stop(position)
+    # Stop is last_entry + 2*initial_N = 99 + 2*2.0 = 103.0
+    self.assertAlmostEqual(stop_price, 103.0, places=2)
+
+    # With latest_n = 3.0
+    stop_price_latest = PositionManager.calculate_short_stop(position, latest_n=3.0)
+    # Stop is last_entry + 2*latest_N = 99 + 2*3.0 = 105.0
+    self.assertAlmostEqual(stop_price_latest, 105.0, places=2)
+
+  def test_add_pyramid_unit_long_with_latest_n(self):
+    """Test adding a pyramid unit to long position with latest_n"""
+    position = PositionManager.create_new_long_position(
+      units=100,
+      entry_price=100.0,
+      entry_n=2.0,
+      order_id='order123',
+      system=1
+    )
+    # Add pyramid without latest_n (uses initial_n)
+    updated_position = PositionManager.add_pyramid_unit(
+      position,
+      units=100,
+      entry_price=101.0,
+      entry_n=2.0,
+      order_id='order456'
+    )
+    # Stop is last_entry - 2*initial_N = 101 - 2*2.0 = 97.0
+    self.assertAlmostEqual(updated_position['stop_price'], 97.0, places=2)
+
+    # Add another pyramid with latest_n = 3.0
+    updated_position = PositionManager.add_pyramid_unit(
+      updated_position,
+      units=100,
+      entry_price=102.0,
+      entry_n=2.0,
+      order_id='order789',
+      latest_n=3.0
+    )
+    # Stop is last_entry - 2*latest_N = 102 - 2*3.0 = 96.0
+    self.assertAlmostEqual(updated_position['stop_price'], 96.0, places=2)
+
+  def test_add_pyramid_unit_short_with_latest_n(self):
+    """Test adding a pyramid unit to short position with latest_n"""
+    position = PositionManager.create_new_short_position(
+      units=100,
+      entry_price=100.0,
+      entry_n=2.0,
+      order_id='order123',
+      system=1
+    )
+    # Add pyramid without latest_n (uses initial_n)
+    updated_position = PositionManager.add_pyramid_unit(
+      position,
+      units=100,
+      entry_price=99.0,
+      entry_n=2.0,
+      order_id='order456'
+    )
+    # Stop is last_entry + 2*initial_N = 99 + 2*2.0 = 103.0
+    self.assertAlmostEqual(updated_position['stop_price'], 103.0, places=2)
+
+    # Add another pyramid with latest_n = 3.0
+    updated_position = PositionManager.add_pyramid_unit(
+      updated_position,
+      units=100,
+      entry_price=98.0,
+      entry_n=2.0,
+      order_id='order789',
+      latest_n=3.0
+    )
+    # Stop is last_entry + 2*latest_N = 98 + 2*3.0 = 104.0
+    self.assertAlmostEqual(updated_position['stop_price'], 104.0, places=2)
+
 
 if __name__ == '__main__':
   unittest.main()

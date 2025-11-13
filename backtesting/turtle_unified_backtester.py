@@ -46,7 +46,8 @@ class TurtleUnifiedBacktester:
                enable_logging=True, seed=None, save_results=True,
                balance_long_short_units=False,
                stop_loss_atr_multiplier=2.0, pyramid_atr_multiplier=0.5,
-               use_margin=True, margin_multiplier=2.0):
+               use_margin=True, margin_multiplier=2.0,
+               use_latest_n_for_pyramiding=False):
     """
     Initialize the unified backtester
 
@@ -68,6 +69,7 @@ class TurtleUnifiedBacktester:
       pyramid_atr_multiplier: Multiplier for pyramid trigger distance (default 0.5 = 0.5*N increments)
       use_margin: Whether to use margin (2x buying power) like Alpaca (default: True)
       margin_multiplier: Margin multiplier for buying power (default: 2.0 for Reg T margin)
+      use_latest_n_for_pyramiding: If True, use latest ATR for pyramiding calculations and update stops (default: False)
     """
     if not enable_longs and not enable_shorts:
       raise ValueError("At least one of enable_longs or enable_shorts must be True")
@@ -92,6 +94,7 @@ class TurtleUnifiedBacktester:
     self.pyramid_atr_multiplier = pyramid_atr_multiplier
     self.use_margin = use_margin
     self.margin_multiplier = margin_multiplier if use_margin else 1.0
+    self.use_latest_n_for_pyramiding = use_latest_n_for_pyramiding
 
     # Determine if we need to track systems (only when both systems are enabled)
     self.track_systems = enable_system1 and enable_system2
@@ -177,6 +180,10 @@ class TurtleUnifiedBacktester:
       parts.append("cash_only")
     elif self.margin_multiplier != 2.0:
       parts.append(f"margin{self.margin_multiplier}x")
+
+    # Add latest N for pyramiding flag if enabled
+    if self.use_latest_n_for_pyramiding:
+      parts.append("latest_n_pyr")
 
     return "_".join(parts)
 
@@ -470,6 +477,7 @@ class TurtleUnifiedBacktester:
       'pyramid_atr_multiplier': self.pyramid_atr_multiplier,
       'use_margin': self.use_margin,
       'margin_multiplier': self.margin_multiplier,
+      'use_latest_n_for_pyramiding': self.use_latest_n_for_pyramiding,
     }
     # Create a stable hash of the configuration
     config_str = json.dumps(config_dict, sort_keys=True)
@@ -1227,14 +1235,25 @@ class TurtleUnifiedBacktester:
     position = self.long_positions[ticker]
     if position['pyramid_count'] >= 4:
       return None
-    
+
     # Check balance constraint
     if not self._can_add_long_unit():
       return None
 
-    # Pyramid trigger: initial_entry + (pyramid_count * pyramid_atr_multiplier * N)
-    # Default 0.5N ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
-    pyramid_price = position['initial_entry_price'] + (position['pyramid_count'] * self.pyramid_atr_multiplier * position['n_value'])
+    # Determine which N to use for pyramiding calculation
+    if self.use_latest_n_for_pyramiding:
+      # Use latest N from today's data
+      latest_n = today['N']
+      # Get the last entry price (most recent pyramid or initial entry)
+      last_entry_price = position['entry_price']  # This is the most recent entry
+      # Pyramid trigger: last_entry_price + (pyramid_atr_multiplier * latest_N)
+      pyramid_price = last_entry_price + (self.pyramid_atr_multiplier * latest_n)
+    else:
+      # Original behavior: use initial N and initial entry price
+      # Pyramid trigger: initial_entry + (pyramid_count * pyramid_atr_multiplier * N)
+      # Default 0.5N ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
+      latest_n = position['n_value']  # Will be used for unit sizing
+      pyramid_price = position['initial_entry_price'] + (position['pyramid_count'] * self.pyramid_atr_multiplier * position['n_value'])
 
     if today['high'] >= pyramid_price:
       unit_size = self._get_unit_size(total_equity, position['n_value'])
@@ -1262,8 +1281,15 @@ class TurtleUnifiedBacktester:
         position['units'] = new_units
         position['entry_price'] = (position['entry_price'] * old_units + pyramid_price * unit_size) / new_units
         position['pyramid_count'] += 1
-        position['stop_price'] = pyramid_price - self.stop_loss_atr_multiplier * position['n_value']
-        
+
+        # Update stop-loss based on parameter setting
+        if self.use_latest_n_for_pyramiding:
+          # Use latest N and set stop based on the pyramid entry price
+          position['stop_price'] = pyramid_price - (self.stop_loss_atr_multiplier * latest_n)
+        else:
+          # Original behavior: use initial N
+          position['stop_price'] = pyramid_price - (self.stop_loss_atr_multiplier * position['n_value'])
+
         return {
             'ticker': ticker,
             'side': 'long',
@@ -1430,14 +1456,25 @@ class TurtleUnifiedBacktester:
     position = self.short_positions[ticker]
     if position['pyramid_count'] >= 4:
       return None
-    
+
     # Check balance constraint
     if not self._can_add_short_unit():
       return None
 
-    # Pyramid trigger for shorts: initial_entry - (pyramid_count * pyramid_atr_multiplier * N)
-    # Default 0.5N ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
-    pyramid_price = position['initial_entry_price'] - (position['pyramid_count'] * self.pyramid_atr_multiplier * position['n_value'])
+    # Determine which N to use for pyramiding calculation
+    if self.use_latest_n_for_pyramiding:
+      # Use latest N from today's data
+      latest_n = today['N']
+      # Get the last entry price (most recent pyramid or initial entry)
+      last_entry_price = position['entry_price']  # This is the most recent entry
+      # Pyramid trigger for shorts: last_entry_price - (pyramid_atr_multiplier * latest_N)
+      pyramid_price = last_entry_price - (self.pyramid_atr_multiplier * latest_n)
+    else:
+      # Original behavior: use initial N and initial entry price
+      # Pyramid trigger for shorts: initial_entry - (pyramid_count * pyramid_atr_multiplier * N)
+      # Default 0.5N ensures pyramids at 0.5N, 1.0N, 1.5N from the original entry
+      latest_n = position['n_value']  # Will be used for unit sizing
+      pyramid_price = position['initial_entry_price'] - (position['pyramid_count'] * self.pyramid_atr_multiplier * position['n_value'])
 
     if today['low'] <= pyramid_price:
       unit_size = self._get_unit_size(total_equity, position['n_value'])
@@ -1471,8 +1508,15 @@ class TurtleUnifiedBacktester:
         position['units'] = new_units
         position['entry_price'] = (position['entry_price'] * old_units + pyramid_price * unit_size) / new_units
         position['pyramid_count'] += 1
+
+        # Update stop-loss based on parameter setting
         # Short stop moves UP with entry
-        position['stop_price'] = pyramid_price + self.stop_loss_atr_multiplier * position['n_value']
+        if self.use_latest_n_for_pyramiding:
+          # Use latest N and set stop based on the pyramid entry price
+          position['stop_price'] = pyramid_price + (self.stop_loss_atr_multiplier * latest_n)
+        else:
+          # Original behavior: use initial N
+          position['stop_price'] = pyramid_price + (self.stop_loss_atr_multiplier * position['n_value'])
 
         return {
             'ticker': ticker,

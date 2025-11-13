@@ -48,7 +48,7 @@ class PositionManager:
     return position_value * margin_pct
 
   @staticmethod
-  def calculate_long_stop(position):
+  def calculate_long_stop(position, latest_n=None):
     """
     Calculate stop price for long position
 
@@ -60,6 +60,7 @@ class PositionManager:
 
     Args:
       position: Position dict with pyramid_units and initial_n
+      latest_n: If provided, use this N instead of initial_n for stop calculation
 
     Returns:
       Stop price as float, or None if no units
@@ -68,16 +69,20 @@ class PositionManager:
     if not pyramid_units:
       return None
 
-    initial_n = position.get('initial_n', pyramid_units[0]['entry_n'])
+    # Use latest_n if provided, otherwise use initial_n
+    if latest_n is not None:
+      n_value = latest_n
+    else:
+      n_value = position.get('initial_n', pyramid_units[0]['entry_n'])
 
     # Use the last pyramid entry price as reference
     last_entry_price = pyramid_units[-1]['entry_price']
 
     # Stop is always 2N below last entry
-    return last_entry_price - 2 * initial_n
+    return last_entry_price - 2 * n_value
 
   @staticmethod
-  def calculate_short_stop(position):
+  def calculate_short_stop(position, latest_n=None):
     """
     Calculate stop price for short position
 
@@ -89,6 +94,7 @@ class PositionManager:
 
     Args:
       position: Position dict with pyramid_units and initial_n
+      latest_n: If provided, use this N instead of initial_n for stop calculation
 
     Returns:
       Stop price as float, or None if no units
@@ -97,13 +103,17 @@ class PositionManager:
     if not pyramid_units:
       return None
 
-    initial_n = position.get('initial_n', pyramid_units[0]['entry_n'])
+    # Use latest_n if provided, otherwise use initial_n
+    if latest_n is not None:
+      n_value = latest_n
+    else:
+      n_value = position.get('initial_n', pyramid_units[0]['entry_n'])
 
     # Use the last pyramid entry price as reference
     last_entry_price = pyramid_units[-1]['entry_price']
 
     # Stop is always 2N above last entry
-    return last_entry_price + 2 * initial_n
+    return last_entry_price + 2 * n_value
 
   @staticmethod
   def can_pyramid(position, max_pyramids=4):
@@ -120,7 +130,7 @@ class PositionManager:
     return len(position.get('pyramid_units', [])) < max_pyramids
 
   @staticmethod
-  def add_pyramid_unit(position, units, entry_price, entry_n, order_id):
+  def add_pyramid_unit(position, units, entry_price, entry_n, order_id, latest_n=None):
     """
     Add a pyramid unit to position (works for both long and short)
 
@@ -130,6 +140,7 @@ class PositionManager:
       entry_price: Entry price
       entry_n: ATR at entry (kept for backward compatibility, uses initial_n)
       order_id: Order ID
+      latest_n: If provided, use this N for stop calculation and store it in the unit
 
     Returns:
       Updated position dict
@@ -149,13 +160,19 @@ class PositionManager:
       'order_id': order_id
     }
 
+    # If latest_n was provided (use_latest_n_for_pyramiding mode), store it
+    if latest_n is not None and latest_n != initial_n:
+      pyramid_unit['latest_n'] = latest_n
+      pyramid_unit['n_diff_pct'] = ((latest_n - initial_n) / initial_n * 100) if initial_n > 0 else 0
+
     position['pyramid_units'].append(pyramid_unit)
 
     # Update stop price based on position side
+    # Pass latest_n if provided to use for stop calculation
     if side == 'long':
-      position['stop_price'] = PositionManager.calculate_long_stop(position)
+      position['stop_price'] = PositionManager.calculate_long_stop(position, latest_n)
     else:  # short
-      position['stop_price'] = PositionManager.calculate_short_stop(position)
+      position['stop_price'] = PositionManager.calculate_short_stop(position, latest_n)
 
     return position
 
