@@ -1822,6 +1822,31 @@ class TurtleTradingLS:
     self.logger.log("MARKET OPEN SETUP")
     self.logger.log("="*60)
 
+    # SAFETY CHECK: Cancel any stale orders from previous day
+    # This handles cases where post-market routine failed or didn't run
+    self.logger.log("Checking for stale orders from previous day...")
+    try:
+      open_orders = self.order_manager.get_open_orders()
+      if open_orders:
+        self.logger.log(f"Found {len(open_orders)} stale orders - cancelling them", 'WARNING')
+        for order in open_orders:
+          try:
+            self.order_manager.cancel_order(str(order.id))
+            self.logger.log(f"  ✓ Cancelled stale {order.symbol} {order.side.name} order from previous day")
+          except Exception as cancel_error:
+            self.logger.log(f"  ✗ Failed to cancel stale order {order.id}: {cancel_error}", 'WARNING')
+
+        # Clear pending order tracking
+        self.state.pending_entry_orders = {}
+        self.state.pending_pyramid_orders = {}
+        if hasattr(self.state, 'pending_exit_orders'):
+          self.state.pending_exit_orders = {}
+        self.state.save_state()
+      else:
+        self.logger.log("No stale orders found - clean start ✓")
+    except Exception as e:
+      self.logger.log(f"Error checking for stale orders: {e}", 'WARNING')
+
     self.logger.log_state_snapshot(self.state, 'market_open')
 
     account = self.trading_client.get_account()
@@ -1987,6 +2012,40 @@ class TurtleTradingLS:
     }
 
     self.slack.send_summary("📊 Daily Summary", summary)
+
+    # CRITICAL: Cancel all unfilled orders at end of day
+    # Stop-limit orders that didn't fill during the day should be cancelled
+    # This prevents stale orders from executing the next day
+    self.logger.log("\nCancelling all unfilled orders at market close...")
+    try:
+      open_orders = self.order_manager.get_open_orders()
+      if open_orders:
+        self.logger.log(f"Found {len(open_orders)} open orders to cancel")
+        cancelled_count = 0
+        for order in open_orders:
+          try:
+            self.order_manager.cancel_order(str(order.id))
+            self.logger.log(f"  ✓ Cancelled {order.symbol} {order.side.name} order (ID: {order.id})")
+            cancelled_count += 1
+          except Exception as cancel_error:
+            self.logger.log(f"  ✗ Failed to cancel {order.symbol} order {order.id}: {cancel_error}", 'WARNING')
+
+        self.logger.log(f"Cancelled {cancelled_count}/{len(open_orders)} orders")
+
+        if cancelled_count > 0:
+          self.slack.send_message(f"🧹 Cancelled {cancelled_count} unfilled order(s) at market close")
+      else:
+        self.logger.log("No open orders to cancel")
+
+      # Clear pending order tracking since we cancelled everything
+      self.state.pending_entry_orders = {}
+      self.state.pending_pyramid_orders = {}
+      if hasattr(self.state, 'pending_exit_orders'):
+        self.state.pending_exit_orders = {}
+      self.state.save_state()
+
+    except Exception as e:
+      self.logger.log(f"Error cancelling orders at market close: {e}", 'ERROR')
 
     # Reset daily PnL and starting equity
     self.daily_pnl = 0
