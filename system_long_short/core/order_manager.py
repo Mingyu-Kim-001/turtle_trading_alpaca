@@ -307,8 +307,9 @@ class OrderManager:
       slippage = 0.02 if is_stop_loss else 0.005
       limit_price = round(stop_price * (1 - slippage), 2)
 
-      # Round units to 8 decimal places for Alpaca's precision
-      units = round(float(units), 8)
+      # Round DOWN to 8 decimal places to avoid requesting more than we have
+      import math
+      units = math.floor(float(units) * 100000000) / 100000000
 
       self._log(f"Placing long exit order for {ticker}: units={units:.4f}, "
            f"stop=${stop_price:.2f}, limit=${limit_price:.2f}")
@@ -576,8 +577,10 @@ class OrderManager:
       Tuple of (success, order_id, filled_price)
     """
     try:
-      # Round units to 8 decimal places for Alpaca's precision
-      units = round(float(units), 8)
+      import math
+      # Round DOWN to 8 decimal places to avoid requesting more than we have
+      # This prevents floating point precision issues where we try to sell 12.60423901 when we only have 12.604239006
+      units = math.floor(float(units) * 100000000) / 100000000
 
       order_side = OrderSide.SELL if side == 'long' else OrderSide.BUY
       self._log(f"Placing MARKET {order_side.name.lower()} order for {ticker}: {units:.4f} units")

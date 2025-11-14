@@ -858,8 +858,11 @@ class TurtleTradingLS:
       exit_level = '10-day' if system == 1 else '20-day'
 
       if self.signal_generator.check_long_exit_signal(df, current_price, system):
+        # Get the actual channel level that triggered the exit
+        channel_key = 'low_10' if system == 1 else 'low_20'
+        exit_price = df.iloc[-1][channel_key]
         self.logger.log(f"Long exit signal for {ticker} (System {system})")
-        self.exit_long_position(ticker, current_price, f'Exit signal ({exit_level} low, S{system})')
+        self.exit_long_position(ticker, exit_price, f'Exit signal ({exit_level} low, S{system})')
 
   def check_short_exit_signals(self):
     """Check if any short positions hit exit signals"""
@@ -894,8 +897,11 @@ class TurtleTradingLS:
       exit_level = '10-day' if system == 1 else '20-day'
 
       if self.signal_generator.check_short_exit_signal(df, current_price, system):
+        # Get the actual channel level that triggered the exit
+        channel_key = 'high_10' if system == 1 else 'high_20'
+        exit_price = df.iloc[-1][channel_key]
         self.logger.log(f"Short exit signal for {ticker} (System {system})")
-        self.exit_short_position(ticker, current_price, f'Exit signal ({exit_level} high, S{system})')
+        self.exit_short_position(ticker, exit_price, f'Exit signal ({exit_level} high, S{system})')
 
   def check_long_pyramid_opportunities(self):
     """Check if any long positions can pyramid"""
