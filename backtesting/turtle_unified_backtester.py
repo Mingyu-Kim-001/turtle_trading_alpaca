@@ -982,10 +982,11 @@ class TurtleUnifiedBacktester:
     if self.enable_longs:
       for ticker in list(self.long_positions.keys()):
         df = processed_data[ticker]
-        if today_date not in df.index:
+        if today_date not in df.index or yesterday_date not in df.index:
           continue
         today = df.loc[today_date]
-        trade = self._check_long_pyramiding(ticker, today, total_equity)
+        yesterday = df.loc[yesterday_date]
+        trade = self._check_long_pyramiding(ticker, today, yesterday, total_equity)
         if trade:
             pyramid_trades.append(trade)
 
@@ -993,10 +994,11 @@ class TurtleUnifiedBacktester:
     if self.enable_shorts:
       for ticker in list(self.short_positions.keys()):
         df = processed_data[ticker]
-        if today_date not in df.index:
+        if today_date not in df.index or yesterday_date not in df.index:
           continue
         today = df.loc[today_date]
-        trade = self._check_short_pyramiding(ticker, today, total_equity)
+        yesterday = df.loc[yesterday_date]
+        trade = self._check_short_pyramiding(ticker, today, yesterday, total_equity)
         if trade:
             pyramid_trades.append(trade)
     
@@ -1036,7 +1038,7 @@ class TurtleUnifiedBacktester:
               'ticker': ticker,
               'side': 'long',
               'entry_price': yesterday['high_55'],
-              'n_value': today['N'],
+              'n_value': yesterday['N'],  # Use yesterday's N to match shift(1) logic
               'system': 2
             })
         elif self._is_shortable(ticker) and today['low'] < yesterday['low_55']:
@@ -1046,7 +1048,7 @@ class TurtleUnifiedBacktester:
               'ticker': ticker,
               'side': 'short',
               'entry_price': yesterday['low_55'],
-              'n_value': today['N'],
+              'n_value': yesterday['N'],  # Use yesterday's N to match shift(1) logic
               'system': 2
             })
 
@@ -1063,7 +1065,7 @@ class TurtleUnifiedBacktester:
                 'ticker': ticker,
                 'side': 'long',
                 'entry_price': yesterday['high_20'],
-                'n_value': today['N'],
+                'n_value': yesterday['N'],  # Use yesterday's N to match shift(1) logic
                 'system': 1
               })
             else:
@@ -1080,7 +1082,7 @@ class TurtleUnifiedBacktester:
                 'ticker': ticker,
                 'side': 'short',
                 'entry_price': yesterday['low_20'],
-                'n_value': today['N'],
+                'n_value': yesterday['N'],  # Use yesterday's N to match shift(1) logic
                 'system': 1
               })
             else:
@@ -1274,7 +1276,7 @@ class TurtleUnifiedBacktester:
     
     return trade
 
-  def _check_long_pyramiding(self, ticker, today, total_equity):
+  def _check_long_pyramiding(self, ticker, today, yesterday, total_equity):
     """Check for long pyramiding opportunity (add on upward move)."""
     if self.cash <= 0:
       return None
@@ -1289,8 +1291,8 @@ class TurtleUnifiedBacktester:
 
     # Determine which N to use for pyramiding calculation
     if self.use_latest_n_for_pyramiding:
-      # Use latest N from today's data
-      latest_n = today['N']
+      # Use latest N from yesterday's data (matches shift(1) logic)
+      latest_n = yesterday['N']
       # Get the last entry price (most recent pyramid or initial entry)
       last_entry_price = position['entry_price']  # This is the most recent entry
       # Pyramid trigger: last_entry_price + (pyramid_atr_multiplier * latest_N)
@@ -1495,7 +1497,7 @@ class TurtleUnifiedBacktester:
     
     return trade
 
-  def _check_short_pyramiding(self, ticker, today, total_equity):
+  def _check_short_pyramiding(self, ticker, today, yesterday, total_equity):
     """Check for short pyramiding opportunity (add on downward move)."""
     if self.cash <= 0:
       return None
@@ -1510,8 +1512,8 @@ class TurtleUnifiedBacktester:
 
     # Determine which N to use for pyramiding calculation
     if self.use_latest_n_for_pyramiding:
-      # Use latest N from today's data
-      latest_n = today['N']
+      # Use latest N from yesterday's data (matches shift(1) logic)
+      latest_n = yesterday['N']
       # Get the last entry price (most recent pyramid or initial entry)
       last_entry_price = position['entry_price']  # This is the most recent entry
       # Pyramid trigger for shorts: last_entry_price - (pyramid_atr_multiplier * latest_N)

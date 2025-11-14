@@ -517,10 +517,16 @@ class TurtleTradingLS:
       position, target_price
     )
 
-    # Place exit order
-    success, order_id, filled_price = self.order_manager.place_long_exit_order(
-      ticker, total_units, target_price, reason, is_stop_loss=is_stop_loss
-    )
+    # Place exit order - use market order for stop losses to ensure immediate fill
+    if is_stop_loss:
+      self.logger.log(f"Placing MARKET order to exit long {ticker} (stop loss)")
+      success, order_id, filled_price = self.order_manager.place_market_exit_order(
+        ticker, total_units, side='long'
+      )
+    else:
+      success, order_id, filled_price = self.order_manager.place_long_exit_order(
+        ticker, total_units, target_price, reason, is_stop_loss=is_stop_loss
+      )
 
     if success and filled_price:
       # Calculate P&L
@@ -579,10 +585,17 @@ class TurtleTradingLS:
       position, target_price
     )
 
-    # Place exit order (buy to cover)
-    success, order_id, filled_price = self.order_manager.place_short_exit_order(
-      ticker, total_units, target_price, reason, is_stop_loss=is_stop_loss
-    )
+    # Place exit order - use market order for stop losses to ensure immediate fill
+    if is_stop_loss:
+      self.logger.log(f"Placing MARKET order to exit short {ticker} (stop loss)")
+      success, order_id, filled_price = self.order_manager.place_market_exit_order(
+        ticker, total_units, side='short'
+      )
+    else:
+      # Place exit order (buy to cover)
+      success, order_id, filled_price = self.order_manager.place_short_exit_order(
+        ticker, total_units, target_price, reason, is_stop_loss=is_stop_loss
+      )
 
     if success and filled_price:
       # Calculate P&L
