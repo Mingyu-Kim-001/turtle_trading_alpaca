@@ -88,8 +88,8 @@ class IndicatorCalculator:
     Get N (ATR) from the last completed daily bar, excluding today's incomplete bar.
 
     This ensures N is calculated only from complete daily data, matching the shift(1)
-    behavior used in Donchian channels. During market hours, today's incomplete bar
-    is excluded to prevent N from changing throughout the trading day.
+    behavior used in Donchian channels. Today's bar is excluded until after market
+    close to prevent N from changing throughout the trading day.
 
     Args:
       df: DataFrame with calculated indicators (must have 'N' column and date index)
@@ -117,19 +117,22 @@ class IndicatorCalculator:
     now_eastern = datetime.now(eastern)
     today = now_eastern.date()
 
-    # If last bar is from today, it might be incomplete during market hours
+    # If last bar is from today, it's incomplete until after market close
     if last_bar_date == today:
-      # Check if market is currently open (9:30 AM - 4:00 PM ET)
+      # Check if market has closed (after 4:00 PM ET)
       market_time = now_eastern.time()
       from datetime import time
-      market_open = time(9, 30)
       market_close = time(16, 0)
 
-      if market_open <= market_time <= market_close:
-        # Market is open, last bar is incomplete - use second-to-last bar
+      if market_time <= market_close:
+        # Market hasn't closed yet (or hasn't started), today's bar is incomplete
+        # Use yesterday's completed bar
         if len(df) < 2:
           return None
         return df.iloc[-2]['N']
+      
+      # Market has closed, today's bar is now complete
+      return df.iloc[-1]['N']
 
-    # Last bar is complete (either not today, or market is closed)
+    # Last bar is from a previous day (already complete)
     return df.iloc[-1]['N']
