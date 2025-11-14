@@ -181,7 +181,11 @@ Examples:
     enable_system2=config.enable_system2,
     check_shortability=config.check_shortability,
     risk_per_unit=risk_per_unit_value,
-    use_latest_n_for_pyramiding=config.use_latest_n_for_pyramiding
+    use_latest_n_for_pyramiding=config.use_latest_n_for_pyramiding,
+    telegram_bot_token=config.telegram_bot_token,
+    telegram_chat_id=config.telegram_chat_id,
+    enable_slack=config.enable_slack,
+    enable_telegram=config.enable_telegram
   )
 
   # Build configuration description

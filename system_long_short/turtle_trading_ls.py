@@ -30,7 +30,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.enums import QueryOrderStatus, OrderStatus
 
-from system_long_short.utils import DailyLogger, SlackNotifier, StateManager
+from system_long_short.utils import DailyLogger, SlackNotifier, TelegramNotifier, MultiNotifier, StateManager
 from system_long_short.core import (
   DataProvider,
   IndicatorCalculator,
@@ -49,7 +49,9 @@ class TurtleTradingLS:
         enable_longs=True, enable_shorts=True,
         enable_system1=True, enable_system2=False,
         check_shortability=False, risk_per_unit=0.005,
-        use_latest_n_for_pyramiding=False):
+        use_latest_n_for_pyramiding=False,
+        telegram_bot_token=None, telegram_chat_id=None,
+        enable_slack=True, enable_telegram=True):
     """
     Initialize Turtle Trading System with Long/Short support
 
@@ -68,6 +70,10 @@ class TurtleTradingLS:
       check_shortability: Whether to check if tickers are shortable
       risk_per_unit: Risk per unit as fraction of account equity (default 0.005 = 0.5%)
       use_latest_n_for_pyramiding: Use latest N (ATR) for pyramiding calculations (default False)
+      telegram_bot_token: Telegram bot token (optional)
+      telegram_chat_id: Telegram chat ID (optional)
+      enable_slack: Whether to enable Slack notifications (default True)
+      enable_telegram: Whether to enable Telegram notifications (default True)
     """
     # Validate configuration
     if not enable_longs and not enable_shorts:
@@ -85,7 +91,37 @@ class TurtleTradingLS:
     self.position_manager = PositionManager()
     self.state = StateManager()
     self.logger = DailyLogger()
-    self.slack = SlackNotifier(slack_token, slack_channel)
+
+    # Initialize notifier(s) - support both Slack and Telegram
+    notifiers = []
+
+    if enable_slack and slack_token and slack_channel:
+      slack_notifier = SlackNotifier(slack_token, slack_channel)
+      notifiers.append(slack_notifier)
+      print("✓ Slack notifications enabled")
+
+    if enable_telegram and telegram_bot_token and telegram_chat_id:
+      telegram_notifier = TelegramNotifier(telegram_bot_token, telegram_chat_id)
+      notifiers.append(telegram_notifier)
+      print("✓ Telegram notifications enabled")
+
+    if not notifiers:
+      print("⚠ Warning: No notifiers configured. Notifications will not be sent.")
+      # Create a dummy notifier that does nothing
+      class DummyNotifier:
+        def send_message(self, message, title=None):
+          pass
+        def send_summary(self, title, data):
+          pass
+      notifiers.append(DummyNotifier())
+
+    # Use MultiNotifier if multiple platforms, or single notifier directly
+    if len(notifiers) > 1:
+      self.slack = MultiNotifier(notifiers)
+      print(f"✓ Using MultiNotifier with {len(notifiers)} platforms")
+    else:
+      self.slack = notifiers[0]
+
     self.order_manager = OrderManager(
       self.trading_client,
       self.logger,

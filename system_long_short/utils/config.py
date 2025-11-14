@@ -147,15 +147,30 @@ class TradingConfig:
         self.slack_token = os.environ.get('SLACK_BOT_TOKEN')
         self.slack_channel = os.environ.get('PERSONAL_SLACK_CHANNEL_ID')
 
+        # Telegram credentials (optional)
+        self.telegram_bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        self.telegram_chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+
+        # Notification toggles
+        self.enable_slack = str_to_bool(os.environ.get('ENABLE_SLACK_NOTIFICATIONS', 'True'))
+        self.enable_telegram = str_to_bool(os.environ.get('ENABLE_TELEGRAM_NOTIFICATIONS', 'True'))
+
         # Validate required credentials
-        if not all([self.alpaca_key, self.alpaca_secret, self.slack_token, self.slack_channel]):
+        if not all([self.alpaca_key, self.alpaca_secret]):
             raise ValueError(
                 "Missing required credentials. Please ensure the following are set:\n"
                 "  - ALPACA_API_KEY\n"
-                "  - ALPACA_SECRET\n"
-                "  - SLACK_BOT_TOKEN\n"
-                "  - PERSONAL_SLACK_CHANNEL_ID"
+                "  - ALPACA_SECRET"
             )
+
+        # Validate at least one notification method is configured
+        has_slack = self.slack_token and self.slack_channel and self.enable_slack
+        has_telegram = self.telegram_bot_token and self.telegram_chat_id and self.enable_telegram
+
+        if not has_slack and not has_telegram:
+            print("⚠ Warning: No notification methods configured. Notifications will not be sent.")
+            print("  Configure Slack: SLACK_BOT_TOKEN + PERSONAL_SLACK_CHANNEL_ID")
+            print("  Configure Telegram: TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID")
 
         # Universe file
         self.universe_file = os.environ.get('UNIVERSE_FILE', 'system_long_short/ticker_universe.txt')
