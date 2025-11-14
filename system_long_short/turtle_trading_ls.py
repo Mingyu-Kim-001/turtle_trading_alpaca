@@ -792,8 +792,8 @@ class TurtleTradingLS:
 
       stop_price = position['stop_price']
 
-      if current_price <= stop_price * 1.005:
-        self.logger.log(f"Long stop loss triggered for {ticker}: ${current_price:.2f} <= ${stop_price * 1.005:.2f}")
+      if current_price <= stop_price:
+        self.logger.log(f"Long stop loss triggered for {ticker}: ${current_price:.2f} <= ${stop_price:.2f}")
         self.exit_long_position(ticker, stop_price, 'Stop loss', is_stop_loss=True)
 
   def check_short_stops(self):
@@ -821,8 +821,8 @@ class TurtleTradingLS:
 
       stop_price = position['stop_price']
 
-      if current_price >= stop_price * 0.995:
-        self.logger.log(f"Short stop loss triggered for {ticker}: ${current_price:.2f} >= ${stop_price * 0.995:.2f}")
+      if current_price >= stop_price:
+        self.logger.log(f"Short stop loss triggered for {ticker}: ${current_price:.2f} >= ${stop_price:.2f}")
         self.exit_short_position(ticker, stop_price, 'Stop loss', is_stop_loss=True)
 
   def check_long_exit_signals(self):
