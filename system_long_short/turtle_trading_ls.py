@@ -542,6 +542,18 @@ class TurtleTradingLS:
         self.state.last_trade_was_win[(ticker, 'long')] = pnl > 0
         self.logger.log(f"System 1 long trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
 
+      # Extract position details before deleting
+      from datetime import datetime
+      entry_date_str = position.get('entry_date', '')
+      try:
+        entry_date = datetime.fromisoformat(entry_date_str).strftime('%Y-%m-%d')
+      except:
+        entry_date = entry_date_str[:10] if entry_date_str else 'N/A'
+      
+      pyramid_count = len(position.get('pyramid_units', []))
+      entry_n = position.get('initial_n', 0)
+      stop_price = position.get('stop_price', 0)
+
       # Remove position
       del self.state.long_positions[ticker]
       self.state.save_state()
@@ -553,6 +565,10 @@ class TurtleTradingLS:
       self.slack.send_summary(f"{emoji} LONG EXIT EXECUTED", {
         "Ticker": ticker,
         "Reason": reason,
+        "Entry Date": entry_date,
+        "Pyramid Count": f"{pyramid_count}x",
+        "Entry N": f"${entry_n:.2f}",
+        "Stop Price": f"${stop_price:.2f}",
         "Units": f"{total_units:.4f}",
         "Exit Price": f"${filled_price:.2f}",
         "Entry Value": f"${entry_value:,.2f}",
@@ -611,6 +627,18 @@ class TurtleTradingLS:
         self.state.last_trade_was_win[(ticker, 'short')] = pnl > 0
         self.logger.log(f"System 1 short trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
 
+      # Extract position details before deleting
+      from datetime import datetime
+      entry_date_str = position.get('entry_date', '')
+      try:
+        entry_date = datetime.fromisoformat(entry_date_str).strftime('%Y-%m-%d')
+      except:
+        entry_date = entry_date_str[:10] if entry_date_str else 'N/A'
+      
+      pyramid_count = len(position.get('pyramid_units', []))
+      entry_n = position.get('initial_n', 0)
+      stop_price = position.get('stop_price', 0)
+
       # Remove position
       del self.state.short_positions[ticker]
       self.state.save_state()
@@ -622,6 +650,10 @@ class TurtleTradingLS:
       self.slack.send_summary(f"{emoji} SHORT EXIT EXECUTED", {
         "Ticker": ticker,
         "Reason": reason,
+        "Entry Date": entry_date,
+        "Pyramid Count": f"{pyramid_count}x",
+        "Entry N": f"${entry_n:.2f}",
+        "Stop Price": f"${stop_price:.2f}",
         "Units": f"{total_units:.4f}",
         "Exit Price": f"${filled_price:.2f}",
         "Entry Value": f"${entry_value:,.2f}",
