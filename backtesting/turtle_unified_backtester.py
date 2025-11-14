@@ -26,6 +26,8 @@ import os
 import json
 import random
 import hashlib
+import fcntl
+import time
 from typing import Dict, List, Tuple, Optional
 
 # Add the project root to the Python path
@@ -484,21 +486,36 @@ class TurtleUnifiedBacktester:
     return hashlib.md5(config_str.encode()).hexdigest()
   
   def _check_cache(self):
-    """Check if results for this configuration already exist in cache."""
+    """Check if results for this configuration already exist in cache with file locking."""
     if not os.path.exists(BACKTEST_CACHE_FILE):
       return None
     
     try:
-      cache_df = pd.read_csv(BACKTEST_CACHE_FILE)
-      config_id = self._get_config_id()
+      # Use file locking to ensure consistent reads
+      lock_file_path = BACKTEST_CACHE_FILE + '.lock'
+      lock_file = open(lock_file_path, 'w')
       
-      # Find matching configuration
-      matching = cache_df[cache_df['config_id'] == config_id]
-      
-      if len(matching) > 0:
-        return matching.iloc[0].to_dict()
-      
-      return None
+      try:
+        # Acquire shared lock for reading (allows multiple readers, blocks writers)
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_SH)
+        
+        # Now safely read the cache file
+        cache_df = pd.read_csv(BACKTEST_CACHE_FILE)
+        config_id = self._get_config_id()
+        
+        # Find matching configuration
+        matching = cache_df[cache_df['config_id'] == config_id]
+        
+        if len(matching) > 0:
+          return matching.iloc[0].to_dict()
+        
+        return None
+        
+      finally:
+        # Always release the lock
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        lock_file.close()
+        
     except Exception as e:
       print(f"Warning: Error reading cache: {e}")
       return None
@@ -567,7 +584,7 @@ class TurtleUnifiedBacktester:
     return metrics
   
   def _save_to_cache(self, metrics):
-    """Save backtest results to cache file."""
+    """Save backtest results to cache file with file locking to prevent race conditions."""
     # Prepare row data
     row_data = {
       'config_id': self._get_config_id(),
@@ -592,24 +609,54 @@ class TurtleUnifiedBacktester:
     # Convert to DataFrame
     new_row = pd.DataFrame([row_data])
     
-    # Append to cache file
-    if os.path.exists(BACKTEST_CACHE_FILE):
-      # Read existing cache
-      try:
-        existing_df = pd.read_csv(BACKTEST_CACHE_FILE)
-        # Remove any existing entry with same config_id
-        existing_df = existing_df[existing_df['config_id'] != row_data['config_id']]
-        # Append new row
-        updated_df = pd.concat([existing_df, new_row], ignore_index=True)
-        updated_df.to_csv(BACKTEST_CACHE_FILE, index=False)
-      except Exception as e:
-        print(f"Warning: Error updating cache, creating new: {e}")
-        new_row.to_csv(BACKTEST_CACHE_FILE, index=False)
-    else:
-      # Create new cache file
-      new_row.to_csv(BACKTEST_CACHE_FILE, index=False)
+    # Use file locking to prevent race conditions in multiprocessing
+    max_retries = 10
+    retry_delay = 0.1  # seconds
     
-    print(f"Results cached to: {BACKTEST_CACHE_FILE}")
+    for attempt in range(max_retries):
+      try:
+        # Create lock file path
+        lock_file_path = BACKTEST_CACHE_FILE + '.lock'
+        
+        # Open lock file (create if doesn't exist)
+        lock_file = open(lock_file_path, 'w')
+        
+        try:
+          # Acquire exclusive lock (blocking)
+          fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+          
+          # Now we have the lock - safely read, modify, and write
+          if os.path.exists(BACKTEST_CACHE_FILE):
+            # Read existing cache
+            try:
+              existing_df = pd.read_csv(BACKTEST_CACHE_FILE)
+              # Remove any existing entry with same config_id
+              existing_df = existing_df[existing_df['config_id'] != row_data['config_id']]
+              # Append new row
+              updated_df = pd.concat([existing_df, new_row], ignore_index=True)
+              updated_df.to_csv(BACKTEST_CACHE_FILE, index=False)
+            except Exception as e:
+              print(f"Warning: Error updating cache, creating new: {e}")
+              new_row.to_csv(BACKTEST_CACHE_FILE, index=False)
+          else:
+            # Create new cache file
+            new_row.to_csv(BACKTEST_CACHE_FILE, index=False)
+          
+          print(f"Results cached to: {BACKTEST_CACHE_FILE}")
+          break  # Success - exit retry loop
+          
+        finally:
+          # Always release the lock
+          fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+          lock_file.close()
+          
+      except Exception as e:
+        if attempt < max_retries - 1:
+          print(f"Warning: Cache write attempt {attempt + 1} failed: {e}. Retrying...")
+          time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+        else:
+          print(f"Error: Failed to save to cache after {max_retries} attempts: {e}")
+          raise
 
   def generate_charts(self, cash_history, equity_history, long_unit_history, short_unit_history, net_unit_history):
     """Generate and save chart visualizations."""
