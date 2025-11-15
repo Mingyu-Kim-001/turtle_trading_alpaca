@@ -1046,6 +1046,9 @@ class TurtleTradingLS:
               if ticker in self.state.pending_pyramid_orders:
                 del self.state.pending_pyramid_orders[ticker]
                 self.state.save_state()
+        else:
+          # Insufficient buying power for pyramid
+          self.logger.log(f"LONG {ticker} L{pyramid_level}: BLOCKED - insufficient buying power (need ${cost:,.2f}, have ${buying_power:,.2f})", 'WARNING')
 
   def check_short_pyramid_opportunities(self):
     """Check if any short positions can pyramid"""
@@ -1190,6 +1193,9 @@ class TurtleTradingLS:
               if ticker in self.state.pending_pyramid_orders:
                 del self.state.pending_pyramid_orders[ticker]
                 self.state.save_state()
+        else:
+          # Insufficient buying power for pyramid
+          self.logger.log(f"SHORT {ticker} L{pyramid_level}: BLOCKED - insufficient buying power (need ${margin_required:,.2f}, have ${buying_power:,.2f})", 'WARNING')
 
   def process_entry_queue(self):
     """Process pending entry signals with System 2 priority"""
