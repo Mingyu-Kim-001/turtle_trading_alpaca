@@ -413,7 +413,8 @@ class TestSignalGeneratorLongShort(unittest.TestCase):
     signals = SignalGenerator.generate_entry_signals(
       universe, data_provider, indicator_calculator,
       long_positions, short_positions,
-      enable_shorts=False, proximity_threshold=0.05
+      enable_shorts=False, enable_system1=True, enable_system2=True,
+      proximity_threshold=0.05
     )
 
     # Both System 1 and System 2 should generate signals
@@ -457,7 +458,8 @@ class TestSignalGeneratorLongShort(unittest.TestCase):
     signals = SignalGenerator.generate_entry_signals(
       universe, data_provider, indicator_calculator,
       long_positions, short_positions,
-      enable_shorts=False, proximity_threshold=0.05
+      enable_shorts=False, enable_system1=True, enable_system2=True,
+      proximity_threshold=0.05
     )
 
     # Check that all System 2 signals come before System 1 signals
@@ -558,7 +560,8 @@ class TestSignalGeneratorLongShort(unittest.TestCase):
     signals = SignalGenerator.generate_entry_signals(
       universe, data_provider, indicator_calculator,
       long_positions, short_positions,
-      enable_shorts=False, proximity_threshold=0.05,
+      enable_shorts=False, enable_system1=True, enable_system2=True,
+      proximity_threshold=0.05,
       last_trade_was_win=last_trade_was_win
     )
 
@@ -599,7 +602,8 @@ class TestSignalGeneratorLongShort(unittest.TestCase):
     signals = SignalGenerator.generate_entry_signals(
       universe, data_provider, indicator_calculator,
       long_positions, short_positions,
-      enable_shorts=False, proximity_threshold=0.05
+      enable_shorts=False, enable_system1=True, enable_system2=True,
+      proximity_threshold=0.05
     )
 
     test_signals = [s for s in signals if s['ticker'] == 'TEST']

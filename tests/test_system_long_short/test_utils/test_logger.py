@@ -32,10 +32,11 @@ class TestDailyLoggerLongShort(unittest.TestCase):
     self.logger.log("Test message for long-short", "INFO")
 
     # Check log file was created
-    self.assertTrue(os.path.exists(self.logger.log_file))
+    log_file = self.logger._get_log_files()['log_file']
+    self.assertTrue(os.path.exists(log_file))
 
     # Check log file contains message
-    with open(self.logger.log_file, 'r') as f:
+    with open(log_file, 'r') as f:
       content = f.read()
       self.assertIn("Test message for long-short", content)
       self.assertIn("INFO", content)
@@ -54,10 +55,11 @@ class TestDailyLoggerLongShort(unittest.TestCase):
     self.assertEqual(len(self.logger.orders), 1)
 
     # Check order file was created
-    self.assertTrue(os.path.exists(self.logger.order_log_file))
+    order_log_file = self.logger._get_log_files()['order_log_file']
+    self.assertTrue(os.path.exists(order_log_file))
 
     # Check order data
-    with open(self.logger.order_log_file, 'r') as f:
+    with open(order_log_file, 'r') as f:
       data = json.load(f)
       self.assertEqual(len(data), 1)
       self.assertEqual(data[0]['type'], 'ENTRY')
@@ -72,6 +74,9 @@ class TestDailyLoggerLongShort(unittest.TestCase):
         self.long_positions = {'AAPL': {}}
         self.short_positions = {'TSLA': {}}
         self.entry_queue = []
+        self.pending_pyramid_orders = {}
+        self.pending_entry_orders = {}
+        self.pending_exit_orders = {}
 
     state = MockState()
     self.logger.log_state_snapshot(state, 'test_snapshot')
@@ -80,10 +85,11 @@ class TestDailyLoggerLongShort(unittest.TestCase):
     self.assertEqual(len(self.logger.state_snapshots), 1)
 
     # Check snapshot file was created
-    self.assertTrue(os.path.exists(self.logger.state_log_file))
+    state_log_file = self.logger._get_log_files()['state_log_file']
+    self.assertTrue(os.path.exists(state_log_file))
 
     # Check snapshot data
-    with open(self.logger.state_log_file, 'r') as f:
+    with open(state_log_file, 'r') as f:
       data = json.load(f)
       self.assertEqual(len(data), 1)
       self.assertEqual(data[0]['label'], 'test_snapshot')
