@@ -1394,6 +1394,15 @@ class TurtleTradingLS:
                 )
                 self.logger.log(f"Created long position for {ticker}: {filled_qty:.0f} units @ ${filled_price:.2f}")
 
+                # Log the filled order
+                self.logger.log_order('LONG_ENTRY', ticker, 'FILLED', {
+                  'order_id': order_id,
+                  'units': filled_qty,
+                  'filled_price': filled_price,
+                  'is_pyramid': False,
+                  'pyramid_level': None
+                })
+
                 # Send notification
                 stop_price = self.state.long_positions[ticker]['stop_price']
                 total_equity = self.get_total_equity()
@@ -1412,6 +1421,15 @@ class TurtleTradingLS:
                   filled_qty, filled_price, n, order_id
                 )
                 self.logger.log(f"Created short position for {ticker}: {filled_qty:.0f} units @ ${filled_price:.2f}")
+
+                # Log the filled order
+                self.logger.log_order('SHORT_ENTRY', ticker, 'FILLED', {
+                  'order_id': order_id,
+                  'units': filled_qty,
+                  'filled_price': filled_price,
+                  'is_pyramid': False,
+                  'pyramid_level': None
+                })
 
                 # Send notification
                 stop_price = self.state.short_positions[ticker]['stop_price']
@@ -1568,6 +1586,15 @@ class TurtleTradingLS:
             latest_n_msg = f" (latest_n={latest_n_stored:.3f})" if latest_n_stored else ""
             self.logger.log(f"Added pyramid unit to long position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}{latest_n_msg}")
 
+            # Log the filled order
+            self.logger.log_order('LONG_ENTRY', ticker, 'FILLED', {
+              'order_id': order_id,
+              'units': filled_qty,
+              'filled_price': filled_price,
+              'is_pyramid': True,
+              'pyramid_level': pyramid_level
+            })
+
             # Send notification
             stop_price = self.state.long_positions[ticker]['stop_price']
             total_equity = self.get_total_equity()
@@ -1592,6 +1619,15 @@ class TurtleTradingLS:
             )
             latest_n_msg = f" (latest_n={latest_n_stored:.3f})" if latest_n_stored else ""
             self.logger.log(f"Added pyramid unit to short position {ticker}: level {pyramid_level}, {filled_qty:.0f} units @ ${filled_price:.2f}{latest_n_msg}")
+
+            # Log the filled order
+            self.logger.log_order('SHORT_ENTRY', ticker, 'FILLED', {
+              'order_id': order_id,
+              'units': filled_qty,
+              'filled_price': filled_price,
+              'is_pyramid': True,
+              'pyramid_level': pyramid_level
+            })
 
             # Send notification
             stop_price = self.state.short_positions[ticker]['stop_price']
@@ -1729,6 +1765,14 @@ class TurtleTradingLS:
                 self.state.last_trade_was_win[(ticker, 'long')] = pnl > 0
                 self.logger.log(f"System 1 long trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
 
+              # Log the filled order
+              self.logger.log_order('LONG_EXIT', ticker, 'FILLED', {
+                'order_id': order_id,
+                'units': filled_qty,
+                'filled_price': filled_price,
+                'reason': 'Exit signal (pending order filled)'
+              })
+
               # Remove position
               del self.state.long_positions[ticker]
 
@@ -1760,6 +1804,14 @@ class TurtleTradingLS:
               if position.get('system') == 1:
                 self.state.last_trade_was_win[(ticker, 'short')] = pnl > 0
                 self.logger.log(f"System 1 short trade for {ticker}: {'WIN' if pnl > 0 else 'LOSS'} (P&L: ${pnl:,.2f})")
+
+              # Log the filled order
+              self.logger.log_order('SHORT_EXIT', ticker, 'FILLED', {
+                'order_id': order_id,
+                'units': filled_qty,
+                'filled_price': filled_price,
+                'reason': 'Exit signal (pending order filled)'
+              })
 
               # Remove position
               del self.state.short_positions[ticker]
