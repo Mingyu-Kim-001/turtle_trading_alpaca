@@ -9,3 +9,4 @@ __pycache__
 launch.json
 backtesting/*results/
 logs/*
+trading_state*.json
